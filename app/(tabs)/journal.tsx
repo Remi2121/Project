@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Explore from '../explore/explore';
+import Journal from '../journal/journal';
 
 export default function explore() {
-  return <Explore />;
+  return <Journal />;
 }
