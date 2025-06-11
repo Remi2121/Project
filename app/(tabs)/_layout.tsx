@@ -36,15 +36,16 @@ const TabIcon = ({ focused, icon }: TabIconProps) => {
         style={styles.tabIconContainer}
         resizeMode="stretch"
       >
-        <Ionicons name={icon} size={24} color="#ffffff" />
+        <Ionicons name={icon} size={30} color="#ffffff" style={{ paddingBottom: 20 }} />
       </ImageBackground>
     );
   }
   return (
-    <View style={styles.tabIconDefault}>
-      <Ionicons name={icon} size={24} color="#A8B5DB" />
-    </View>
-  );
+      <View style={styles.tabIconDefault}>
+        <Ionicons name={icon} size={24} color="#A8B5DB" style={{ paddingBottom: 2 }}  />
+      </View>
+
+    );
 };
 
 export default function Layout() {
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 100,
     minHeight: 80,
-    marginTop: 16,
+    marginTop: 20,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 100,
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
   tabIconDefault: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
-    borderRadius: 32,
+    marginTop: 1,
+    borderRadius: 20,
   },
 });
