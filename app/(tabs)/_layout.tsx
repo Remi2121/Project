@@ -81,6 +81,7 @@ export default function Layout() {
 
       {/* Hidden Screens */}
       <Tabs.Screen name="detect-options" options={{ href: null }} />
+      <Tabs.Screen name="camera" options={{ href: null }} />
     </Tabs>
   );
 }

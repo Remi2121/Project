@@ -23,7 +23,7 @@ export default function DetectMoodOptionScreen() {
       />
 
       <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/camera')}>
           <Ionicons name="camera" size={30} color="white"  />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/')}>
