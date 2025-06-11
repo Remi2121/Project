@@ -3,10 +3,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
-import highlate from '../../assets/images/highlate.png'; // Corrected relative path
+import highlate from '../../assets/images/highlate.png';
+
+// Icon and label mappings
+const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+  index: 'home',
+  chatbot: 'chatbubble-ellipses',
+  profile: 'person-circle',
+  journal: 'book',
+  explore: 'musical-notes',
+};
+
+const labelMap: Record<string, string> = {
+  index: 'Home',
+  chatbot: 'Chatbot',
+  profile: 'Profile',
+  journal: 'Journal',
+  explore: 'Explore',
+};
 
 // Custom tab icon with highlight background
-const TabIcon = ({ focused, icon }: any) => {
+type TabIconProps = {
+  focused: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+};
+
+const TabIcon = ({ focused, icon }: TabIconProps) => {
   if (focused) {
     return (
       <ImageBackground
@@ -28,7 +50,7 @@ const TabIcon = ({ focused, icon }: any) => {
 export default function Layout() {
   return (
     <Tabs
-      screenOptions={({ route }) => ({
+      screenOptions={({ route }: { route: { name: string } }) => ({
         tabBarActiveTintColor: '#ffffff',
         tabBarInactiveTintColor: '#cccccc',
         tabBarLabelStyle: { fontSize: 12 },
@@ -44,45 +66,12 @@ export default function Layout() {
             style={StyleSheet.absoluteFill}
           />
         ),
-        tabBarIcon: ({ focused }) => {
-          let iconName: string;
-
-          switch (route.name) {
-            case 'index':
-              iconName = 'home';
-              break;
-            case 'chatbot':
-              iconName = 'chatbubble-ellipses';
-              break;
-            case 'profile':
-              iconName = 'person-circle';
-              break;
-            case 'journal':
-              iconName = 'book';
-              break;
-            case 'explore':
-              iconName = 'musical-notes';
-              break;
-            default:
-              iconName = 'apps';
-          }
-
-          return <TabIcon focused={focused} icon={iconName} />;
-        },
-        tabBarLabel: route.name === 'index'
-          ? 'Home'
-          : route.name === 'explore'
-          ? 'Explore'
-          : route.name === 'chatbot'
-          ? 'Chatbot'
-          : route.name === 'journal'
-          ? 'Journal'
-          : route.name === 'profile'
-          ? 'Profile'
-          : route.name,
+        tabBarIcon: ({ focused }:{focused:boolean}) => (
+          <TabIcon focused={focused} icon={iconMap[route.name] ?? 'apps'} />
+        ),
+        tabBarLabel: labelMap[route.name] ?? route.name,
       })}
     >
-      {/* Visible Tabs */}
       <Tabs.Screen name="index" />
       <Tabs.Screen name="explore" />
       <Tabs.Screen name="chatbot" />
