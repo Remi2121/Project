@@ -78,6 +78,9 @@ export default function Layout() {
       <Tabs.Screen name="chatbot" />
       <Tabs.Screen name="journal" />
       <Tabs.Screen name="profile" />
+
+      {/* Hidden Screens */}
+      <Tabs.Screen name="detect-options" options={{ href: null }} />
     </Tabs>
   );
 }

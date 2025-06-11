@@ -26,7 +26,7 @@ export default function HomeScreen() {
       <Text style={styles.username}>User! 👋</Text>
       <Text style={styles.subtitle}>{moodSummary}</Text>
 
-      <TouchableOpacity style={styles.mainButton} onPress={() => router.push('/')}>
+      <TouchableOpacity style={styles.mainButton} onPress={() => router.push('/detect-options')}>
         <Text style={styles.icon}>🎭</Text>
         <Text style={styles.mainText}>Detect Mood</Text>
       </TouchableOpacity>
