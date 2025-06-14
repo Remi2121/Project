@@ -26,7 +26,7 @@ export default function DetectMoodOptionScreen() {
         <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/camera')}>
           <Ionicons name="camera" size={30} color="white"  />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/audio')}>
           <MaterialIcons name="keyboard-voice" size={30} color="white" />
         </TouchableOpacity>
       </View>
