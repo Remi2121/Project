@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -68,15 +69,13 @@ export default function camera() {
       const confidence = face.detectionConfidence; // optional: confidence value (0 to 1)
 
 router.push({
-        pathname: '/',
+        pathname: '/cameraResult',
         params: {
           mood,
           confidence:(confidence*100).toFixed(1)+ '%', // Convert to percentage
           imageUri: previewUri,
         }
-      });
-
-      
+      });  
     } catch (error) {
       console.error("Error using Google Vision API:", error);
       alert("Something went wrong. Please try again.");
@@ -113,23 +112,22 @@ router.push({
       </View>
     );
   }
-
   function toggleCameraFacing() {
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
       {previewUri ? (
         <View style={styles.previewContainer}>
           <Image source={{ uri: previewUri }} style={styles.previewImage} />
           <View style={styles.previewButtons}>
             <TouchableOpacity style={styles.button} onPress={handleRetake}>
-              <Ionicons name="refresh-circle-outline" size={48} color="#2a1faa" />
+              <Ionicons name="refresh-circle-outline" size={48} color="white" />
               <Text style={styles.iconLabel}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={handleUsePhoto}>
-              <Ionicons name="checkmark-circle-outline" size={48} color="#2a1faa" />
+              <Ionicons name="checkmark-circle-outline" size={48} color="white" />
               <Text style={styles.iconLabel} >Use Photo</Text>
             </TouchableOpacity>
           </View>
@@ -150,7 +148,7 @@ router.push({
         </CameraView>
          </View>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -204,7 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconLabel: {
-    color: '#2a1faa',
+    color: 'white',
     fontSize: 14,
     marginTop: 4,
   },
