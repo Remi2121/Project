@@ -82,6 +82,8 @@ export default function Layout() {
       <Tabs.Screen name="detect-options" options={{ href: null }} />
       <Tabs.Screen name="camera" options={{ href: null }} />
       <Tabs.Screen name="audio" options={{ href: null }} />
+      <Tabs.Screen name="cameraResult" options={{ href: null }} />
+      <Tabs.Screen name="recommendList" options={{ href: null }} />
     </Tabs>
   );
 }
