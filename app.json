@@ -8,16 +8,33 @@
     "scheme": "moodify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"],
+        "CFBundleURLTypes": [
+      {
+        "CFBundleURLSchemes": ["moodify"]
+      }
+    ]    
       }
     },
     "android": {
-       
+      "intentFilters": [
+    {
+      "action": "VIEW",
+      "data": [
+        {
+          "scheme": "https",
+          "host": "auth.expo.io",
+          "pathPrefix": "/@suveh03/app"
+        }
+      ],
+      "category": ["BROWSABLE", "DEFAULT"]
+    }
+  ],
+      "package": "com.suveh03.moodify",
       "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

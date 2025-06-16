@@ -20,8 +20,8 @@ export default function Recommendation() {
             </Text>
             <View style={styles.grid}>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
-                    <Ionicons name="play-circle" style={styles.icon} />
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/playlist',params: { mood }}) }>
+                    <Ionicons name="play-circle" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Play Music</Text>
                 </TouchableOpacity>
 
@@ -46,7 +46,7 @@ export default function Recommendation() {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
-                    <Ionicons name="calendar-outline" style={styles.icon} />
+                    <Ionicons name="calendar-outline" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Mood Calendar</Text>
                 </TouchableOpacity>
 
