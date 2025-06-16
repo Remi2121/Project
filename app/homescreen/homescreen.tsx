@@ -1,3 +1,4 @@
+// homescreen
 import { Text, View, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import styles from './homestyles'; 
