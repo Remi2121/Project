@@ -4,6 +4,8 @@ import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Linking, Act
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+
 
 type Playlist = {
   id: string;
@@ -19,6 +21,7 @@ export default function RecommendList() {
   const { mood } = useLocalSearchParams();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const moodStr = Array.isArray(mood) ? mood[0] : mood;
   const lowerMood = moodStr?.toLowerCase(); // Ensure lowercase for FastAPI
@@ -28,12 +31,12 @@ export default function RecommendList() {
 
     axios.get(`${BACKEND_URL}/playlists/${lowerMood}`)
       .then(res => {
-        console.log('✅ Received playlists:', res.data);
+        console.log(' Received playlists:', res.data);
         setPlaylists(res.data.playlists);
         setLoading(false);
       })
       .catch(err => {
-        console.error('❌ Axios error:',err);
+        console.error('Axios error:',err);
         
         setLoading(false);
       });
@@ -55,7 +58,7 @@ export default function RecommendList() {
         data={playlists}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => Linking.openURL(item.external_url)}>
+          <TouchableOpacity style={styles.card} onPress={() => Linking.openURL(item.external_url) }>
             {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
             <View style={styles.details}>
               <Text style={styles.name}>{item.name}</Text>
