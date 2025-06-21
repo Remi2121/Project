@@ -8,34 +8,42 @@
     "scheme": "moodify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
+        "UIBackgroundModes": [
+          "audio"
+        ],
         "CFBundleURLTypes": [
-      {
-        "CFBundleURLSchemes": ["moodify"]
-      }
-    ]    
+          {
+            "CFBundleURLSchemes": [
+              "moodify"
+            ]
+          }
+        ]
       }
     },
     "android": {
       "intentFilters": [
-    {
-      "action": "VIEW",
-      "data": [
         {
-          "scheme": "https",
-          "host": "auth.expo.io",
-          "pathPrefix": "/@suveh03/app"
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "auth.expo.io",
+              "pathPrefix": "/@suveh03/app"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
-      "category": ["BROWSABLE", "DEFAULT"]
-    }
-  ],
       "package": "com.suveh03.moodify",
-      "permissions": ["RECORD_AUDIO"],
+      "permissions": [
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -63,7 +71,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true
@@ -71,6 +80,5 @@
     "extra": {
       "EXPO_ROUTER_APP_ROOT": "app"
     }
-  
   }
 }
