@@ -147,7 +147,7 @@ export default function Explore() {
                   onPress={() => handleOpenPlaylist(playlist.playlist_url)}
                 >
                   <LinearGradient
-                    colors={['#0d0b2f', '#2a1faa']}
+                    colors={['#0d0b2f', '#2a5faa']}
                     style={styles.playlistCard}
                   >
                     <Image
@@ -188,7 +188,7 @@ export default function Explore() {
                     onPress={() => handleOpenPlaylist(playlist.playlist_url)}
                   >
                     <LinearGradient
-                      colors={['#0d0b2f', '#2a1faa']}
+                      colors={['#0d0b2f', '#2a5faa']}
                       style={styles.playlistCardSmall}
                     >
                       <Image

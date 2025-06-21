@@ -145,11 +145,11 @@ const styles = StyleSheet.create({
     paddingLeft: 0,
   },
 
-  // Example for playlistCardSmall:
+  
 playlistCardSmall: {
-  width: 140,       // fixed width
-  height: 180,      // fixed height
-  marginRight: 15,  // spacing between cards
+  width: 140,       
+  height: 180,      
+  marginRight: 15,  
   borderRadius: 10,
   padding: 10,
   justifyContent: 'center',
@@ -157,18 +157,18 @@ playlistCardSmall: {
 },
 
 playlistImageSmall: {
-  width: 120,       // fixed width for image inside card
-  height: 120,      // fixed height for image
+  width: 120,       
+  height: 120,      
   borderRadius: 8,
   marginBottom: 8,
-  resizeMode: 'cover',  // or 'contain' depending on your preference
+  resizeMode: 'cover', 
 },
 
 playlistNameSmall: {
   fontSize: 14,
   color: 'white',
-  textAlign: 'center',  // center align text inside the fixed width
-  height: 40,           // fix height to prevent text pushing card size
+  textAlign: 'center',  
+  height: 40,           
 },
 
 });
