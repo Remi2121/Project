@@ -33,7 +33,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 100,
     height: 100,
-   
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   textContainer: {
@@ -59,7 +60,6 @@ const styles = StyleSheet.create({
 
   moodItem: {
     marginBottom: 20,
-    
   },
 
   squareRow: {
@@ -75,7 +75,102 @@ const styles = StyleSheet.create({
     margin: 3,
     borderRadius: 5,
   },
-});
 
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: 'white',
+  },
+
+ 
+  searchResultsContainer: {
+    marginTop: 20,
+  },
+
+  searchResultsHeader: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+
+  playlistCard: {
+    padding: 15,
+    marginVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginRight: 20,
+  },
+
+  playlistImageLarge: {
+    width: 200,
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+
+  playlistNameLarge: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+
+  playlistTapText: {
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+
+  suggestionsHeader: {
+    color: 'white',
+    fontSize: 22,
+    marginTop: 30,
+    fontWeight: 'bold',
+  },
+
+  moodSectionContainer: {
+    marginTop: 25,
+  },
+
+  moodSectionTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+
+  suggestionsScrollView: {
+    paddingLeft: 0,
+  },
+
+  // Example for playlistCardSmall:
+playlistCardSmall: {
+  width: 140,       // fixed width
+  height: 180,      // fixed height
+  marginRight: 15,  // spacing between cards
+  borderRadius: 10,
+  padding: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+playlistImageSmall: {
+  width: 120,       // fixed width for image inside card
+  height: 120,      // fixed height for image
+  borderRadius: 8,
+  marginBottom: 8,
+  resizeMode: 'cover',  // or 'contain' depending on your preference
+},
+
+playlistNameSmall: {
+  fontSize: 14,
+  color: 'white',
+  textAlign: 'center',  // center align text inside the fixed width
+  height: 40,           // fix height to prevent text pushing card size
+},
+
+});
 
 export default styles;
