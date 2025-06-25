@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { useNavigation } from 'expo-router';
 
 
-const menuItems = ['Mood History', 'Favorites', 'Journal', 'Settings'] as const;
+const menuItems = ['Mood History.', 'Favorites', 'Journal', 'Settings'] as const;
 
 type MenuItem = typeof menuItems[number];
 
@@ -33,7 +33,7 @@ export default function ProfileSidebar() {
   const handleNavigation = (label: MenuItem) => {
   console.log('Navigating to:', label);
   switch (label) {
-    case 'Mood History':
+    case 'Mood History.':
       router.push('./ProfilePage/Menu_Items/mood-history');
       break;
     case 'Favorites':
