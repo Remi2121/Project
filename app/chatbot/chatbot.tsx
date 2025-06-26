@@ -1,10 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, Image, ScrollView, Text, TextInput } from 'react-native';
 import styles from './chatbotstyles';
 
-export default function Chat_Bot() {
+type Props = {
+  routeParams?: UnknownOutputParams;
+};
+
+const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const [topic, setTopic] = useState('');
   const [tips, setTips] = useState('');
   const [question] = useState('How are you feeling today?');
@@ -14,7 +19,8 @@ export default function Chat_Bot() {
     "anxiety", "depression", "stress", "self-care", "mindfulness",
     "mental health", "wellbeing", "coping", "therapy", "burnout",
     "emotions", "mental fitness", "resilience", "sleep", "loneliness",
-    "social anxiety", "panic attack", "self-esteem", "sad","alone","happy", "angry", "frustrated", "overwhelmed", "nervous",
+    "social anxiety", "panic attack", "self-esteem", "sad", "alone", "happy",
+    "angry", "frustrated", "overwhelmed", "nervous","anger"
   ];
 
   const getTips = async () => {
@@ -30,10 +36,10 @@ export default function Chat_Bot() {
     }
 
     try {
-      const res = await fetch('http://192.168.107.146:8000/get_tips', {
+      const res = await fetch('http://192.168.239.146:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: normalizedTopic })
+        body: JSON.stringify({ topic: normalizedTopic }),
       });
 
       const text = await res.text();
@@ -66,6 +72,23 @@ export default function Chat_Bot() {
     setLoading(false);
   };
 
+  // 🔁 Automatically fetch tips if topic is passed in routeParams
+  const topicParam = typeof routeParams?.topic === 'string' ? routeParams.topic : '';
+
+  useEffect(() => {
+    if (topicParam) {
+      const normalized = topicParam.trim().toLowerCase();
+      setTopic(normalized);
+
+      if (validMoods.includes(normalized)) {
+        getTips();
+      } else {
+        setTips("This is not a mental health related mood.");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicParam]);
+
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
       <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
@@ -95,4 +118,6 @@ export default function Chat_Bot() {
       </ScrollView>
     </LinearGradient>
   );
-}
+};
+
+export default Chatbot;

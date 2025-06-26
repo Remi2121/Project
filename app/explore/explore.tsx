@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,8 +17,12 @@ import {
 } from 'react-native';
 import styles from '../explore/explorestyles';
 
-export default function Explore() {
-  const [mood, setMood] = useState('');
+type Props = {
+  routeParams?: UnknownOutputParams;
+};
+
+const Explore: React.FC<Props> = ({ routeParams }) => {
+
   const [playlistData, setPlaylistData] = useState<{
     playlists: {
       playlist_url: string;
@@ -26,13 +31,14 @@ export default function Explore() {
       tracks: any[];
     }[];
   } | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const moods = ['sad', 'happy', 'angry', 'depression'];
+  const [mood, setMood] = useState('');
+  const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, any[]>>({});
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
-  // Emoji mapping for moods
+  const moods = ['sad', 'happy', 'angry', 'depression'];
+
   const moodEmojis: Record<string, string> = {
     sad: '😢',
     happy: '😊',
@@ -40,18 +46,23 @@ export default function Explore() {
     depression: '😞',
   };
 
-  // Fetch playlists based on user input mood
+  const moodParam = typeof routeParams?.mood === 'string' ? routeParams.mood : '';
+
   const fetchPlaylists = async () => {
-    if (!mood.trim()) {
-      Alert.alert('Please enter a mood');
-      return;
-    }
+    if (!mood.trim()) return;
+
     try {
       setLoading(true);
-      const response = await axios.get('http://192.168.107.146:5000/playlist', {
+      const response = await axios.get('http://192.168.239.146:5000/playlist', {
         params: { mood },
       });
-      setPlaylistData(response.data);
+
+      if (response.data && response.data.playlists) {
+        setPlaylistData(response.data);
+      } else {
+        setPlaylistData(null);
+        Alert.alert('No Results', 'No playlists found for this mood.');
+      }
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Could not fetch playlists.');
@@ -60,44 +71,70 @@ export default function Explore() {
     }
   };
 
-  // Open playlist URL in external app or browser
-  const handleOpenPlaylist = (playlistUrl: string) => {
-    Linking.openURL(playlistUrl).catch((err) => {
+  const handleOpenPlaylist = (url: string) => {
+    Linking.openURL(url).catch((err) => {
       console.error(err);
       Alert.alert('Error', 'Failed to open Spotify.');
     });
   };
 
-  // Fetch suggestions for all moods in parallel on mount
+  const fetchPlaylistsByParam = async (moodValue: string) => {
+    if (!moodValue.trim()) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.get('http://192.168.239.146:5000/playlist', {
+        params: { mood: moodValue },
+      });
+
+      if (response.data && response.data.playlists) {
+        setPlaylistData(response.data);
+      } else {
+        setPlaylistData(null);
+        Alert.alert('No Results', 'No playlists found for this mood.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Could not fetch playlists.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (moodParam) {
+      setMood(moodParam);
+      fetchPlaylistsByParam(moodParam); // 💡 Use directly instead of waiting for state update
+    }
+  }, [moodParam]);
+
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
         setSuggestionsLoading(true);
-
         const results = await Promise.all(
           moods.map(async (moodType) => {
-            const res = await axios.get('http://192.168.107.146:5000/playlist', {
+            const res = await axios.get('http://192.168.239.146:5000/playlist', {
               params: { mood: moodType },
             });
             return { moodType, playlists: res.data.playlists || [] };
           })
         );
 
-        const suggestionsObj: Record<string, any[]> = {};
+        const map: Record<string, any[]> = {};
         results.forEach(({ moodType, playlists }) => {
-          suggestionsObj[moodType] = playlists;
+          map[moodType] = playlists;
         });
-
-        setSuggestions(suggestionsObj);
+        setSuggestions(map);
       } catch (err) {
-        console.error('Failed to fetch suggestions', err);
+        console.error('Suggestions fetch failed', err);
       } finally {
         setSuggestionsLoading(false);
       }
     };
 
     fetchSuggestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -208,4 +245,6 @@ export default function Explore() {
       </ScrollView>
     </LinearGradient>
   );
-}
+};
+
+export default Explore;
