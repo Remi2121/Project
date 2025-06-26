@@ -1,18 +1,30 @@
-import { Text, View, Image } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import styles from './homeStyles';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, Text, View } from 'react-native';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import styles from './homeStyles'; // Make sure your styles are correctly defined
 
 export default function WelcomeScreen() {
-  const fullBigText = "Moodify";
-  const fullWelcomeText = "Mood-Based Music & Activity Recommender App";
+  const fullBigText = 'Moodify';
+  const fullWelcomeText = 'Mood-Based Music & Activity Recommender App';
 
   const [displayedBigText, setDisplayedBigText] = useState('');
   const [displayedWelcomeText, setDisplayedWelcomeText] = useState('');
-  const router = useRouter(); // Declare router here
+  const opacity = useSharedValue(1);
+  const router = useRouter();
+
+  // ✅ Correct function to navigate
+  const navigateToTabs = () => {
+    router.push('/(tabs)');
+  };
 
   useEffect(() => {
-    const totalDuration = 5000; // 5 seconds animation
+    const totalDuration = 4000;
     const totalCharacters = fullBigText.length + fullWelcomeText.length;
     const intervalTime = totalDuration / totalCharacters;
 
@@ -35,12 +47,15 @@ export default function WelcomeScreen() {
       }
     }, intervalTime);
 
-    // Set timeout to navigate after 5 seconds
+    // Animate opacity and navigate
     const timeout = setTimeout(() => {
-      router.push('/(tabs)');
-    }, 6000);
+      opacity.value = withTiming(0, { duration: 700 }, (finished) => {
+        if (finished) {
+          runOnJS(navigateToTabs)(); // ✅ Fixed usage
+        }
+      });
+    }, 5000);
 
-    // Cleanup intervals and timeout on unmount
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
@@ -48,22 +63,25 @@ export default function WelcomeScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <Image
         style={styles.backgroundImage}
         source={require('../assets/images/homebg.png')}
       />
-
       <Image
         style={styles.icon}
         source={require('../assets/images/home.png')}
       />
-
       <View style={styles.HomefirstContainer}>
         <Text style={styles.BigText}>{displayedBigText}</Text>
         <Text style={styles.welcomeText}>{displayedWelcomeText}</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
+
