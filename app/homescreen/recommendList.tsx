@@ -1,8 +1,10 @@
+
+import React from 'react';
+import { TouchableOpacity, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 
 export default function Recommendation() {
     const { mood } = useLocalSearchParams();
@@ -11,6 +13,7 @@ export default function Recommendation() {
 
     return (
         <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
             <Text style={styles.header}>You Seem {typeof mood === 'string' ? mood : '...'}...</Text>
             <Text style={{ color: '#ffffff', fontSize: 16, textAlign: 'center', marginBottom: 20,}}>
                 Here are some suggestions to help you feel better.
@@ -30,12 +33,12 @@ export default function Recommendation() {
                     <Text style={styles.tileText}> Take Meditation</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal/journal')}>
                     <Text style={styles.icon}>📘</Text>
                     <Text style={styles.tileText}>Add to Journal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push('/moodtrends')}>
                     <Text style={styles.icon}>📊</Text>
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
@@ -51,6 +54,7 @@ export default function Recommendation() {
                 </TouchableOpacity>
 
             </View>
+            </ScrollView>
         </LinearGradient>
     );
 }
@@ -92,5 +96,14 @@ const styles = StyleSheet.create({
         marginBottom: 40,
         textAlign: 'center',
     },
+    scrollContent: {
+  paddingBottom: 40,
+},
+description: {
+  color: '#ffffff',
+  fontSize: 16,
+  textAlign: 'center',
+  marginBottom: 20,
+},
 
 });

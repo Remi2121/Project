@@ -1,4 +1,4 @@
-// app/detect-options.tsx
+// detect-options.tsx
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
