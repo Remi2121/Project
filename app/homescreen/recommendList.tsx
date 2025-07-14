@@ -1,4 +1,4 @@
-
+//recommendList.tsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet, Text, View, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -38,7 +38,7 @@ export default function Recommendation() {
                     <Text style={styles.tileText}>Add to Journal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/moodtrends')}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push('/')}>
                     <Text style={styles.icon}>📊</Text>
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
