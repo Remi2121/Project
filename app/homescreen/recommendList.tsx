@@ -38,7 +38,7 @@ export default function Recommendation() {
                     <Text style={styles.tileText}>Add to Journal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/moodtrends')}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push('/')}>
                     <Text style={styles.icon}>📊</Text>
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
