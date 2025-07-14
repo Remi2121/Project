@@ -1,23 +1,45 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, Image, ScrollView, Text, TextInput } from 'react-native';
 import styles from './chatbotstyles';
 
-export default function Chat_Bot() {
+type Props = {
+  routeParams?: UnknownOutputParams;
+};
+
+const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const [topic, setTopic] = useState('');
   const [tips, setTips] = useState('');
   const [question] = useState('How are you feeling today?');
   const [loading, setLoading] = useState(false);
 
+  const validMoods = [
+    "anxiety", "depression", "stress", "self-care", "mindfulness",
+    "mental health", "wellbeing", "coping", "therapy", "burnout",
+    "emotions", "mental fitness", "resilience", "sleep", "loneliness",
+    "social anxiety", "panic attack", "self-esteem", "sad", "alone", "happy",
+    "angry", "frustrated", "overwhelmed", "nervous","anger"
+  ];
+
   const getTips = async () => {
     setLoading(true);
     setTips('');
+
+    const normalizedTopic = topic.trim().toLowerCase();
+
+    if (!validMoods.includes(normalizedTopic)) {
+      setTips("This is not a mental health related mood.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch('http://192.168.64.146:8000/get_tips', {  // Updated IP Address
+      const res = await fetch('http://192.168.239.146:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic })
+        body: JSON.stringify({ topic: normalizedTopic }),
       });
 
       const text = await res.text();
@@ -46,17 +68,38 @@ export default function Chat_Bot() {
       console.error(err);
       setTips('Error fetching tips.');
     }
+
     setLoading(false);
   };
 
+  // 🔁 Automatically fetch tips if topic is passed in routeParams
+  const topicParam = typeof routeParams?.topic === 'string' ? routeParams.topic : '';
+
+  useEffect(() => {
+    if (topicParam) {
+      const normalized = topicParam.trim().toLowerCase();
+      setTopic(normalized);
+
+      if (validMoods.includes(normalized)) {
+        getTips();
+      } else {
+        setTips("This is not a mental health related mood.");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicParam]);
+
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
-       <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
+      <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <Text style={styles.header}>Your AI Meditation Doctor</Text>
-        <Lottie source={require('../../assets/animation/doctoranimation.json')} 
-        autoPlay loop 
-        style={{ height: 200 }} />
+        <Lottie
+          source={require('../../assets/animation/doctoranimation.json')}
+          autoPlay
+          loop
+          style={{ height: 200 }}
+        />
         <Text style={styles.question}>{question}</Text>
         <TextInput
           style={styles.input}
@@ -64,6 +107,7 @@ export default function Chat_Bot() {
           value={topic}
           onChangeText={setTopic}
           placeholderTextColor="white"
+          autoCapitalize="none"
         />
         <Button title="Get Tips" onPress={getTips} />
         {loading ? (
@@ -74,5 +118,6 @@ export default function Chat_Bot() {
       </ScrollView>
     </LinearGradient>
   );
-}
+};
 
+export default Chatbot;
