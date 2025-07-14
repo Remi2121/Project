@@ -1,4 +1,4 @@
-// homescreen
+// homescreen.tsx
 import { Text, View, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import styles from './homestyles'; 
@@ -48,7 +48,7 @@ export default function HomeScreen() {
           <Text style={styles.tileText}>Mood Journal</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push('/moodtrends')}>
           <Text style={styles.icon}>📈</Text>
           <Text style={styles.tileText}>Mood Trends</Text>
         </TouchableOpacity>

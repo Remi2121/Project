@@ -1,11 +1,15 @@
+//camera.tsx
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
+import { MediaType } from 'expo-image-picker';
 
-export default function camera() {
+
+export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
@@ -24,10 +28,25 @@ export default function camera() {
     }
   };
 
+  const pickImageFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      base64: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const picked = result.assets[0];
+      setPreviewUri(picked.uri);
+      setBase64Image(picked.base64 || null);
+    }
+  };
+
   const handleRetake = () => {
     setPreviewUri(null);
     setBase64Image(null);
   };
+
 
   const handleUsePhoto = async () => {
     if (!base64Image) return;
@@ -46,7 +65,7 @@ export default function camera() {
 
       const response = await fetch(GC_ENDPOINT, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', },
+        headers: { 'Content-Type': 'application/json', },
         body: JSON.stringify(requestBody),
       });
 
@@ -68,14 +87,14 @@ export default function camera() {
       const mood = getDominantMood(face)
       const confidence = face.detectionConfidence; // optional: confidence value (0 to 1)
 
-router.push({
+      router.push({
         pathname: '/cameraResult',
         params: {
           mood,
-          confidence:(confidence*100).toFixed(1)+ '%', // Convert to percentage
+          confidence: (confidence * 100).toFixed(1) + '%', // Convert to percentage
           imageUri: previewUri,
         }
-      });  
+      });
     } catch (error) {
       console.error("Error using Google Vision API:", error);
       alert("Something went wrong. Please try again.");
@@ -122,31 +141,41 @@ router.push({
         <View style={styles.previewContainer}>
           <Image source={{ uri: previewUri }} style={styles.previewImage} />
           <View style={styles.previewButtons}>
+
             <TouchableOpacity style={styles.button} onPress={handleRetake}>
               <Ionicons name="refresh-circle-outline" size={48} color="white" />
               <Text style={styles.iconLabel}>Retake</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.button} onPress={handleUsePhoto}>
               <Ionicons name="checkmark-circle-outline" size={48} color="white" />
               <Text style={styles.iconLabel} >Use Photo</Text>
             </TouchableOpacity>
+
           </View>
         </View>
       ) : (
         <View style={styles.cameraContainer}>
-        <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
-          <View style={styles.bottomControls}>
-            <TouchableOpacity style={styles.iconButton} onPress={() =>
-              setFacing(prev => (prev === 'back' ? 'front' : 'back'))
-            }>
-              <Ionicons name="camera-reverse-outline" size={32} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
-              <Ionicons name="camera-outline" size={32} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </CameraView>
-         </View>
+          <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
+            <View style={styles.bottomControls}>
+             
+              <TouchableOpacity style={styles.iconButton} onPress={pickImageFromGallery}>
+                <Ionicons name="image-outline" size={32} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconButton} onPress={() => setFacing(prev => (prev === 'back' ? 'front' : 'back')) }>
+                <Ionicons name="camera-reverse-outline" size={35} color="#fff" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
+                <Ionicons name="camera-outline" size={35} color="#fff" />
+              </TouchableOpacity>
+
+
+
+            </View>
+          </CameraView>
+        </View>
       )}
     </LinearGradient>
   );
@@ -207,8 +236,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cameraContainer: {
-  flex: 1,
-  position: 'relative',
-},
+    flex: 1,
+    position: 'relative',
+  },
 
 });
