@@ -1,9 +1,10 @@
-//recommendList.tsx
+
 import React from 'react';
 import { TouchableOpacity, StyleSheet, Text, View, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function Recommendation() {
     const { mood } = useLocalSearchParams();
@@ -22,7 +23,7 @@ export default function Recommendation() {
             </Text>
             <View style={styles.grid}>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/playlist',params: { mood }}) }>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/(tabs)/explore',params: { mood }}) }>
                     <Ionicons name="play-circle" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Play Music</Text>
                 </TouchableOpacity>
@@ -42,7 +43,7 @@ export default function Recommendation() {
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot', params: { topic: mood } })}>
                     <Text style={styles.icon}>💬</Text>
                     <Text style={styles.tileText}>Talk to Chatbot</Text>
                 </TouchableOpacity>
