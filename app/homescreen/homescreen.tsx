@@ -27,28 +27,28 @@ export default function HomeScreen() {
       <Text style={styles.username}>User! 👋</Text>
       <Text style={styles.subtitle}>{moodSummary}</Text>
 
-      <TouchableOpacity style={styles.mainButton} onPress={() => router.push('/detect-options')}>
+      <TouchableOpacity style={styles.mainButton} onPress={() => router.push({pathname:'/detect-options' as any})}>
         <Text style={styles.icon}>🎭</Text>
         <Text style={styles.mainText}>Detect Mood</Text>
       </TouchableOpacity>
 
       <View style={styles.grid}>
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'/explore' as any})}>
           <Text style={styles.icon}>🎵</Text>
           <Text style={styles.tileText}>Music</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'/explore' as any})}>
           <Text style={styles.icon}>🧘</Text>
           <Text style={styles.tileText}>Meditation</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/')}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'/' as any})}>
           <Text style={styles.icon}>📘</Text>
           <Text style={styles.tileText}>Mood Journal</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/moodtrends')}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'/moodtrends' as any})}>
           <Text style={styles.icon}>📈</Text>
           <Text style={styles.tileText}>Mood Trends</Text>
         </TouchableOpacity>
