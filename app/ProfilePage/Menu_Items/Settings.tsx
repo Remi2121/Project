@@ -1,8 +1,13 @@
 // app/ProfilePage/Menu_Items/Settings.tsx
+import { useLayoutEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
 import {
+  Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Switch,
@@ -10,10 +15,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSettings } from './Settings';
+import { useSettings } from '../../utilis/Settings';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const {
     notificationsEnabled,
     toggleNotifications,
@@ -31,11 +41,28 @@ export default function SettingsScreen() {
     resetSettings,
     isDark,
     t,
+    biometricEnabled,
+    toggleBiometric,
+    user, // assume user object contains name and profileImage
   } = useSettings();
 
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const styles = getStyles(isDark);
 
+  const confirmLogout = () => {
+    Alert.alert(
+      t.confirmLogout || 'Logout',
+      t.areYouSureLogout || 'Are you sure you want to logout?',
+      [
+        { text: t.cancel || 'Cancel', style: 'cancel' },
+        { text: t.logout || 'Logout', onPress: handleLogout, style: 'destructive' },
+      ]
+    );
+  };
+
   return (
+
+    
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
@@ -43,6 +70,19 @@ export default function SettingsScreen() {
           <Ionicons name="arrow-back" size={26} color={isDark ? 'white' : 'black'} />
         </TouchableOpacity>
         <Text style={styles.headerText}>{t.settings}</Text>
+      </View>
+
+      {/* Profile Info */}
+      <View style={styles.profileBox}>
+        {user?.profileImage && (
+          <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+        )}
+      
+      </View>
+
+      {/* Theme Preview */}
+      <View style={[styles.themePreviewBox, { backgroundColor: darkMode ? '#333' : '#eee' }]}>
+        <Text style={{ color: darkMode ? '#fff' : '#000' }}>{t.themePreview || 'Theme Preview'}</Text>
       </View>
 
       {/* General */}
@@ -70,19 +110,33 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>{t.reminderTime}</Text>
-          <Picker
-            selectedValue={reminderTime}
-            onValueChange={setReminderTime}
-            style={styles.picker}
-            dropdownIconColor={isDark ? 'white' : 'black'}
-          >
-            <Picker.Item label="08:00 AM" value="08:00" />
-            <Picker.Item label="12:00 PM" value="12:00" />
-            <Picker.Item label="06:00 PM" value="18:00" />
-            <Picker.Item label="09:00 PM" value="21:00" />
-          </Picker>
+          <Text style={styles.label}>{t.useBiometric || 'Biometric Login'}</Text>
+          <Switch value={biometricEnabled} onValueChange={toggleBiometric} />
         </View>
+        <View>
+        <Text>Settings</Text>
+      </View>
+
+        <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.row}>
+          <Text style={styles.label}>
+            {t.reminderTime}: {reminderTime}
+          </Text>
+        </TouchableOpacity>
+
+        {showTimePicker && (
+          <DateTimePicker
+            mode="time"
+            value={new Date()}
+            onChange={(event, selectedDate) => {
+              setShowTimePicker(false);
+              if (selectedDate) {
+                const hours = selectedDate.getHours().toString().padStart(2, '0');
+                const minutes = selectedDate.getMinutes().toString().padStart(2, '0');
+                setReminderTime(`${hours}:${minutes}`);
+              }
+            }}
+          />
+        )}
       </View>
 
       {/* Language */}
@@ -94,9 +148,9 @@ export default function SettingsScreen() {
           style={styles.picker}
           dropdownIconColor={isDark ? 'white' : 'black'}
         >
-          <Picker.Item label="English" value="en" />
-          <Picker.Item label="தமிழ்" value="ta" />
-          <Picker.Item label="සිංහල" value="si" />
+          <Picker.Item label="🇬🇧 English" value="en" />
+          <Picker.Item label="🇮🇳 தமிழ்" value="ta" />
+          <Picker.Item label="🇱🇰 සිංහල" value="si" />
         </Picker>
       </View>
 
@@ -129,7 +183,7 @@ export default function SettingsScreen() {
           <Text style={[styles.label, { color: 'orange' }]}>{t.resetDefaults}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.row} onPress={handleLogout}>
+        <TouchableOpacity style={styles.row} onPress={confirmLogout}>
           <Text style={[styles.label, { color: 'red' }]}>{t.logout}</Text>
         </TouchableOpacity>
       </View>
@@ -155,6 +209,27 @@ const getStyles = (dark: boolean) =>
       fontWeight: 'bold',
       color: dark ? 'white' : 'black',
     },
+    profileBox: {
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    profileImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      marginBottom: 8,
+    },
+    profileName: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: dark ? '#fff' : '#000',
+    },
+    themePreviewBox: {
+      padding: 10,
+      borderRadius: 8,
+      marginVertical: 10,
+      alignItems: 'center',
+    },
     section: {
       marginVertical: 16,
     },
@@ -172,10 +247,9 @@ const getStyles = (dark: boolean) =>
       borderBottomWidth: 1,
     },
     label: {
-  fontSize: 16,
-  color: dark ? '#fff' : '#000', // pure white in dark mode, pure black in light mode
-},
-
+      fontSize: 16,
+      color: dark ? '#fff' : '#000',
+    },
     picker: {
       color: dark ? 'white' : 'black',
       backgroundColor: dark ? '#2e2e2e' : '#ffffff',
