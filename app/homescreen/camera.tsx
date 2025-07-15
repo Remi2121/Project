@@ -88,7 +88,7 @@ export default function Camera() {
       const confidence = face.detectionConfidence; // optional: confidence value (0 to 1)
 
       router.push({
-        pathname: '/cameraResult',
+        pathname: '/cameraResult' as any,
         params: {
           mood,
           confidence: (confidence * 100).toFixed(1) + '%', // Convert to percentage

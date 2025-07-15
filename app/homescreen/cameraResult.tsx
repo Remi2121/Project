@@ -50,12 +50,12 @@ export default function MoodResult() {
                 style={styles.button} 
                 onPress={async () => {
                     await saveMoodToFirestore();
-                    router.push({ pathname: '/recommendList', params: { mood } });
+                    router.push({ pathname: '/recommendList' as any, params: { mood } });
                     }}>
                     <Text style={styles.buttonText}>     Confirm     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.button} onPress={() => router.replace('/camera')}>
+                <TouchableOpacity style={styles.button} onPress={() => router.replace({pathname:'/camera' as any})}>
                     <Text style={styles.buttonText}>    Try Again    </Text>
                 </TouchableOpacity>
             </View>

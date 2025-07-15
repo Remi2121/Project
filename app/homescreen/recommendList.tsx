@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 
+
 export default function Recommendation() {
     const { mood } = useLocalSearchParams();
     const router = useRouter();
@@ -23,32 +24,48 @@ export default function Recommendation() {
             </Text>
             <View style={styles.grid}>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/(tabs)/explore',params: { mood }}) }>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/(tabs)/explore' as any,params: { mood }}) }>
                     <Ionicons name="play-circle" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Play Music</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: 'explore' as any, // if in same route level
+              })
+            }>
                     <Text style={styles.icon}>🧘</Text>
                     <Text style={styles.tileText}> Take Meditation</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/journal/journal' as any,
+              })
+            }>
                     <Text style={styles.icon}>📘</Text>
                     <Text style={styles.tileText}>Add to Journal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/' as any,
+              })
+            }>
                     <Text style={styles.icon}>📊</Text>
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot', params: { topic: mood } })}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot' as any, params: { topic: mood } })}>
                     <Text style={styles.icon}>💬</Text>
                     <Text style={styles.tileText}>Talk to Chatbot</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/journal' as any,
+              })
+            }>
                     <Ionicons name="calendar-outline" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Mood Calendar</Text>
                 </TouchableOpacity>
