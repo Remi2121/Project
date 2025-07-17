@@ -1,4 +1,4 @@
-// app/detect-options.tsx
+// detect-options.tsx
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,10 +23,10 @@ export default function DetectMoodOptionScreen() {
       />
 
       <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/camera')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push({pathname:'/camera' as any})}>
           <Ionicons name="camera" size={30} color="white"  />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/audio')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push({pathname:'/audio' as any})}>
           <MaterialIcons name="keyboard-voice" size={30} color="white" />
         </TouchableOpacity>
       </View>
