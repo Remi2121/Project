@@ -43,7 +43,7 @@ export default function ProfileSidebar() {
       router.push('./ProfilePage/Menu_Items/Journal');
       break;
     case 'Settings':
-      router.push('./ProfilePage/Menu_Items/Settings');
+      router.push('../ProfilePage/Menu_Items/Settings');
       break;
     default:
       break;

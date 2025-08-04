@@ -1,10 +1,11 @@
-import { Stack } from 'expo-router';
+// app/_layout.tsx
+import { ThemeProvider } from './utilis/themecontext';
+import { Slot } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="home" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <ThemeProvider>
+      <Slot />
+    </ThemeProvider>
   );
 }

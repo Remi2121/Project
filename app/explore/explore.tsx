@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
+
 import {
   ActivityIndicator,
   Alert,
