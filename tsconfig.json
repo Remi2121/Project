@@ -1,10 +1,12 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "target": "esnext",
-    "lib": ["esnext", "dom"],
+    "lib": [
+      "esnext",
+      "dom"
+    ],
     "jsx": "react-native",
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
@@ -12,13 +14,22 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": {"@/*": ["./*"] },
-    "types": ["expo", "expo-router"]
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "types": [
+      "expo",
+      "expo-router"
+    ]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts", "global.d.ts"
-  ]
+    "expo-env.d.ts",
+    "global.d.ts"
+  ],
+  "extends": "expo/tsconfig.base"
 }

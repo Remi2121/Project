@@ -1,8 +1,11 @@
+//recommendList.tsx
+import React from 'react';
+import { TouchableOpacity, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+
 
 export default function Recommendation() {
     const { mood } = useLocalSearchParams();
@@ -11,6 +14,7 @@ export default function Recommendation() {
 
     return (
         <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
             <Text style={styles.header}>You Seem {typeof mood === 'string' ? mood : '...'}...</Text>
             <Text style={{ color: '#ffffff', fontSize: 16, textAlign: 'center', marginBottom: 20,}}>
                 Here are some suggestions to help you feel better.
@@ -20,37 +24,54 @@ export default function Recommendation() {
             </Text>
             <View style={styles.grid}>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/(tabs)/explore',params: { mood }}) }>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname: '/(tabs)/explore' as any,params: { mood }}) }>
                     <Ionicons name="play-circle" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Play Music</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: 'explore' as any, // if in same route level
+              })
+            }>
                     <Text style={styles.icon}>🧘</Text>
                     <Text style={styles.tileText}> Take Meditation</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/journal/journal' as any,
+              })
+            }>
                     <Text style={styles.icon}>📘</Text>
                     <Text style={styles.tileText}>Add to Journal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/' as any,
+              })
+            }>
                     <Text style={styles.icon}>📊</Text>
                     <Text style={styles.tileText}>Check Mood Trends</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot', params: { topic: mood } })}>
+                <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot' as any, params: { topic: mood } })}>
                     <Text style={styles.icon}>💬</Text>
                     <Text style={styles.tileText}>Talk to Chatbot</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+                <TouchableOpacity style={styles.tile} onPress={() =>
+              router.push({
+                pathname: '/journal' as any,
+              })
+            }>
                     <Ionicons name="calendar-outline" style={{fontSize: 70, color: '#fff'}} />
                     <Text style={styles.tileText}>Mood Calendar</Text>
                 </TouchableOpacity>
 
             </View>
+            </ScrollView>
         </LinearGradient>
     );
 }
@@ -92,5 +113,14 @@ const styles = StyleSheet.create({
         marginBottom: 40,
         textAlign: 'center',
     },
+    scrollContent: {
+  paddingBottom: 40,
+},
+description: {
+  color: '#ffffff',
+  fontSize: 16,
+  textAlign: 'center',
+  marginBottom: 20,
+},
 
 });

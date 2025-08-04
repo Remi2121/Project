@@ -1,6 +1,6 @@
 import React from 'react';
 
-import ProfileSidebar from '../ProfilePage/ProfileSideBar/ProfileSidebar';
+import Profile from './profile/profile';
 
 export default function ProfilePage() {
   return <ProfileSidebar />;

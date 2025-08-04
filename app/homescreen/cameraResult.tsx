@@ -1,6 +1,10 @@
+//cameraResult.tsx
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { db } from '../../utils/firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 export default function MoodResult() {
     const { mood, confidence } = useLocalSearchParams();
@@ -13,6 +17,19 @@ export default function MoodResult() {
         Neutral: '😐',
     };
     const moodStr = Array.isArray(mood) ? mood[0] : mood;
+    const saveMoodToFirestore = async () => {
+  try {
+    await addDoc(collection(db, 'moods'), {
+      mood,
+      confidence,
+      timestamp: new Date().toISOString()
+    });
+    console.log('Mood saved to Firestore!');
+  } catch (error) {
+    console.error('Error saving mood:', error);
+  }
+};
+
 
 
     return (
@@ -29,11 +46,16 @@ export default function MoodResult() {
             </Text>
             <Text style={styles.confidenceText}>Confidence: {confidence}</Text>
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={() => router.push({ pathname: '/recommendList', params: { mood } })}>
+                <TouchableOpacity 
+                style={styles.button} 
+                onPress={async () => {
+                    await saveMoodToFirestore();
+                    router.push({ pathname: '/recommendList' as any, params: { mood } });
+                    }}>
                     <Text style={styles.buttonText}>     Confirm     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.button} onPress={() => router.replace('/camera')}>
+                <TouchableOpacity style={styles.button} onPress={() => router.replace({pathname:'/camera' as any})}>
                     <Text style={styles.buttonText}>    Try Again    </Text>
                 </TouchableOpacity>
             </View>
