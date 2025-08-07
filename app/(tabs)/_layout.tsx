@@ -86,6 +86,7 @@ export default function Layout() {
       <Tabs.Screen name="cameraResult" options={{ href: null }} />
       <Tabs.Screen name="recommendList" options={{ href: null }} />
       <Tabs.Screen name="playlist" options={{ href: null }} />
+      <Tabs.Screen name="mood_trends" options={{ href: null }} />
     
     </Tabs>
   );

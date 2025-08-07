@@ -1,8 +1,8 @@
 // homescreen.tsx
-import { Text, View, TouchableOpacity } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import styles from './homestyles'; 
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
+import styles from './homestyles';
 
 
 export default function HomeScreen() {
@@ -48,7 +48,7 @@ export default function HomeScreen() {
           <Text style={styles.tileText}>Mood Journal</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'/moodtrends' as any})}>
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'../(tabs)/mood_trends' as any})}>
           <Text style={styles.icon}>📈</Text>
           <Text style={styles.tileText}>Mood Trends</Text>
         </TouchableOpacity>
