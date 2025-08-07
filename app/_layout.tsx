@@ -1,6 +1,6 @@
 // app/_layout.tsx
-import { ThemeProvider } from './utilis/themecontext';
 import { Slot } from 'expo-router';
+import { ThemeProvider } from './utilis/themecontext';
 
 export default function RootLayout() {
   return (
