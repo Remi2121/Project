@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
@@ -31,6 +32,7 @@ const getLast7Dates = (): string[] => {
 };
 
 export default function MoodTrendsComponent() {
+  const router = useRouter();  // Hook to handle navigation
   const moodData: MoodDayData[] = [
     { date: '2025-08-01', moods: [{ mood: '😢', percentage: 20 }] },
     { date: '2025-08-02', moods: [{ mood: '😐', percentage: 40 }] },
@@ -59,7 +61,7 @@ export default function MoodTrendsComponent() {
 
   const chartData = filteredData.map(item => {
     const avg = calculateAveragePercentage(item.moods);
-    const emoji = item.moods.map(m => m.mood).join(' ') || '😶';
+    const emoji = item.moods.map(m => m.mood).join(' ') || '';
     return {
       value: avg,
       label: getAbbreviatedDayOfWeek(item.date),
@@ -79,10 +81,10 @@ export default function MoodTrendsComponent() {
   });
 
   const buttons = [
-    { label: 'Add Entry', icon: '✏️' },
-    { label: 'Statistics', icon: '📊' },
-    { label: 'History', icon: '🕒' },
-    { label: 'Predict', icon: '🔍' },
+    { label: 'Add Entry', icon: '✏️', onPress: () => router.push({ pathname: '/(tabs)/journal' }) },
+    { label: 'Statistics', icon: '📊', onPress: () => router.push({ pathname: '../../journal/journal.tsx'  }) },
+    { label: 'History', icon: '🕒', onPress: () => router.push({ pathname: '/moodtrends/history'  }) },
+    { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '../../journal/journal.tsx'  }) },
   ];
 
   return (
@@ -116,7 +118,7 @@ export default function MoodTrendsComponent() {
         {/* 📦 Button Row */}
         <View style={styles.buttonRow}>
           {buttons.map((btn, index) => (
-            <TouchableOpacity key={index} style={styles.button}>
+            <TouchableOpacity key={index} style={styles.button} onPress={btn.onPress}>
               <View style={styles.buttonContent}>
                 <Text style={styles.emojiText}>{btn.icon}</Text>
                 <Text style={styles.buttonText}>{btn.label}</Text>
