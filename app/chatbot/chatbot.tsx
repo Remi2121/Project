@@ -1,8 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, Image, ScrollView, Text, TextInput } from 'react-native';
+import {
+  ActivityIndicator,
+  Button,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+} from 'react-native';
+import { db } from 'utils/firebaseConfig'; // your firebase config import
 import styles from './chatbotstyles';
 
 type Props = {
@@ -36,7 +45,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     }
 
     try {
-      const res = await fetch('http://192.168.239.146:8000/get_tips', {
+      const res = await fetch('http://10.200.114.146:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: normalizedTopic }),
@@ -61,6 +70,18 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           .join('\n\n');
 
         setTips(numberedTips);
+
+        // Save mood + tips to Firestore collection "MoodHistory"
+        try {
+          await addDoc(collection(db, 'MoodHistory'), {
+            mood: normalizedTopic,
+            tips: numberedTips,
+            createdAt: serverTimestamp(),
+          });
+          console.log('Mood saved to Firestore');
+        } catch (firestoreError) {
+          console.error('Error saving mood to Firestore:', firestoreError);
+        }
       } else {
         setTips('This is not a mental health related concept.');
       }
@@ -86,7 +107,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         setTips("This is not a mental health related mood.");
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicParam]);
 
   return (
