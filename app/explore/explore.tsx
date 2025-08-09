@@ -17,6 +17,8 @@ import {
   View,
 } from 'react-native';
 import styles from '../explore/explorestyles';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from 'utils/firebaseConfig';
 
 type Props = {
   routeParams?: UnknownOutputParams;
@@ -48,29 +50,40 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   };
 
   const moodParam = typeof routeParams?.mood === 'string' ? routeParams.mood : '';
+const fetchPlaylists = async () => {
+  if (!mood.trim()) return;
 
-  const fetchPlaylists = async () => {
-    if (!mood.trim()) return;
+  try {
+    setLoading(true);
+    const response = await axios.get('http://10.200.114.146:5000/playlist', {
+      params: { mood },
+    });
 
-    try {
-      setLoading(true);
-      const response = await axios.get('http://192.168.239.146:5000/playlist', {
-        params: { mood },
-      });
+    if (response.data && response.data.playlists) {
+      setPlaylistData(response.data);
 
-      if (response.data && response.data.playlists) {
-        setPlaylistData(response.data);
-      } else {
-        setPlaylistData(null);
-        Alert.alert('No Results', 'No playlists found for this mood.');
+      // Save searched mood to Firestore
+      try {
+        await addDoc(collection(db, 'MoodHistory'), {
+          mood: mood.trim().toLowerCase(),
+          createdAt: serverTimestamp(),
+        });
+        console.log('Mood saved to Firestore');
+      } catch (error) {
+        console.error('Error saving mood to Firestore:', error);
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Could not fetch playlists.');
-    } finally {
-      setLoading(false);
+    } else {
+      setPlaylistData(null);
+      Alert.alert('No Results', 'No playlists found for this mood.');
     }
-  };
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Could not fetch playlists.');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleOpenPlaylist = (url: string) => {
     Linking.openURL(url).catch((err) => {
@@ -84,7 +97,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
 
     try {
       setLoading(true);
-      const response = await axios.get('http://192.168.239.146:5000/playlist', {
+      const response = await axios.get('http://10.200.114.146:5000/playlist', {
         params: { mood: moodValue },
       });
 
@@ -115,7 +128,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
         setSuggestionsLoading(true);
         const results = await Promise.all(
           moods.map(async (moodType) => {
-            const res = await axios.get('http://192.168.239.146:5000/playlist', {
+            const res = await axios.get('http://10.200.114.146:5000/playlist', {
               params: { mood: moodType },
             });
             return { moodType, playlists: res.data.playlists || [] };
