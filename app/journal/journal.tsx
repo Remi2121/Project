@@ -7,8 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { db } from 'utils/firebaseConfig';
 
-
-const moods = ['😄', '😀', '😊','😍', '😔', '😢', '😭', '😠', '😤', '😡', '😱', '😨', '😳', '😐', '🤔', '🥱', '😴', '🥳'];
+const moods = ['😄', '😀', '😊', '😍', '😔', '😢', '😭', '😠', '😤', '😡', '😱', '😨', '😳', '😐', '🤔', '🥱', '😴', '🥳'];
 
 export default function JournalScreen() {
   const [selectedMood, setSelectedMood] = useState<string>('');
@@ -16,8 +15,49 @@ export default function JournalScreen() {
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [filterDate, setFilterDate] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEntryFocused, setIsEntryFocused] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+
+  // Highlight helper
+const highlightText = (text: string, query: string) => {
+  if (!query) return <Text style={{ color: '#fff' }}>{text}</Text>;
+
+  try {
+    const regex = new RegExp(`(${query})`, 'gi');
+    const parts = text.split(regex);
+
+    return (
+      <Text style={{ color: '#fff' }}>
+        {parts.map((part, index) => {
+          if (part.toLowerCase() === query.toLowerCase()) {
+            return (
+              <Text
+                key={index}
+                style={{
+                  backgroundColor: part.match(/[\u{1F600}-\u{1F64F}]/u) ? '#ffdd55' : 'yellow', // emoji vs text
+                  color: '#000',
+                  fontWeight: 'bold',
+                  borderRadius: 4,
+                  paddingHorizontal: 2,
+                }}
+              >
+                {part}
+              </Text>
+            );
+          }
+          return <Text key={index}>{part}</Text>;
+        })}
+      </Text>
+    );
+  } catch {
+    return <Text style={{ color: '#fff' }}>{text}</Text>;
+  }
+};
+
 
   const loadEntries = async () => {
     try {
@@ -62,23 +102,26 @@ export default function JournalScreen() {
     }
 
     const timestamp = new Date();
-    const formattedTime = timestamp.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
+    const formattedDate = timestamp.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
     });
+
+    const formattedClock = timestamp.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const formattedTime = `${formattedDate} ${formattedClock}`;
 
     const updatedEntry = {
       time: String(formattedTime),
       mood: String(selectedMood),
       text: String(text),
-      date: timestamp, 
+      date: timestamp,
       edited: false, // Default to false, will be set to true if edited later
     };
-
-    //console.log('🛠️ Entry to be saved:', updatedEntry);
 
     try {
       if (isEditing && editingId) {
@@ -106,7 +149,6 @@ export default function JournalScreen() {
       setText('');
       setSelectedMood('');
     } catch (error: any) {
-      //console.error('❌ Firebase error during save:', error);
       alert(`Error saving to cloud: ${error.message || error}`);
     }
   };
@@ -129,12 +171,19 @@ export default function JournalScreen() {
     }
   };
 
+  // Filter + Search
+  const filteredEntries = journalEntries.filter(entry => {
+    const matchDate =
+      !filterDate || new Date(entry.date).toDateString() === filterDate.toDateString();
 
-  const filteredEntries = filterDate
-    ? journalEntries.filter(entry =>
-      new Date(entry.date).toDateString() === filterDate.toDateString()
-    )
-    : journalEntries;
+    const matchSearch =
+      !searchQuery ||
+      entry.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.mood.includes(searchQuery);
+
+    return matchDate && matchSearch;
+  });
+
 
 
   return (
@@ -166,14 +215,19 @@ export default function JournalScreen() {
 
         {/* Text Area */}
         <TextInput
-          style={styles.input}
-          placeholder="What's on your mind?"
-          placeholderTextColor="#aaa"
-          multiline
-          numberOfLines={4}
-          value={text}
-          onChangeText={setText}
-        />
+  style={[
+    styles.input,
+    isEntryFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+  ]}
+  placeholder="What's on your mind?"
+  placeholderTextColor="#aaa"
+  multiline
+  numberOfLines={4}
+  value={text}
+  onChangeText={setText}
+  onFocus={() => setIsEntryFocused(true)}
+  onBlur={() => setIsEntryFocused(false)}
+/>
 
         <TouchableOpacity
           style={[styles.saveButton, (!text.trim() || !selectedMood) && { opacity: 0.4 }]}
@@ -197,12 +251,10 @@ export default function JournalScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="close-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
               <Text style={styles.saveText}>Cancel Edit</Text>
             </View>
           </TouchableOpacity>
         )}
-
 
 
         {/* Calendar */}
@@ -227,23 +279,48 @@ export default function JournalScreen() {
             style={[styles.saveButton, { marginTop: 10 }]}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="close-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
               <Text style={styles.saveText}>Clear Date Filter</Text>
             </View>
           </TouchableOpacity>
         )}
 
-
-
         {journalEntries.length > 0 && (
           <>
-
             <Text style={styles.subHeader}>────────── Past Journals ──────────</Text>
+            <TextInput
+  style={[
+  styles.input,
+  { marginBottom: 18 },
+  isSearchFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+]}
+
+  placeholder="Search your past entries..."
+  placeholderTextColor="#aaa"
+  value={searchQuery}
+  onChangeText={setSearchQuery}
+  onFocus={() => setIsSearchFocused(true)}
+  onBlur={() => setIsSearchFocused(false)}
+/>
 
             {filteredEntries.map((entry) => (
               <View key={entry.id} style={styles.entryCard}>
                 <View style={styles.entryHeader}>
-                  <Text style={styles.entryTime}>{entry.time}</Text>
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.entryTime}>
+                      <Ionicons name="calendar-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                    <Text style={styles.entryTime}>
+                      <Ionicons name="time-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </Text>
+                  </View>
 
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity
@@ -274,14 +351,15 @@ export default function JournalScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.entryMood}>{entry.mood}</Text>
-                <View>
-                  <Text style={styles.entryText}>{entry.text}</Text>
-
-                  {entry.edited && (
-                    <Text style={styles.editedLabel}>Edited...</Text>
-                  )}
-                </View>
+                <Text style={styles.entryMood}>
+  {highlightText(entry.mood, searchQuery)}
+</Text>
+<View>
+  {highlightText(entry.text, searchQuery)}
+  {entry.edited && (
+    <Text style={styles.editedLabel}>Edited...</Text>
+  )}
+</View>
 
               </View>
             ))}
@@ -290,7 +368,6 @@ export default function JournalScreen() {
       </ScrollView>
     </LinearGradient>
   );
-
 }
 
 const styles = StyleSheet.create({
@@ -360,6 +437,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontSize: 12,
   },
+  entryTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   entryMood: {
     fontSize: 20,
     marginBottom: 4,
@@ -386,6 +468,4 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'right',
   },
-
-
 });
