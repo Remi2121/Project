@@ -1,14 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-
-// 🔥 Firestore
-import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import { db } from 'utils/firebaseConfig';
-
-// 🎨 Styles
 import styles from './mood_trends_styles';
 
 type MoodKey = string;
@@ -17,15 +13,15 @@ interface JournalEntry {
   id: string;
   mood: MoodKey;
   text?: string;
-  time: Date; // Firestore createdAt -> JS Date
+  time: Date; 
 }
 
 interface WeekBucket {
-  start: Date;                 // Sunday 00:00
-  dayMood: (MoodKey | null)[]; // [Sun..Sat]
+  start: Date;                 
+  dayMood: (MoodKey | null)[]; 
   dominantMood: MoodKey | null;
-  dominantCount: number;       // 0..7
-  percentage: number;          // (dominantCount/7)*100
+  dominantCount: number;       
+  percentage: number;         
 }
 
 /** ===== Config ===== */
@@ -228,31 +224,32 @@ export default function MoodTrendsComponent() {
     return starts.map((s) => bucketMap.get(s.toISOString())!);
   }, [entries]);
 
-  // 📣 Console logs (oldest = week 1) — uses local YYYY-MM-DD
-  const loggedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!weeks || weeks.length === 0) return;
-    const sig = weeks.map((w) => w.start.toISOString() + (w.dominantMood ?? '') + w.percentage).join('|');
-    if (loggedRef.current === sig) return;
-    loggedRef.current = sig;
+  // // 📣 Console logs (oldest = week 1) — uses local YYYY-MM-DD
+  // const loggedRef = useRef<string | null>(null);
+  // useEffect(() => {
+  //   if (!weeks || weeks.length === 0) return;
+  //   const sig = weeks.map((w) => w.start.toISOString() + (w.dominantMood ?? '') + w.percentage).join('|');
+  //   if (loggedRef.current === sig) return;
+  //   loggedRef.current = sig;
 
-    weeks.forEach((w, idx) => {
-      const weekNo = idx + 1;
-      console.log(`week ${weekNo} - ${fmtRangeShort(w.start)}`);
-      for (let dIdx = 0; dIdx < 7; dIdx++) {
-        const dayDate = addDays(w.start, dIdx);
-        const localYMD = formatLocalYMD(dayDate);
-        const mKey = w.dayMood[dIdx];
-        const name = moodName(mKey);
-        const sticker = mKey ? (EMOJI_NAME[mKey] ? mKey : moodEmoji(mKey)) : '';
-        console.log(`week ${weekNo} - ${localYMD} , ${name}${sticker ? ' ' + sticker : ''}`);
-      }
-      const finalName = moodName(w.dominantMood);
-      const finalSticker = w.dominantMood ? (EMOJI_NAME[w.dominantMood] ? w.dominantMood : moodEmoji(w.dominantMood)) : '';
-      console.log(`week ${weekNo} - final mood ${finalName}${finalSticker ? ' ' + finalSticker : ''} , ${w.percentage}%`);
-    });
-  }, [weeks]);
+  //   weeks.forEach((w, idx) => {
+  //     const weekNo = idx + 1;
+  //     console.log(`week ${weekNo} - ${fmtRangeShort(w.start)}`);
+  //     for (let dIdx = 0; dIdx < 7; dIdx++) {
+  //       const dayDate = addDays(w.start, dIdx);
+  //       const localYMD = formatLocalYMD(dayDate);
+  //       const mKey = w.dayMood[dIdx];
+  //       const name = moodName(mKey);
+  //       const sticker = mKey ? (EMOJI_NAME[mKey] ? mKey : moodEmoji(mKey)) : '';
+  //       console.log(`week ${weekNo} - ${localYMD} , ${name}${sticker ? ' ' + sticker : ''}`);
+  //     }
+  //     const finalName = moodName(w.dominantMood);
+  //     const finalSticker = w.dominantMood ? (EMOJI_NAME[w.dominantMood] ? w.dominantMood : moodEmoji(w.dominantMood)) : '';
+  //     console.log(`week ${weekNo} - final mood ${finalName}${finalSticker ? ' ' + finalSticker : ''} , ${w.percentage}%`);
+  //   });
+  // }, [weeks]);
 
+  
   // 📈 Weekly chart — X-axis labels as "Week 1", "Week 2", ...
   const chartData = useMemo(() => {
     return weeks.map((w, idx) => {
@@ -271,8 +268,8 @@ export default function MoodTrendsComponent() {
 
   const buttons = [
     { label: 'Add Entry', icon: '✏️', onPress: () => router.push({ pathname: '/(tabs)/journal' }) },
-    { label: 'Statistics', icon: '📊', onPress: () => router.push({ pathname: '../../journal/journal' }) },
-    { label: 'History', icon: '🕒', onPress: () => router.push({ pathname: '/moodtrends/history' }) },
+    { label: 'Statistics', icon: '📊', onPress: () => router.push({ pathname: '/moodtrends/statistics/statistics' }) },
+    { label: 'History', icon: '🕒', onPress: () => router.push({ pathname: '/moodtrends/history/history' }) },
     { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '../../journal/journal' }) },
   ];
 
