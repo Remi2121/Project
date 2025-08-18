@@ -34,13 +34,13 @@ export default function ProfileSidebar() {
   console.log('Navigating to:', label);
   switch (label) {
     case 'Mood History.':
-      router.push('/moodtrends/history/history');
+      router.push('../ProfilePage/Menu_Items/mood-history');
       break;
     case 'Favorites':
        router.push('../ProfilePage/Menu_Items/mood-history');
       break;
     case 'Journal':
-      router.push('/journal/journal');
+      router.push('./ProfilePage/Menu_Items/Journal');
       break;
     case 'Settings':
       router.push('../ProfilePage/Menu_Items/Settings');
