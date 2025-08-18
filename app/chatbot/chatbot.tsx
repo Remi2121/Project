@@ -45,7 +45,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     }
 
     try {
-      const res = await fetch('http://10.200.114.146:8000/get_tips', {
+      const res = await fetch('http://192.168.8.158:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: normalizedTopic }),

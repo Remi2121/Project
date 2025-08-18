@@ -49,7 +49,7 @@ export default function Recommendation() {
 
                 <TouchableOpacity style={styles.tile} onPress={() =>
               router.push({
-                pathname: '/' as any,
+                pathname: '/(tabs)/mood_trends' as any,
               })
             }>
                     <Text style={styles.icon}>📊</Text>
