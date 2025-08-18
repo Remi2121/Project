@@ -15,7 +15,7 @@ import styles from './ProfileSidebar.styles';
 
 
 
-const menuItems = ['Mood History.', 'Favorites', 'Journal', 'Settings'] as const;
+const menuItems = ['Mood History.', 'Settings'] as const;
 
 type MenuItem = typeof menuItems[number];
 
@@ -36,13 +36,7 @@ export default function ProfileSidebar() {
     case 'Mood History.':
       router.push('../ProfilePage/Menu_Items/mood-history');
       break;
-    case 'Favorites':
-       router.push('../ProfilePage/Menu_Items/mood-history');
-      break;
-    case 'Journal':
-      router.push('./ProfilePage/Menu_Items/Journal');
-      break;
-    case 'Settings':
+      case 'Settings':
       router.push('../ProfilePage/Menu_Items/Settings');
       break;
     default:
