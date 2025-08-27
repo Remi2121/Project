@@ -5,6 +5,7 @@ import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
 
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import {
   ActivityIndicator,
   Alert,
@@ -16,9 +17,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import styles from '../explore/explorestyles';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from 'utils/firebaseConfig';
+import styles from '../explore/explorestyles';
 
 type Props = {
   routeParams?: UnknownOutputParams;
@@ -55,7 +55,7 @@ const fetchPlaylists = async () => {
 
   try {
     setLoading(true);
-    const response = await axios.get('http://10.200.114.146:5000/playlist', {
+    const response = await axios.get('http://10.159.234.146:5000/playlist', {
       params: { mood },
     });
 
@@ -97,7 +97,7 @@ const fetchPlaylists = async () => {
 
     try {
       setLoading(true);
-      const response = await axios.get('http://10.200.114.146:5000/playlist', {
+      const response = await axios.get('http://10.159.234.146:5000/playlist', {
         params: { mood: moodValue },
       });
 
@@ -128,7 +128,7 @@ const fetchPlaylists = async () => {
         setSuggestionsLoading(true);
         const results = await Promise.all(
           moods.map(async (moodType) => {
-            const res = await axios.get('http://10.200.114.146:5000/playlist', {
+            const res = await axios.get('http://10.159.234.146:5000/playlist', {
               params: { mood: moodType },
             });
             return { moodType, playlists: res.data.playlists || [] };

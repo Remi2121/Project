@@ -79,13 +79,13 @@ const fmtRangeShort = (start: Date) => {
 const fmtDayLong = (d: Date) =>
   d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
-// ✅ Local timezone YYYY-MM-DD (no UTC shift)
-const formatLocalYMD = (d: Date) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
+// // ✅ Local timezone YYYY-MM-DD (no UTC shift)
+// const formatLocalYMD = (d: Date) => {
+//   const y = d.getFullYear();
+//   const m = String(d.getMonth() + 1).padStart(2, '0');
+//   const day = String(d.getDate()).padStart(2, '0');
+//   return `${y}-${m}-${day}`;
+// };
 
 export default function MoodTrendsComponent() {
   const router = useRouter();
@@ -297,6 +297,12 @@ export default function MoodTrendsComponent() {
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
       <View style={styles.container}>
+        <TouchableOpacity
+          onPress={() => router.replace("/(tabs)")}
+          style={styles.backButton}
+          accessibilityLabel="Go to Home">
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
         <Text style={styles.heading}>Mood Trends</Text>
 
         <View style={styles.chartContainer}>
@@ -367,3 +373,4 @@ export default function MoodTrendsComponent() {
     </LinearGradient>
   );
 }
+

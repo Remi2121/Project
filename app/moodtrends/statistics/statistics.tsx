@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import {
   collection,
   getDocs,
@@ -359,6 +360,12 @@ const Statistics: React.FC = () => {
 
   return (
     <LinearGradient colors={["#1f1b5a", "#3f34c0"]} style={styles.container}>
+    <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/mood_trends')}
+          style={styles.backButton}
+          accessibilityLabel="Go to Home">
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
     <View style={styles.container}>
       {/* Tab buttons */}
       <View style={styles.tabs}>
@@ -382,7 +389,7 @@ const Statistics: React.FC = () => {
               spacing={14}
               isAnimated
               showFractionalValues
-              height={Dimensions.get("window").height * 0.6}
+              height={Dimensions.get("window").height * 0.5}
 
             />
             <View style={{ height: 8 }} />

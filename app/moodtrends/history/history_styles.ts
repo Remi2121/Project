@@ -7,6 +7,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  backButton: {
+  position: 'absolute',
+  justifyContent: 'center',
+  top: 50,   
+  left: 15,
+  zIndex: 10,
+  borderRadius: 800,
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+},
+backIcon: {
+  color: 'white',
+  fontSize: 30,
+  fontWeight: '700',
+
+},
   container: {
     flex: 1,
     paddingTop: 60,

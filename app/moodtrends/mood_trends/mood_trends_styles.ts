@@ -2,6 +2,24 @@ import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
+  
+backButton: {
+  position: 'absolute',
+  justifyContent: 'center',
+  top: 40,   
+  left: 15,
+  zIndex: 10,
+  borderRadius: 800,
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+},
+backIcon: {
+  color: 'white',
+  fontSize: 30,
+  fontWeight: '700',
+
+},
+
   container: { flex: 1, padding: 20 },
   chartContainer: {
     backgroundColor: '#040429',

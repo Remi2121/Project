@@ -5,6 +5,22 @@ const styles = StyleSheet.create({
     flex: 1, 
     
   },
+  backButton: {
+  position: 'absolute',
+  justifyContent: 'center',
+  top: 40,   
+  left: 15,
+  zIndex: 10,
+  borderRadius: 800,
+  paddingVertical: 6,
+  paddingHorizontal: 10,
+},
+backIcon: {
+  color: 'white',
+  fontSize: 30,
+  fontWeight: '700',
+
+},
   center: { 
     flex: 1, 
     alignItems: 'center', 
@@ -26,8 +42,9 @@ const styles = StyleSheet.create({
     color: '#6695e8ff',
     gap: 8,
     paddingHorizontal: 12,
-    paddingTop: 40,
+    paddingTop: 85,
     paddingBottom: 4,
+ 
   },
   tabBtn: {
     flex: 1,
@@ -57,6 +74,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#5487daff',
+    top: 65
   },
   h2: { 
     fontSize: 18, 
