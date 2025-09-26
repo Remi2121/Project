@@ -59,7 +59,11 @@ export default function HomeScreen() {
           <Text style={styles.tileText}>Music</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+
+
+        <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'../meditation/stressRelief' as any})}>
+
+
           <Text style={styles.icon}>🧘</Text>
           <Text style={styles.tileText}>Meditation</Text>
         </TouchableOpacity>

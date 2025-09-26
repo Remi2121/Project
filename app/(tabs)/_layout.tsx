@@ -87,6 +87,8 @@ export default function Layout() {
       <Tabs.Screen name="recommendList" options={{ href: null }} />
       <Tabs.Screen name="playlist" options={{ href: null }} />
       <Tabs.Screen name="mood_trends" options={{ href: null }} />
+      <Tabs.Screen name="stressRelief" options={{ href: null }} />
+      <Tabs.Screen name="Player" options={{ href: null }} />
     
     </Tabs>
   );
