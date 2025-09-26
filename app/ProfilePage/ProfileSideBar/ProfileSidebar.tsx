@@ -40,7 +40,7 @@ export default function ProfileSidebar() {
        router.push('../ProfilePage/Menu_Items/mood-history');
       break;
     case 'Journal':
-      router.push('./ProfilePage/Menu_Items/Journal');
+      router.push('../ProfilePage/Menu_Items/moodjournal');
       break;
     case 'Settings':
       router.push('../ProfilePage/Menu_Items/Settings');

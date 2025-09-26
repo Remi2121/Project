@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { addDoc, collection, deleteDoc, doc, getDocs, query, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -153,7 +154,14 @@ const History: React.FC = () => {
 
   return (
     <LinearGradient colors={["#1f1b5a", "#3f34c0"]} style={styles.container}>
+              <TouchableOpacity
+          onPress={() => router.replace("/(tabs)/mood_trends")}
+          style={styles.backButton}
+          accessibilityLabel="Go to Home">
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
       <ScrollView>
+
         <Text style={styles.header}>Mood History</Text>
 
         {/* Toggle buttons */}
