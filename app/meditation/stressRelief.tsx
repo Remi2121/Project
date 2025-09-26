@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Animated, Easing, Button, Modal, TextInput } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
 
 // --- Stress audio imports ---
 import calm_water from "../../assets/audio/stress/calm_water.mp3";
@@ -50,7 +52,7 @@ const CATEGORIES: Category[] = [
 ];
 
 // --- Stress Component ---
-function StressUI({ tracks, navigation }: { tracks: Track[]; navigation: any }) {
+function StressUI({ tracks }: { tracks: Track[]; navigation: any }) {
   return (
     <>
       <Text style={styles.helper}>Play the music and relieve the stress</Text>
@@ -63,7 +65,12 @@ function StressUI({ tracks, navigation }: { tracks: Track[]; navigation: any }) 
             </View>
             <TouchableOpacity
               style={styles.playBtn}
-              onPress={() => navigation?.navigate?.("Player", { title: t.title, url: t.file })}
+              onPress={() =>
+                router.push({
+                  pathname: "/Player",
+                  params: { title: t.title, url: t.file, image: t.image },
+                })
+              }
             >
               <Ionicons name="play" size={18} color="#0d0b2f" />
             </TouchableOpacity>
@@ -127,6 +134,7 @@ function FocusUI() {
 
   useEffect(() => {
 
+    if (!isRunning) return;
     const breathingLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -158,7 +166,7 @@ function FocusUI() {
       breathingLoop.stop();
       clearInterval(textInterval);
     };
-  }, []);
+  }, [isRunning, scaleAnim]);
 
   return (
     <View style={focusStyles.container}>
