@@ -55,7 +55,7 @@ const fetchPlaylists = async () => {
 
   try {
     setLoading(true);
-    const response = await axios.get('http://10.159.234.146:5000/playlist', {
+    const response = await axios.get('http://10.229.220.146:5000/playlist', {
       params: { mood },
     });
 
@@ -97,7 +97,7 @@ const fetchPlaylists = async () => {
 
     try {
       setLoading(true);
-      const response = await axios.get('http://10.159.234.146:5000/playlist', {
+      const response = await axios.get('http://10.229.220.146:5000/playlist', {
         params: { mood: moodValue },
       });
 
@@ -128,7 +128,7 @@ const fetchPlaylists = async () => {
         setSuggestionsLoading(true);
         const results = await Promise.all(
           moods.map(async (moodType) => {
-            const res = await axios.get('http://10.159.234.146:5000/playlist', {
+            const res = await axios.get('http://10.229.220.146:5000/playlist', {
               params: { mood: moodType },
             });
             return { moodType, playlists: res.data.playlists || [] };

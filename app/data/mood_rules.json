@@ -1,0 +1,507 @@
+{
+  "Mood 2|Mood 2|Mood 2|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Reason"
+  },
+  "Mood 1|Mood 2|Mood 3|Mood 2|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 2|Mood 3|Mood 3|Mood 2": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 3|Mood 5|Mood 3|Mood 2|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 2|Mood 3|Mood 4|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 3|Mood 5|Mood 4|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 3|Mood 1|Mood 5|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 5|Mood 1|Mood 3": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 3|Mood 3|Mood 2|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 4|Mood 5|Mood 3|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 5|Mood 1|Mood 2|Mood 3": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 5|Mood 5|Mood 1|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 4|Mood 4|Mood 5|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 4|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 1|Mood 5|Mood 4|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 4|Mood 3|Mood 2|Mood 1": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 2|Mood 3|Mood 3|Mood 3": {
+    "pred": "Mood 3",
+    "pct": 1,
+    "reason": "Last 3 days same mood"
+  },
+  "Mood 3|Mood 1|Mood 1|Mood 3|Mood 5": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 3|Mood 2|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 2|Mood 1|Mood 4|Mood 5": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 1|Mood 2|Mood 1|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 4|Mood 3|Mood 3|Mood 1": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 2|Mood 5|Mood 1|Mood 3": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 2|Mood 5|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 3|Mood 3|Mood 1": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 2|Mood 3|Mood 1|Mood 3": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 2|Mood 3|Mood 3|Mood 5": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 1|Mood 5|Mood 3|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 5|Mood 4|Mood 1|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 5|Mood 1|Mood 4|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 3|Mood 3|Mood 1|Mood 4": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 5|Mood 4|Mood 4|Mood 5": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 4|Mood 5|Mood 1|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 4|Mood 1|Mood 5|Mood 4": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 5|Mood 3|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 5|Mood 3|Mood 4|Mood 3": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 1|Mood 4|Mood 4|Mood 3": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 2|Mood 4|Mood 4|Mood 1": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 1|Mood 2|Mood 4|Mood 3": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 4|Mood 4|Mood 4|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 1,
+    "reason": "Last 3 days same mood"
+  },
+  "Mood 5|Mood 4|Mood 2|Mood 5|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 1|Mood 2|Mood 2|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 3|Mood 3|Mood 5|Mood 1|Mood 4": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 2|Mood 5|Mood 1|Mood 4": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 4|Mood 3|Mood 1|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 2|Mood 3|Mood 5|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 3|Mood 2|Mood 2|Mood 3": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 1|Mood 3|Mood 2|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 3|Mood 1|Mood 3|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 5|Mood 3|Mood 4|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 5|Mood 1|Mood 5|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 3|Mood 3|Mood 2|Mood 1": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 2|Mood 4|Mood 1": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 4|Mood 3|Mood 5|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 5|Mood 2|Mood 4|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 4|Mood 3|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 5|Mood 4|Mood 5|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 1|Mood 5|Mood 4|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 1|Mood 4|Mood 4|Mood 1": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 2|Mood 3|Mood 3|Mood 4": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 3|Mood 3|Mood 5|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 5|Mood 2|Mood 3|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 5|Mood 4|Mood 3|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 1|Mood 1|Mood 2|Mood 3": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 2|Mood 4|Mood 2|Mood 1": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 1|Mood 2|Mood 4|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 1|Mood 5|Mood 3|Mood 4": {
+    "pred": "Mood 4",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 3|Mood 2|Mood 2|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 4|Mood 4|Mood 1|Mood 5": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 5|Mood 2|Mood 4": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 5|Mood 5|Mood 3|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 4|Mood 5|Mood 1|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 3|Mood 5|Mood 4|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 4|Mood 2|Mood 2|Mood 1": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 2|Mood 1|Mood 1|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 3|Mood 1|Mood 1|Mood 2": {
+    "pred": "Mood 1",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 3|Mood 5|Mood 1|Mood 3": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 5|Mood 1|Mood 4|Mood 3": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 5|Mood 2|Mood 1|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 5|Mood 4|Mood 4|Mood 3": {
+    "pred": "Mood 4",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 2|Mood 3|Mood 1|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 5|Mood 4|Mood 1|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 3|Mood 4|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 5|Mood 3|Mood 5|Mood 3": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 4|Mood 5|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 4|Mood 4|Mood 3|Mood 5": {
+    "pred": "Mood 4",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 2|Mood 2|Mood 4|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 3|Mood 5|Mood 5|Mood 3|Mood 1": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 1|Mood 1|Mood 2|Mood 5": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 2|Mood 3|Mood 3|Mood 1": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 4|Mood 2|Mood 3|Mood 4|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 5|Mood 2|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 1,
+    "reason": "Last 3 days same mood"
+  },
+  "Mood 4|Mood 4|Mood 2|Mood 2|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 1,
+    "reason": "Last 3 days same mood"
+  },
+  "Mood 2|Mood 2|Mood 2|Mood 1|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 1|Mood 4|Mood 3|Mood 3|Mood 4": {
+    "pred": "Mood 3",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  },
+  "Mood 5|Mood 3|Mood 1|Mood 3|Mood 5": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 2|Mood 4|Mood 3|Mood 5|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 5|Mood 2|Mood 3|Mood 5|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 4|Mood 3|Mood 1|Mood 5|Mood 4": {
+    "pred": "Mood 1",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 3|Mood 2|Mood 5|Mood 3|Mood 2": {
+    "pred": "Mood 2",
+    "pct": 0.33,
+    "reason": "Mixed pattern, predicted majority mood"
+  },
+  "Mood 1|Mood 5|Mood 5|Mood 1|Mood 5": {
+    "pred": "Mood 5",
+    "pct": 0.66,
+    "reason": "Last 2 days same mood"
+  }
+}
