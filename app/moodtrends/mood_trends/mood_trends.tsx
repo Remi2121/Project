@@ -273,7 +273,7 @@ export default function MoodTrendsComponent() {
     { label: 'Add Entry', icon: '✏️', onPress: () => router.push({ pathname: '/(tabs)/journal' }) },
     { label: 'Statistics', icon: '📊', onPress: () => router.push({ pathname: '/moodtrends/statistics/statistics' }) },
     { label: 'History', icon: '🕒', onPress: () => router.push({ pathname: '/moodtrends/history/history' }) },
-    { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '/moodtrends/predition/DailyMoodBackfill' }) },
+    { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '/moodtrends/predition/PredictorFromRules' }) },
   ];
 
   if (loading) {

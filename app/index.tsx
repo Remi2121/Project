@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Text, View } from 'react-native';
+import 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
