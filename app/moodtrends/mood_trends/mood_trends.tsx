@@ -3,9 +3,12 @@ import { useRouter } from 'expo-router';
 import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts';
+import { LineChart as RNLineChart } from 'react-native-gifted-charts';
+
 import { db } from 'utils/firebaseConfig';
 import styles from './mood_trends_styles';
+// TypeScript quirk workaround:
+const LineChartAny = RNLineChart as unknown as React.ComponentType<any>;
 
 type MoodKey = string;
 
@@ -270,7 +273,7 @@ export default function MoodTrendsComponent() {
     { label: 'Add Entry', icon: '✏️', onPress: () => router.push({ pathname: '/(tabs)/journal' }) },
     { label: 'Statistics', icon: '📊', onPress: () => router.push({ pathname: '/moodtrends/statistics/statistics' }) },
     { label: 'History', icon: '🕒', onPress: () => router.push({ pathname: '/moodtrends/history/history' }) },
-    { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '../../journal/journal' }) },
+    { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '/moodtrends/predition/PredictorFromRules' }) },
   ];
 
   if (loading) {
@@ -306,21 +309,22 @@ export default function MoodTrendsComponent() {
         <Text style={styles.heading}>Mood Trends</Text>
 
         <View style={styles.chartContainer}>
-          <LineChart
-            data={chartData}
-            thickness={3}
-            color="#00e0ff"
-            curved
-            hideRules
-            hideAxesAndRules
-            yAxisTextStyle={{ color: 'transparent' }}
-            xAxisLabelTextStyle={{ color: 'white', fontSize: 12 }}
-            dataPointsColor="#00e0ff"
-            dataPointsRadius={4}
-            spacing={60}   // tweak this if you want different gap
-            maxValue={100}
-          />
-        </View>
+  <LineChartAny
+    data={chartData}
+    thickness={3}
+    color="#00e0ff"
+    curved
+    hideRules
+    hideAxesAndRules
+    yAxisTextStyle={{ color: 'transparent' }}
+    xAxisLabelTextStyle={{ color: 'white', fontSize: 12 }}
+    dataPointsColor="#00e0ff"
+    dataPointsRadius={4}
+    spacing={60}
+    maxValue={100}
+  />
+</View>
+
 
         <View style={styles.moodTextContainer}>
           <Text style={styles.moodText}>View your mood trends and insights</Text>
