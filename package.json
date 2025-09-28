@@ -2,7 +2,6 @@
   "name": "moodify",
   "main": "expo-router/entry",
   "version": "1.0.0",
-  
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -32,6 +31,7 @@
     "debounce": "^2.2.0",
     "dotenv": "^16.5.0",
     "expo": "53.0.19",
+    "expo-asset": "^12.0.9",
     "expo-audio": "~0.4.8",
     "expo-auth-session": "~6.2.1",
     "expo-av": "~15.1.7",
@@ -46,7 +46,7 @@
     "expo-linear-gradient": "~14.1.5",
     "expo-linking": "~7.1.7",
     "expo-random": "^14.0.1",
-    "expo-router": "^5.1.4",
+    "expo-router": "~5.1.7",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
     "expo-symbols": "~0.4.5",
@@ -88,13 +88,16 @@
     "@types/node": "^24.0.1",
     "@types/qs": "^6.14.0",
     "@types/react": "~19.1.10",
+    "@types/xlsx": "^0.0.35",
     "babel-plugin-transform-import-meta": "^2.3.3",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "expo-module-scripts": "^4.1.7",
     "metro-react-native-babel-preset": "^0.77.0",
+    "schema-utils": "^4.3.2",
     "ts-node": "^10.9.2",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "xlsx": "^0.18.5"
   },
   "expo": {
     "doctor": {
