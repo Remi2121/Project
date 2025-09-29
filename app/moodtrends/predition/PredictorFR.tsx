@@ -1,4 +1,3 @@
-// app/moodtrends/predition/AutoPredictor.tsx
 import RingProgress from '@/components/RingProgress';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -14,29 +13,28 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { db } from 'utils/firebaseConfig';
 
-/** ===== Config ===== */
+// Config
 const TZ = 'Asia/Colombo';
 const SOURCE_COLLECTION = 'MoodHistory';
 const SOURCE_TIME_FIELD = 'createdAt';
 
-/** ===== Types ===== */
+// Types
 type RealMood = 'happy' | 'sad' | 'angry' | 'tired' | 'sick' | 'neutral' | 'calm' | 'excited' | 'anxious';
 type Rule = { pred: string; pct: number; reason: string };
 type RuleMap = Record<string, Rule>;
 
-/** ===== Load Excel-compiled rules (JSON) =====
- * Using require avoids needing "resolveJsonModule" in tsconfig.
- */
-const RULES: RuleMap = require('../../data/mood_rules.json');
+// Load  rules (JSON)
 
-/** ===== Mappings ===== */
+const RULES: RuleMap = require('../../../tools/data/mood_rules.json');
+
+//Mappings
 const EMOJI_TO_REAL: Record<string, RealMood> = {
   '😊': 'happy', '😐': 'neutral', '😢': 'sad', '😡': 'angry', '🥱': 'tired', '🤒': 'sick'
 };
 
 const REAL_TO_MOODN: Record<string, string> = {
-  happy: 'Mood 1', calm: 'Mood 1', excited: 'Mood 1',
-  sad: 'Mood 2', neutral: 'Mood 2', anxious: 'Mood 2', sorrow: 'Mood 2',
+  happy: 'Mood 1', calm: 'Mood 1', excited: 'Mood 1',neutral: 'Mood 1',
+  sad: 'Mood 2', anxious: 'Mood 2', sorrow: 'Mood 2',
   angry: 'Mood 3',
   tired: 'Mood 4',
   sick: 'Mood 5',
@@ -46,7 +44,7 @@ const MOODN_TO_REAL: Record<string, RealMood> = {
   'Mood 1': 'happy', 'Mood 2': 'sad', 'Mood 3': 'angry', 'Mood 4': 'tired', 'Mood 5': 'sick',
 };
 
-/** ===== Time helpers (TZ safe) ===== */
+// Time helpers (TZ safe) 
 function toDayKeyTZ(d: Date, tz = TZ) {
   const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
   return fmt.format(d); // YYYY-MM-DD
@@ -58,7 +56,7 @@ function startOfDayTZ(d: Date, tz = TZ) {
 }
 function addDaysUTC(d: Date, n: number) { const x = new Date(d.getTime()); x.setUTCDate(x.getUTCDate() + n); return x; }
 
-/** ===== Normalization ===== */
+// Normalization
 const norm = (s: any) => String(s || '').trim();
 const lower = (s: any) => norm(s).toLowerCase();
 
@@ -85,7 +83,7 @@ function toMoodN(input: string) {
 
 const key5 = (a: string[]) => a.join('|');
 
-/** ===== Excel-reason helpers (strict) ===== */
+// Reason helpers (strict) 
 function findPctFromExcelReason(reason: string, predMoodN?: string): number | null {
   const entries = Object.values(RULES);
   for (const r of entries) {
@@ -189,7 +187,7 @@ function detectPatternReasonFromExcel(last5N: string[]): { predMoodN: string; re
   return null;
 }
 
-/** ===== Strict predictor (Excel-only reasons) ===== */
+// Strict predictor (Only reasons) 
 function predictFromRules(last5Real: RealMood[]) {
   const last5N = last5Real.map((m) => toMoodN(m));
 
@@ -221,7 +219,7 @@ function predictFromRules(last5Real: RealMood[]) {
   };
 }
 
-/** ===== Fetch & collapse to daily moods ===== */
+// Fetch & collapse to daily moods 
 type DayRow = { key: string; date: Date; mood: RealMood };
 
 async function loadLast5DailyMoods(): Promise<DayRow[]> {
@@ -301,7 +299,7 @@ function collapseSnapToDaily(rows: any[]): DayRow[] {
   return out;
 }
 
-/** ===== UI Helpers ===== */
+//  UI Helpers  
 function moodEmoji(m: RealMood) {
   const map: Record<RealMood, string> = {
     happy: '😊', sad: '😢', angry: '😡', tired: '🥱', sick: '🤒',
@@ -325,7 +323,7 @@ function fmtDayNice(d: Date) {
   return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-/** ===== Screen ===== */
+// Screen  
 export default function AutoPredictor() {
   const router = useRouter();
   const [busy, setBusy] = useState(true);
@@ -334,7 +332,7 @@ export default function AutoPredictor() {
 
   const prediction = useMemo(() => {
     if (days.length !== 5) return null;
-    const last5 = days.map(d => d.mood); // Day1..Day5 oldest→latest
+    const last5 = days.map(d => d.mood); 
     return predictFromRules(last5);
   }, [days]);
 
@@ -359,11 +357,11 @@ export default function AutoPredictor() {
           <Text style={{ color: '#fff', fontSize: 30, paddingTop: 5, paddingRight: 5 }}>←</Text>
         </TouchableOpacity>
 
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', marginTop: 6 }}>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', marginTop: 6 }}>
           Last 5 Days → Predict Day 6
         </Text>
 
-        <View style={{ height: 12 }} />
+        <View style={{ height: 10 }} />
 
         <TouchableOpacity
           onPress={load}
@@ -378,12 +376,10 @@ export default function AutoPredictor() {
           }}
         >
           {busy ? <ActivityIndicator color="#00121a" /> :
-            <Text style={{ color: '#00121a', fontWeight: '800' }}>Refresh</Text>}
+            <Text style={{ color: '#00121a', fontWeight: '400' }}>Refresh</Text>}
         </TouchableOpacity>
 
         <View style={{ height: 16 }} />
-
-        {/* Last 5 days list */}
         <View style={{ gap: 10 }}>
           {busy ? (
             <View style={{ padding: 16, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10 }}>
@@ -420,7 +416,6 @@ export default function AutoPredictor() {
 
         <View style={{ height: 16 }} />
 
-        {/* Prediction card with Ring */}
         <View
           style={{
             padding: 16,
@@ -451,10 +446,6 @@ export default function AutoPredictor() {
                   {cap(prediction.moodReal)} • {(prediction.pct * 100).toFixed(0)}%
                 </Text>
               </View>
-
-              <Text style={{ color: '#cfe8ff' }}>
-                Reason: {prediction.reason}
-              </Text>
             </>
           ) : (
             <Text style={{ color: '#fff' }}>

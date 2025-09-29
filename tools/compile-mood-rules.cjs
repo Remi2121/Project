@@ -9,7 +9,7 @@ try { XLSX = require('xlsx'); }
 catch(e){ console.error('❌ Missing dev dependency "xlsx". Run: npm i -D xlsx'); process.exit(1); }
 
 const EXCEL_PATH = path.resolve(process.cwd(), 'assets', 'Mood History.xlsx');
-const OUT_JSON   = path.resolve(process.cwd(), 'app', 'data', 'mood_rules.json');
+const OUT_JSON   = path.resolve(process.cwd(), 'tools', 'data', 'mood_rules.json');
 
 const norm  = (s) => String(s || '').trim();
 const lower = (s) => norm(s).toLowerCase();

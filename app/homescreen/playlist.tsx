@@ -1,10 +1,10 @@
 //playlist.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, Linking, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 
 
 type Playlist = {

@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
  
   searchResultsContainer: {
     marginTop: 20,
+    justifyContent: 'center',
   },
 
   searchResultsHeader: {
@@ -132,14 +133,16 @@ const styles = StyleSheet.create({
 
   moodSectionContainer: {
     marginTop: 25,
+    alignItems: 'center', 
   },
 
-  moodSectionTitle: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
+moodSectionTitle: {
+  color: 'white',
+  fontSize: 26,   // ⬆️ 20 → 26 (big font)
+  fontWeight: '700',
+  marginBottom: 12,
+  textAlign: 'center', // center align
+},
 
   suggestionsScrollView: {
     paddingLeft: 0,
@@ -147,21 +150,22 @@ const styles = StyleSheet.create({
 
   
 playlistCardSmall: {
-  width: 140,       
-  height: 180,      
-  marginRight: 15,  
-  borderRadius: 10,
-  padding: 10,
+  width: 250,     
+  height: 250,
+  marginRight: 18,
+  borderRadius: 12,
+  padding: 12,
   justifyContent: 'center',
   alignItems: 'center',
 },
 
+
 playlistImageSmall: {
-  width: 120,       
-  height: 120,      
-  borderRadius: 8,
-  marginBottom: 8,
-  resizeMode: 'cover', 
+  width: 200,     
+  height: 200,    
+  borderRadius: 10,
+  marginBottom: 10,
+  resizeMode: 'cover',
 },
 
 playlistNameSmall: {
