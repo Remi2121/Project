@@ -4,7 +4,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../../utils/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
-import { useEffect } from 'react';
 
 export default function MoodResult() {
     const { mood, confidence } = useLocalSearchParams();
@@ -30,19 +29,14 @@ export default function MoodResult() {
   }
 };
 
-
-
     return (
         <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
             <Text style={styles.header}>DETECT MOOD</Text>
-                {mood ? (
-                    <Text style={styles.emoji}>
-                        {moodEmojis[moodStr] || '🤔'}
-                    </Text>
-                ) : (
+            {mood ? (<Text style={styles.emoji}> {moodEmojis[moodStr] || '🤔'} </Text>
+            ) : (
                 <Text style={{ color: 'red', marginTop: 20 }}>Mood not detected</Text>
-               )}
-                <Text style={styles.moodText}> Detected Mood: <Text style={{ fontWeight: 'bold' }}>{mood}</Text>
+            )}
+            <Text style={styles.moodText}> Detected Mood: <Text style={{ fontWeight: 'bold' }}>{mood}</Text>
             </Text>
             <Text style={styles.confidenceText}>Confidence: {confidence}</Text>
             <View style={styles.buttonContainer}>
