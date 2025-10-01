@@ -2,27 +2,61 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { arrayUnion, deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { db } from "utils/firebaseConfig";
 import type { StoredTrack } from 'utils/storageAudio';
-import { listTracksByMood } from 'utils/storageAudio'; // ✅ use storage helper
+import { listTracksByMood } from 'utils/storageAudio';
 
 type MainMood = 'happy' | 'sad' | 'anger' | 'surprise' | 'neutral';
 
-const moodCovers: Record<MainMood, any> = {
-  happy: require('../../assets/covers/happy.png'),
-  sad: require('../../assets/covers/sad.png'),
-  anger: require('../../assets/covers/anger.png'),
-  surprise: require('../../assets/covers/surprise.png'),
-  neutral: require('../../assets/covers/neutral.png'),
+/** cover mapping */
+const coverByMood: Record<MainMood, { tamil: any; english: any; default: any }> = {
+  happy: {
+    english: require('../../assets/covers/happy.png'),
+    tamil:   require('../../assets/covers/happy2.png'),
+    default: require('../../assets/covers/happy.png'),
+  },
+  sad: {
+    english: require('../../assets/covers/sad2.png'),
+    tamil:   require('../../assets/covers/sad.png'),
+    default: require('../../assets/covers/sad2.png'),
+  },
+  anger: {
+    english: require('../../assets/covers/anger.png'),
+    tamil:   require('../../assets/covers/anger2.png'),
+    default: require('../../assets/covers/anger.png'),
+  },
+  neutral: {
+    english: require('../../assets/covers/neutral.png'),
+    tamil:   require('../../assets/covers/neutral2.png'),
+    default: require('../../assets/covers/neutral2.png'),
+  },
+  surprise: {
+    english: require('../../assets/covers/surprise.png'),
+    tamil:   require('../../assets/covers/surprise.png'),
+    default: require('../../assets/covers/surprise.png'),
+  },
 };
+
+/** cover util */
+function getCoverFor(mood: MainMood, trackName?: string) {
+  const name = (trackName || '').toLowerCase();
+  const isTamil = name.includes('tamil');
+  const isEnglish = name.includes('english');
+
+  const set = coverByMood[mood];
+  if (isTamil) return set.tamil;
+  if (isEnglish) return set.english;
+  return set.default;
+}
 
 export default function Player() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // We get the starting track name + mood
   const startName = String(params.name || 'Unknown');
   const mood = (String(params.mood || 'neutral') as MainMood);
 
@@ -30,12 +64,29 @@ export default function Player() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [rate, setRate] = useState(1.0);
 
-  // playlist & index
   const [playlist, setPlaylist] = useState<StoredTrack[]>([]);
   const [index, setIndex] = useState<number>(0);
   const [title, setTitle] = useState<string>(startName);
 
-  // audio mode (safe fields)
+  // favorites state
+  const [isFav, setIsFav] = useState(false);
+  const userId = "demoUser"; // 👉 replace with Firebase Auth UID later
+
+  /** helpers */
+  const stopAndUnload = async () => {
+    if (!soundRef.current) return;
+    try { await soundRef.current.stopAsync(); } catch {}
+    try { await soundRef.current.unloadAsync(); } catch {}
+    soundRef.current = null;
+    setIsPlaying(false);
+  };
+
+  const handleBack = async () => {
+    await stopAndUnload();
+    router.push('/(tabs)/explore');
+  };
+
+  // audio mode
   useEffect(() => {
     Audio.setAudioModeAsync({
       staysActiveInBackground: false,
@@ -45,12 +96,12 @@ export default function Player() {
     }).catch(() => {});
   }, []);
 
-  // Load playlist for this mood, then play the selected (or first) track
+  // Load playlist
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const list = await listTracksByMood(mood); // read from Storage (URLs resolved)
+        const list = await listTracksByMood(mood);
         if (!mounted) return;
 
         if (!list.length) {
@@ -64,7 +115,10 @@ export default function Player() {
         if (startIdx < 0) startIdx = 0;
         setIndex(startIdx);
 
-        await loadAndPlay(list[startIdx].url, list[startIdx].name);
+        await loadTrack(list[startIdx].url, list[startIdx].name);
+
+        // check favorite status
+        checkIfFavorite(list[startIdx].name);
       } catch (e) {
         console.error(e);
         Alert.alert('Playback Error', 'Could not load playlist.');
@@ -72,28 +126,23 @@ export default function Player() {
     })();
 
     return () => { mounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mood, startName]);
 
-  async function loadAndPlay(url: string, nameForTitle: string) {
-    // cleanup previous
+  /** load track but don't auto-play */
+  async function loadTrack(url: string, nameForTitle: string) {
     if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-      } catch {}
-      try {
-        await soundRef.current.unloadAsync();
-      } catch {}
+      try { await soundRef.current.stopAsync(); } catch {}
+      try { await soundRef.current.unloadAsync(); } catch {}
       soundRef.current = null;
     }
 
     const { sound } = await Audio.Sound.createAsync(
       { uri: url },
-      { shouldPlay: true, rate } // keep current speed
+      { shouldPlay: false, rate }   // no auto play
     );
     soundRef.current = sound;
     setTitle(nameForTitle);
-    setIsPlaying(true);
+    setIsPlaying(false);
 
     sound.setOnPlaybackStatusUpdate((s: any) => {
       if (!s?.isLoaded) return;
@@ -101,39 +150,78 @@ export default function Player() {
     });
   }
 
+  /** check if current song is in favorites */
+  async function checkIfFavorite(trackName: string) {
+    const favDoc = doc(db, "Favorites", userId, "songs", trackName);
+    const snap = await getDoc(favDoc);
+    setIsFav(snap.exists());
+  }
+
+  /** toggle favorite */
+  async function toggleFavorite(trackName: string) {
+    const favDoc = doc(db, "Favorites", userId, "songs", trackName);
+    const snap = await getDoc(favDoc);
+    if (snap.exists()) {
+      await deleteDoc(favDoc);
+      setIsFav(false);
+      Alert.alert("Removed from Favorites");
+    } else {
+      await setDoc(favDoc, {
+        name: trackName,
+        mood,
+        createdAt: new Date(),
+      });
+      setIsFav(true);
+      Alert.alert("Added to Favorites ❤️");
+    }
+  }
+
+  /** add to playlist (default playlist) */
+  async function addToPlaylist(trackName: string, url: string) {
+    const playlistRef = doc(db, "Playlists", userId, "playlists", "default");
+    await updateDoc(playlistRef, {
+      songs: arrayUnion({ name: trackName, mood, url })
+    }).catch(async () => {
+      // if playlist not exist, create it
+      await setDoc(playlistRef, {
+        title: "My Playlist",
+        createdAt: new Date(),
+        songs: [{ name: trackName, mood, url }]
+      });
+    });
+    Alert.alert("Added to Playlist ➕");
+  }
+
   async function togglePlay() {
     if (!soundRef.current) return;
     const st = await soundRef.current.getStatusAsync();
     if (!st.isLoaded) return;
-    if (st.isPlaying) await soundRef.current.pauseAsync();
-    else await soundRef.current.playAsync();
+    if (st.isPlaying) {
+      await soundRef.current.pauseAsync();
+    } else {
+      await soundRef.current.playAsync();
+    }
   }
 
   async function stop() {
-    if (!soundRef.current) return;
-    await soundRef.current.stopAsync();
-    await soundRef.current.setPositionAsync(0);
+    await stopAndUnload();
   }
 
   async function changeSpeed(next: number) {
     if (!soundRef.current) return;
     setRate(next);
-    await soundRef.current.setRateAsync(next, true); // correct pitch
+    await soundRef.current.setRateAsync(next, true);
   }
 
-  // ✅ NEXT button handler
   async function nextTrack() {
     if (!playlist.length) return;
     const nextIdx = (index + 1) % playlist.length;
     setIndex(nextIdx);
     const t = playlist[nextIdx];
-    await loadAndPlay(t.url, t.name);
+    await loadTrack(t.url, t.name);
+    checkIfFavorite(t.name);
   }
 
-  // (optional) Prev if you want later:
-  // async function prevTrack() { ... }
-
-  // cleanup on unmount
   useEffect(() => {
     return () => {
       if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
@@ -143,7 +231,7 @@ export default function Player() {
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={s.container}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/explore')} style={s.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={s.backBtn}>
           <Ionicons name="chevron-back" size={26} color="#fff" />
         </TouchableOpacity>
         <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>
@@ -151,12 +239,25 @@ export default function Player() {
       </View>
 
       <View style={s.coverWrap}>
-        <Image source={moodCovers[mood]} style={s.cover} />
+        <Image source={getCoverFor(mood, title)} style={s.cover} />
       </View>
 
       <View style={s.meta}>
         <Text style={s.title} numberOfLines={1}>{title}</Text>
         <Text style={s.subtitle}>{mood.toUpperCase()}</Text>
+      </View>
+
+      {/* Actions Row: Fav + Add */}
+      <View style={s.actionsRow}>
+        <TouchableOpacity onPress={() => toggleFavorite(title)}>
+          <Ionicons name={isFav ? "heart" : "heart-outline"} size={32} color={isFav ? "red" : "white"} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => {
+          const current = playlist[index];
+          if (current) addToPlaylist(current.name, current.url);
+        }}>
+          <Ionicons name="add-circle-outline" size={32} color="white" />
+        </TouchableOpacity>
       </View>
 
       {/* Controls */}
@@ -170,7 +271,6 @@ export default function Player() {
           <Ionicons name={isPlaying ? 'pause' : 'play'} size={30} color="#1c54e2ff" />
         </TouchableOpacity>
 
-        {/* ✅ NEXT button */}
         <TouchableOpacity style={s.iconBtn} onPress={nextTrack}>
           <Ionicons name="play-skip-forward" size={38} color="#fff" />
           <Text style={s.ctrlLabel}>Next</Text>
@@ -206,12 +306,19 @@ const s = StyleSheet.create({
   title: { color: '#fff', fontSize: 18, fontWeight: '700' },
   subtitle: { color: '#ccead7', marginTop: 4 },
 
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 40,
+    marginVertical: 20,
+  },
+
   controls: {
-    marginTop: 24,
+    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20, // a bit tighter to fit 3 buttons
+    paddingHorizontal: 20,
   },
   iconBtn: { alignItems: 'center' },
   playBtn: {
@@ -220,7 +327,7 @@ const s = StyleSheet.create({
   },
   ctrlLabel: { color: '#fff', marginTop: 4, fontSize: 12 },
 
-  speedRow: { marginTop: 18, flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 50 },
+  speedRow: { marginTop: 18, flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 20 },
   speedPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)',

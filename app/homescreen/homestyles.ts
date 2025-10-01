@@ -7,17 +7,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   greeting: {
-    color: '#fff',
+    color: '#060606ff',
     fontSize: 40,
     fontWeight: '600',
   },
   username: {
-    color: '#fff',
+    color: '#030303ff',
     fontSize: 30,
     marginBottom: 6,
   },
   subtitle: {
-    color: '#A8B5DB',
+    color: '#101011ff',
     fontSize: 20,
     marginBottom: 30,
   },

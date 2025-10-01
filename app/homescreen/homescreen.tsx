@@ -22,7 +22,7 @@ export default function HomeScreen() {
     : "Let's check your mood";
 
   return (
-    <LinearGradient colors={['#0e0e13ff', '#2a1faa']} style={styles.container}>
+    <LinearGradient colors={['#89a2edff', '#66bceeff']} style={styles.container}>
 
       {/* Login Button - Top Right Corner */}
       <TouchableOpacity
