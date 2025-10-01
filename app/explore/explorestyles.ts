@@ -133,15 +133,14 @@ const styles = StyleSheet.create({
 
   moodSectionContainer: {
     marginTop: 25,
-    alignItems: 'center', 
   },
 
 moodSectionTitle: {
   color: 'white',
-  fontSize: 26,   // ⬆️ 20 → 26 (big font)
+  fontSize: 26,   
   fontWeight: '700',
   marginBottom: 12,
-  textAlign: 'center', // center align
+  
 },
 
   suggestionsScrollView: {

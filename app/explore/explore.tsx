@@ -25,14 +25,61 @@ const emojiToMood: Record<string, MainMood> = {
   '😊':'happy','😐':'neutral','😢':'sad','😡':'anger','😠':'anger','😲':'surprise','🥱':'neutral','🤒':'neutral',
 };
 
-// COVER IMAGES (assets/covers/*.png)
-const moodCovers: Record<MainMood, any> = {
-  happy: require('../../assets/covers/happy.png'),
-  sad: require('../../assets/covers/sad.png'),
-  anger: require('../../assets/covers/anger.png'),
-  surprise: require('../../assets/covers/surprise.png'),
-  neutral: require('../../assets/covers/neutral.png'),
+/** ===== COVER IMAGES (two variants per mood) ===== */
+const coverByMood: Record<MainMood, { tamil: any; english: any; default: any }> = {
+  happy: {
+    english: require('../../assets/covers/happy.png'),
+    tamil:   require('../../assets/covers/happy2.png'),
+    default: require('../../assets/covers/happy.png'),
+  },
+  sad: {
+    english: require('../../assets/covers/sad2.png'),
+    tamil:   require('../../assets/covers/sad.png'),
+    default: require('../../assets/covers/sad2.png'),
+  },
+  anger: {
+    english: require('../../assets/covers/anger.png'),
+    tamil:   require('../../assets/covers/anger2.png'),
+    default: require('../../assets/covers/anger.png'),
+  },
+  neutral: {
+    english: require('../../assets/covers/neutral.png'),
+    tamil:   require('../../assets/covers/neutral2.png'),
+    default: require('../../assets/covers/neutral2.png'),
+  },
+  surprise: {
+    english: require('../../assets/covers/surprise.png'),
+    tamil:   require('../../assets/covers/surprise.png'),
+    default: require('../../assets/covers/surprise.png'),
+  },
 };
+
+/** Decide cover by mood + actual file name (from Firebase Storage). */
+function getCoverFor(mood: MainMood, trackName?: string) {
+  const name = (trackName || '').toLowerCase();
+
+  const isTamil =
+    name.includes('tamil') || /\bta\b|_ta\b|\.ta\b/.test(name);
+  const isEnglish =
+    name.includes('english') || /\ben(g|glish)?\b|_en\b|\.en\b/.test(name);
+
+  const set = coverByMood[mood];
+  if (isTamil) return set.tamil;
+  if (isEnglish) return set.english;
+  return set.default;
+}
+
+/** ===== In-memory cache so results persist across back/forward ===== */
+const TRACKS_CACHE: Partial<Record<MainMood, StoredTrack[]>> = {};
+
+async function getTracksCached(mood: MainMood): Promise<StoredTrack[]> {
+  if (TRACKS_CACHE[mood]) {
+    return TRACKS_CACHE[mood]!;
+  }
+  const list = await listTracksByMood(mood);
+  TRACKS_CACHE[mood] = list;
+  return list;
+}
 
 function normalizeToMainMood(input: string): MainMood | null {
   if (!input) return null;
@@ -63,21 +110,22 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   const moodParamRaw = typeof routeParams?.mood === 'string' ? String(routeParams!.mood) : '';
   const moodFromParam = useMemo(() => normalizeToMainMood(moodParamRaw), [moodParamRaw]);
 
+  // Prefill suggestions for all moods (from cache if available; fetch otherwise)
   useEffect(() => {
     (async () => {
       try {
         setSuggestionsLoading(true);
         const entries = await Promise.all(
-          MAIN_MOODS.map(async (m) => [m, await listTracksByMood(m)] as const)
+          MAIN_MOODS.map(async (m) => [m, await getTracksCached(m)] as const)
         );
         const map = { ...suggestions };
         entries.forEach(([m, tracks]) => { (map as any)[m] = tracks; });
         setSuggestions(map as Record<MainMood, StoredTrack[]>);
       } finally { setSuggestionsLoading(false); }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // If opened with ?mood=... param, load that mood (from cache)
   useEffect(() => {
     if (moodFromParam) {
       setMoodInput(moodFromParam);
@@ -93,7 +141,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   async function fetchFromStorage(mainMood: MainMood) {
     try {
       setLoading(true);
-      const tracks = await listTracksByMood(mainMood);
+      const tracks = await getTracksCached(mainMood); // <-- use cache
       setSearchResults(tracks);
       setCurrentMood(mainMood);
       await logMood(mainMood);
@@ -110,23 +158,35 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   }
 
   // Navigate helper (RAW URL — no encode)
-function openPlayer(track: StoredTrack, mood: MainMood | null) {
-  const m = mood ?? 'neutral';
-  // IMPORTANT: pass Storage path; Player will resolve URL
-  router.push({
-    pathname: '/explore/player',
-    params: {
-      path: `${m}/${track.name}`, // e.g., "sad/abc.mp3"
-      name: track.name,
-      mood: m,
-    },
-  });
-}
-
+  function openPlayer(track: StoredTrack, mood: MainMood | null) {
+    const m = mood ?? 'neutral';
+    router.push({
+      pathname: '/explore/player',
+      params: {
+        path: `${m}/${track.name}`,
+        name: track.name,
+        mood: m,
+      },
+    });
+  }
 
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
+
+      {/* ✅ Added Favorites + Playlist buttons */}
+      
+
+
       <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
+
+      <View style={{flexDirection:"row", justifyContent:"flex-end", paddingTop:40, paddingHorizontal:16}}>
+        <TouchableOpacity onPress={()=>router.push("/explore/favorites")} style={{marginRight:20}}>
+        <Ionicons name="heart" size={26} color="red"/>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={()=>router.push("/explore/playlist")}>
+      <Ionicons name="musical-notes" size={26} color="white"/>
+      </TouchableOpacity>
+   </View>
       <View style={styles.logoContainer}>
         <Lottie source={require('../../assets/animation/explorelogo.json')} autoPlay loop style={styles.logo} />
       </View>
@@ -155,13 +215,14 @@ function openPlayer(track: StoredTrack, mood: MainMood | null) {
             <View style={styles.searchResultsContainer}>
               <Text style={styles.searchResultsHeader}>Search Results</Text>
               {searchResults.map((t, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  onPress={() => openPlayer(t, currentMood)} // open Player
-                >
+                <TouchableOpacity key={idx} onPress={() => openPlayer(t, currentMood)}>
                   <LinearGradient colors={['#0d0b2f', '#2a5faa']} style={styles.playlistCard}>
                     {currentMood && (
-                      <Image source={moodCovers[currentMood]} style={styles.playlistImageLarge} resizeMode="cover" />
+                      <Image
+                        source={getCoverFor(currentMood, t.name)}
+                        style={styles.playlistImageLarge}
+                        resizeMode="cover"
+                      />
                     )}
                     <Text style={styles.playlistNameLarge}>{t.name}</Text>
                     <Text style={styles.playlistTapText}>Tap to Open Player</Text>
@@ -175,6 +236,7 @@ function openPlayer(track: StoredTrack, mood: MainMood | null) {
           {/* Suggestions */}
           <Text style={styles.suggestionsHeader}>Suggestions</Text>
           {suggestionsLoading && <ActivityIndicator size="small" color="white" style={{ marginTop: 10 }} />}
+
           {MAIN_MOODS.map((mood) => (
             <View key={mood} style={styles.moodSectionContainer}>
               <Text style={styles.moodSectionTitle}>{moodLabels[mood]} {moodEmoji[mood]}</Text>
@@ -182,14 +244,23 @@ function openPlayer(track: StoredTrack, mood: MainMood | null) {
                 {(suggestions[mood] || []).map((t, idx) => (
                   <TouchableOpacity key={idx} onPress={() => openPlayer(t, mood)}>
                     <LinearGradient colors={['#0d0b2f', '#2a5faa']} style={styles.playlistCardSmall}>
-                      <Image source={moodCovers[mood]} style={styles.playlistImageSmall} resizeMode="cover" />
+                      <Image
+                        source={getCoverFor(mood, t.name)}
+                        style={styles.playlistImageSmall}
+                        resizeMode="cover"
+                      />
                       <Text numberOfLines={2} style={styles.playlistNameSmall}>{t.name}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
                 ))}
+
                 {(!suggestions[mood] || suggestions[mood].length === 0) && (
                   <View style={[styles.playlistCardSmall, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Image source={moodCovers[mood]} style={styles.playlistImageSmall} resizeMode="cover" />
+                    <Image
+                      source={coverByMood[mood].default}
+                      style={styles.playlistImageSmall}
+                      resizeMode="cover"
+                    />
                     <Text style={{ color: 'white', opacity: 0.7, marginTop: 6 }}>No files in “{mood}/”</Text>
                   </View>
                 )}
