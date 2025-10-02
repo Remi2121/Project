@@ -261,6 +261,7 @@ export default function AutoPredictor() {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((u) => { if (!u) router.replace('/authpages/Login-page'); else load(); });
     return unsub;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
