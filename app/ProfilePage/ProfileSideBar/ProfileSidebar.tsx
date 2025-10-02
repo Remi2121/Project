@@ -1,5 +1,6 @@
 // ✅ Cleaned & Fixed Full ProfileSidebar.tsx with Navigation
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Image,
@@ -11,8 +12,7 @@ import {
 } from 'react-native';
 import Animated, { SlideInLeft, SlideOutLeft } from 'react-native-reanimated';
 import styles from './ProfileSidebar.styles';
-import { useRouter } from 'expo-router';
-import { useNavigation } from 'expo-router';
+
 
 
 const menuItems = ['Mood History.', 'Favorites', 'Journal', 'Settings'] as const;
@@ -34,13 +34,13 @@ export default function ProfileSidebar() {
   console.log('Navigating to:', label);
   switch (label) {
     case 'Mood History.':
-      router.push('./ProfilePage/Menu_Items/mood-history');
+      router.push('../ProfilePage/Menu_Items/mood-history');
       break;
     case 'Favorites':
-       router.push('./ProfilePage/Menu_Items/Favorites');
+       router.push('../ProfilePage/Menu_Items/mood-history');
       break;
     case 'Journal':
-      router.push('./ProfilePage/Menu_Items/Journal');
+      router.push('../ProfilePage/Menu_Items/moodjournal');
       break;
     case 'Settings':
       router.push('../ProfilePage/Menu_Items/Settings');

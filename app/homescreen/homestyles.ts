@@ -1,23 +1,63 @@
+// app/homestyles.tsx
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 80,
+    backgroundColor: 'white',
+  },
+  // Top Navigation Bar
+  navBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 26,
+    paddingBottom: 10,
+    backgroundColor: '#2a1faa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    height: 80,
+  },
+  appNameContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+  },
+  appName: {
+    color: 'white',
+    fontSize: 30,
+    fontWeight: 'bold',
+    letterSpacing: 1, 
+  },
+  
+  loginButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  
+  content: {
+    flex: 1,
+    paddingTop: 20,
     paddingHorizontal: 24,
   },
   greeting: {
-    color: '#fff',
-    fontSize: 40,
+    color: '#2a1faa',
+    fontSize: 30,
     fontWeight: '600',
   },
   username: {
-    color: '#fff',
-    fontSize: 30,
+    color: '#2a1faa',
+    fontSize: 20,
     marginBottom: 6,
   },
   subtitle: {
-    color: '#A8B5DB',
+    color: '#2a1faa',
     fontSize: 20,
     marginBottom: 30,
   },
@@ -56,6 +96,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
 
 export default styles;

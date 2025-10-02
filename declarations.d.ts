@@ -8,3 +8,5 @@ declare module 'react-native-vector-icons/MaterialCommunityIcons' {
   export default content;
 }
 
+declare module "*.mp3";
+declare module "*.wav";
