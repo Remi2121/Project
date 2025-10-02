@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, Image, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, Image, ScrollView, Text, TextInput } from 'react-native';
 import styles from './chatbotstyles';
 
 import { useRouter } from 'expo-router';
@@ -21,20 +21,21 @@ type Props = { routeParams?: UnknownOutputParams };
 const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const router = useRouter();
 
+  // NOTE: still using "topic" for input state, but we will SAVE as "mood"
   const [topic, setTopic] = useState('');
   const [tips, setTips] = useState('');
   const [question] = useState('How are you feeling today?');
   const [loading, setLoading] = useState(false);
 
-  // Optional recent history (for this user)
-  const [recent, setRecent] = useState<{ id: string; topic: string; createdAt?: Date }[]>([]);
+  // recent from MoodHistory (per user)
+  const [recent, setRecent] = useState<{ id: string; mood: string; tag?: string; createdAt?: Date }[]>([]);
 
   const validMoods = [
     "anxiety","depression","stress","self-care","mindfulness",
     "mental health","wellbeing","coping","therapy","burnout",
     "emotions","mental fitness","resilience","sleep","loneliness",
     "social anxiety","panic attack","self-esteem","sad","alone","happy",
-    "angry","frustrated","overwhelmed","nervous","anger"
+    "angry","frustrated","overwhelmed","nervous","anger","calm","neutral"
   ];
 
   /** ===== Helpers: user-scoped paths ===== */
@@ -43,45 +44,44 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     if (!uid) throw new Error('NOT_SIGNED_IN');
     return uid;
   };
-  const userSessionsColl = () => {
+  const userHistoryColl = () => {
     const uid = requireUser();
     return collection(db, 'users', uid, 'MoodHistory');
   };
 
-  /** ===== Load recent sessions (optional) ===== */
+  /** ===== Load recent (reads mood field, not topic) ===== */
   const loadRecent = async () => {
     try {
-      const qRef = query(userSessionsColl(), orderBy('createdAt', 'desc'));
+      const qRef = query(userHistoryColl(), orderBy('createdAt', 'desc'));
       const snap = await getDocs(qRef);
       const rows = snap.docs.map(d => {
         const data = d.data() as any;
         return {
           id: d.id,
-          topic: data.topic ?? '',
+          mood: (data.mood ?? data.topic ?? '').toString(),
+          tag: data.tag ?? undefined,
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : undefined,
         };
       });
       setRecent(rows.slice(0, 5));
     } catch (e: any) {
-      // Silent fail is fine (e.g., first-time user)
       console.log('loadRecent error:', e?.message ?? e);
     }
   };
 
   /** ===== Save one session per user ===== */
   const saveSession = async (payload: {
-    topic: string;
+    mood: string;     // normalized mood key (e.g., "sad")
     tips: string;
     raw?: any;
   }) => {
-    await addDoc(userSessionsColl(), {
-      topic: payload.topic,
+    await addDoc(userHistoryColl(), {
+      mood: payload.mood,               // <- main field
+      tag: `mood-${payload.mood}`,      // <- "mood-sad" like you asked
       tips: payload.tips,
+      source: 'chatbot',
       createdAt: serverTimestamp(),
-      // Optionally store raw backend result for debugging:
       raw: payload.raw ?? null,
-      // You can add device/timezone metadata if you want:
-      source: 'mobile-app',
     });
   };
 
@@ -99,7 +99,6 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     }
 
     try {
-      // Ensure user is signed in (or redirect)
       try {
         requireUser();
       } catch {
@@ -110,7 +109,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         return;
       }
 
-      const res = await fetch('http://192.168.239.146:8000/get_tips', {
+      const res = await fetch('http://192.168.8.158:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: normalizedTopic }),
@@ -128,6 +127,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
       }
 
       if (typeof data.tips === 'string') {
+        // make numbered list
         const tipsArray = data.tips.split(/\d+\.\s/);
         tipsArray.shift();
         const numberedTips = tipsArray
@@ -136,14 +136,13 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
 
         setTips(numberedTips);
 
-        // 🔐 Save per-user session in Firestore
+        // 🔐 Save using "mood" + "mood-<mood>" tag
         await saveSession({
-          topic: normalizedTopic,
+          mood: normalizedTopic,
           tips: numberedTips,
           raw: data,
         });
 
-        // Refresh recent
         loadRecent();
       } else {
         setTips('This is not a mental health related concept.');
@@ -176,9 +175,6 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((u) => {
       if (!u) {
-        // you can show without redirect if you prefer
-        // but per your requirement, keep it user-specific
-        // so require login:
         router.replace('/authpages/Login-page');
       } else {
         loadRecent();
@@ -216,20 +212,6 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 20 }} />
         ) : (
           <Text style={styles.tips}>{tips}</Text>
-        )}
-
-        {/* Optional: Recent sessions */}
-        {recent.length > 0 && (
-          <View style={{ marginTop: 24 }}>
-            <Text style={{ color: '#fff', fontWeight: '600', marginBottom: 8 }}>
-              Recent sessions
-            </Text>
-            {recent.map((r) => (
-              <Text key={r.id} style={{ color: '#ddd', marginBottom: 4 }}>
-                • {r.topic} {r.createdAt ? `— ${r.createdAt.toLocaleString()}` : ''}
-              </Text>
-            ))}
-          </View>
         )}
       </ScrollView>
     </LinearGradient>

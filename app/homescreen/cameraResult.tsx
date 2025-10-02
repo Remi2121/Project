@@ -7,14 +7,14 @@ import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../utils/firebaseConfig';
 
 export default function MoodResult() {
-  const router = useRouter();
   const { mood, confidence } = useLocalSearchParams();
+  const router = useRouter();
 
-  // Ensure string value (use first item if array)
+  // Normalize router params to strings
   const moodRaw = Array.isArray(mood) ? mood[0] : (mood ?? '');
   const confRaw = Array.isArray(confidence) ? confidence[0] : (confidence ?? '');
 
-  // UI emoji map for camera labels
+  // UI emoji map (camera labels)
   const moodEmojis: Record<string, string> = {
     Joy: '😊',
     Sorrow: '😢',
@@ -23,7 +23,7 @@ export default function MoodResult() {
     Neutral: '😐',
   };
 
-  // Normalize camera labels -> your app's “real” moods
+  // Map camera labels -> app mood keys
   const normalizeToAppMood = (m: string) => {
     const k = (m || '').trim().toLowerCase();
     if (k === 'joy') return 'happy';
@@ -34,10 +34,12 @@ export default function MoodResult() {
     return 'neutral';
   };
 
-  const normalized = normalizeToAppMood(moodRaw);
+  const normalizedMood = normalizeToAppMood(moodRaw);
+
+  // Confidence as number or null (never undefined)
   const confidenceNum = (() => {
     const n = Number(confRaw);
-    return Number.isFinite(n) ? n : undefined;
+    return Number.isFinite(n) ? n : null;
   })();
 
   const saveMoodToFirestore = async () => {
@@ -50,25 +52,17 @@ export default function MoodResult() {
     }
 
     try {
-      // users/{uid}/MoodHistory
-      await addDoc(collection(db, 'users', user.uid, 'MoodHistory'), {
-        // store both for debugging/auditing
-        moodOriginal: moodRaw,         // e.g., "Joy"
-        mood: normalized,              // e.g., "happy"  (your app uses this)
-        confidence: confidenceNum,     // number | undefined
-        source: 'camera',              // optional tag
-        createdAt: serverTimestamp(),  // Firestore server time
-      });
+      const payload: any = {
+        moodOriginal: moodRaw,     // e.g. "Joy" from camera
+        mood: normalizedMood,      // e.g. "happy" for app
+        source: 'camera',
+        createdAt: serverTimestamp(),
+      };
+      if (confidenceNum !== null) payload.confidence = confidenceNum;
 
-      console.log('Mood saved to Firestore (per-user)!');
-      // Optionally show a toast/alert
-      // Alert.alert('Saved', 'Your mood has been saved.');
+      await addDoc(collection(db, 'users', user.uid, 'MoodHistory'), payload);
 
-      // Navigate to recommendations (pass normalized mood so the rest of app is consistent)
-      router.push({
-        pathname: '/recommendList' as any,
-        params: { mood: normalized },
-      });
+      router.push({ pathname: '/recommendList' as any, params: { mood: normalizedMood } });
     } catch (error: any) {
       console.error('Error saving mood:', error);
       Alert.alert('Error', error?.message ?? 'Failed to save mood.');
@@ -90,22 +84,17 @@ export default function MoodResult() {
       </Text>
 
       <Text style={styles.moodText}>
-        Normalized: <Text style={{ fontWeight: 'bold' }}>{normalized}</Text>
+        Normalized: <Text style={{ fontWeight: 'bold' }}>{normalizedMood}</Text>
       </Text>
 
-      <Text style={styles.confidenceText}>
-        Confidence: {confidenceRawToDisplay(confRaw)}
-      </Text>
+      <Text style={styles.confidenceText}>Confidence: {formatConfidence(confRaw)}</Text>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={saveMoodToFirestore}>
           <Text style={styles.buttonText}>     Confirm     </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.replace({ pathname: '/camera' as any })}
-        >
+        <TouchableOpacity style={styles.button} onPress={() => router.replace({ pathname: '/camera' as any })}>
           <Text style={styles.buttonText}>    Try Again    </Text>
         </TouchableOpacity>
       </View>
@@ -113,55 +102,20 @@ export default function MoodResult() {
   );
 }
 
-function confidenceRawToDisplay(v: any) {
+function formatConfidence(v: any) {
   if (v == null) return '—';
   const n = Number(Array.isArray(v) ? v[0] : v);
   if (!Number.isFinite(n)) return String(v);
-  // show as percentage if it looks like 0..1
-  if (n >= 0 && n <= 1) return `${Math.round(n * 100)}%`;
-  return `${n}`;
+  return n >= 0 && n <= 1 ? `${Math.round(n * 100)}%` : `${n}`;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0d0b2f',
-    alignItems: 'center',
-    padding: 20,
-  },
-  header: {
-    color: '#fff',
-    fontSize: 26,
-    marginTop: 60,
-  },
-  emoji: {
-    fontSize: 120,
-    marginTop: 50,
-  },
-  moodText: {
-    color: '#fff',
-    fontSize: 20,
-    marginTop: 12,
-  },
-  confidenceText: {
-    color: '#ccc',
-    fontSize: 16,
-    marginTop: 8,
-  },
-  buttonContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: 50,
-    gap: 40,
-  },
-  button: {
-    backgroundColor: '#2a1faa',
-    padding: 20,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 20,
-  },
+  container: { flex: 1, backgroundColor: '#0d0b2f', alignItems: 'center', padding: 20 },
+  header: { color: '#fff', fontSize: 26, marginTop: 60 },
+  emoji: { fontSize: 120, marginTop: 50 },
+  moodText: { color: '#fff', fontSize: 20, marginTop: 12 },
+  confidenceText: { color: '#ccc', fontSize: 16, marginTop: 8 },
+  buttonContainer: { flexDirection: 'column', alignItems: 'center', marginTop: 50, gap: 40 },
+  button: { backgroundColor: '#2a1faa', padding: 20, borderRadius: 10 },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
 });
