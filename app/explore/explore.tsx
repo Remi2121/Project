@@ -116,7 +116,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
     if (!uid) throw new Error('NOT_SIGNED_IN');
     return uid;
   };
-  const userColl = (sub: 'MoodHistory' | 'TrackOpens') => {
+  const userColl = (sub: 'MoodHistory' ) => {
     const uid = requireUser();
     return collection(db, 'users', uid, sub);
   };
@@ -170,7 +170,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   /** ===== Write a track open to user's TrackOpens ===== */
   async function logTrackOpen(track: StoredTrack, mood: MainMood | null) {
     try {
-      await addDoc(userColl('TrackOpens'), {
+      await addDoc(userColl('MoodHistory'), {
         name: track.name,
         mood: mood ?? 'neutral',
         createdAt: serverTimestamp(),

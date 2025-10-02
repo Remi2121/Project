@@ -1,19 +1,28 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { arrayUnion, deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  arrayUnion,
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ImageSourcePropType, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { db } from "utils/firebaseConfig";
+import { auth, db } from "utils/firebaseConfig";
 import type { StoredTrack } from 'utils/storageAudio';
 import { listTracksByMood } from 'utils/storageAudio';
 
 type MainMood = 'happy' | 'sad' | 'anger' | 'surprise' | 'neutral';
 
 /** cover mapping */
-const coverByMood: Record<MainMood, { tamil: any; english: any; default: any }> = {
+const coverByMood: Record<MainMood, { tamil: ImageSourcePropType; english: ImageSourcePropType; default: ImageSourcePropType }> = {
   happy: {
     english: require('../../assets/covers/happy.png'),
     tamil:   require('../../assets/covers/happy2.png'),
@@ -41,8 +50,8 @@ const coverByMood: Record<MainMood, { tamil: any; english: any; default: any }> 
   },
 };
 
-/** cover util */
-function getCoverFor(mood: MainMood, trackName?: string) {
+/** cover util with type guarantee */
+function getCoverFor(mood: MainMood, trackName?: string): ImageSourcePropType {
   const name = (trackName || '').toLowerCase();
   const isTamil = name.includes('tamil');
   const isEnglish = name.includes('english');
@@ -50,7 +59,18 @@ function getCoverFor(mood: MainMood, trackName?: string) {
   const set = coverByMood[mood];
   if (isTamil) return set.tamil;
   if (isEnglish) return set.english;
-  return set.default;
+  return set.default; // ✅ always returns a valid image
+}
+
+/** Require user helper */
+function requireUidOrRedirect(router: ReturnType<typeof useRouter>): string | null {
+  const uid = auth.currentUser?.uid ?? null;
+  if (!uid) {
+    Alert.alert('Login required', 'Please sign in to use this feature.', [
+      { text: 'OK', onPress: () => router.replace('/authpages/Login-page') },
+    ]);
+  }
+  return uid;
 }
 
 export default function Player() {
@@ -68,9 +88,9 @@ export default function Player() {
   const [index, setIndex] = useState<number>(0);
   const [title, setTitle] = useState<string>(startName);
 
-  // favorites state
+  // state for favorites & playlist
   const [isFav, setIsFav] = useState(false);
-  const userId = "demoUser"; // 👉 replace with Firebase Auth UID later
+  const [isInPlaylist, setIsInPlaylist] = useState(false);
 
   /** helpers */
   const stopAndUnload = async () => {
@@ -117,8 +137,9 @@ export default function Player() {
 
         await loadTrack(list[startIdx].url, list[startIdx].name);
 
-        // check favorite status
+        // check favorite & playlist status
         checkIfFavorite(list[startIdx].name);
+        checkIfInPlaylist(list[startIdx].name, list[startIdx].url);
       } catch (e) {
         console.error(e);
         Alert.alert('Playback Error', 'Could not load playlist.');
@@ -152,44 +173,80 @@ export default function Player() {
 
   /** check if current song is in favorites */
   async function checkIfFavorite(trackName: string) {
-    const favDoc = doc(db, "Favorites", userId, "songs", trackName);
+    const uid = auth.currentUser?.uid;
+    if (!uid) { setIsFav(false); return; }
+    const safeId = encodeURIComponent(trackName);
+    const favDoc = doc(db, "users", uid, "favorites", safeId);
     const snap = await getDoc(favDoc);
     setIsFav(snap.exists());
   }
 
-  /** toggle favorite */
-  async function toggleFavorite(trackName: string) {
-    const favDoc = doc(db, "Favorites", userId, "songs", trackName);
-    const snap = await getDoc(favDoc);
+  /** check if in default playlist */
+  async function checkIfInPlaylist(trackName: string, url: string) {
+    const uid = auth.currentUser?.uid;
+    if (!uid) { setIsInPlaylist(false); return; }
+    const playlistRef = doc(db, "users", uid, "playlists", "default");
+    const snap = await getDoc(playlistRef);
     if (snap.exists()) {
-      await deleteDoc(favDoc);
-      setIsFav(false);
-      Alert.alert("Removed from Favorites");
+      const data = snap.data();
+      const found = (data.songs || []).some((s: any) => s.name === trackName);
+      setIsInPlaylist(found);
     } else {
-      await setDoc(favDoc, {
-        name: trackName,
-        mood,
-        createdAt: new Date(),
-      });
-      setIsFav(true);
-      Alert.alert("Added to Favorites ❤️");
+      setIsInPlaylist(false);
     }
   }
 
-  /** add to playlist (default playlist) */
+  async function toggleFavorite(trackName: string) {
+    const uid = requireUidOrRedirect(router);
+    if (!uid) return;
+
+    const safeId = encodeURIComponent(trackName);
+    const favDoc = doc(db, "users", uid, "favorites", safeId);
+
+    const snap = await getDoc(favDoc);
+
+    if (snap.exists()) {
+      try {
+        await deleteDoc(favDoc);
+        setIsFav(false);
+        Alert.alert("Removed ❌", `${trackName} removed from favorites`);
+      } catch (err) {
+        console.error("Delete favorite error:", err);
+        Alert.alert("Error", "Could not remove from favorites");
+      }
+    } else {
+      try {
+        await setDoc(favDoc, {
+          name: trackName,
+          mood,
+          createdAt: serverTimestamp(),
+        });
+        setIsFav(true);
+        Alert.alert("Added ❤️", `${trackName} added to favorites`);
+      } catch (err) {
+        console.error("Add favorite error:", err);
+        Alert.alert("Error", "Could not add to favorites");
+      }
+    }
+  }
+
+  /** add to playlist */
   async function addToPlaylist(trackName: string, url: string) {
-    const playlistRef = doc(db, "Playlists", userId, "playlists", "default");
+    const uid = requireUidOrRedirect(router);
+    if (!uid) return;
+
+    const playlistRef = doc(db, "users", uid, "playlists", "default");
     await updateDoc(playlistRef, {
       songs: arrayUnion({ name: trackName, mood, url })
     }).catch(async () => {
-      // if playlist not exist, create it
       await setDoc(playlistRef, {
         title: "My Playlist",
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
         songs: [{ name: trackName, mood, url }]
       });
     });
-    Alert.alert("Added to Playlist ➕");
+    setIsInPlaylist(true); // ✅ turn icon green
+    Alert.alert("Added to Playlist ✅", `${trackName} added`);
   }
 
   async function togglePlay() {
@@ -220,6 +277,7 @@ export default function Player() {
     const t = playlist[nextIdx];
     await loadTrack(t.url, t.name);
     checkIfFavorite(t.name);
+    checkIfInPlaylist(t.name, t.url);
   }
 
   useEffect(() => {
@@ -250,13 +308,21 @@ export default function Player() {
       {/* Actions Row: Fav + Add */}
       <View style={s.actionsRow}>
         <TouchableOpacity onPress={() => toggleFavorite(title)}>
-          <Ionicons name={isFav ? "heart" : "heart-outline"} size={32} color={isFav ? "red" : "white"} />
+          <Ionicons
+            name={isFav ? "heart" : "heart-outline"}
+            size={32}
+            color={isFav ? "red" : "white"}
+          />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {
           const current = playlist[index];
-          if (current) addToPlaylist(current.name, current.url);
+          if (current && !isInPlaylist) addToPlaylist(current.name, current.url);
         }}>
-          <Ionicons name="add-circle-outline" size={32} color="white" />
+          <Ionicons
+            name={isInPlaylist ? "checkmark-circle" : "add-circle-outline"}
+            size={32}
+            color={isInPlaylist ? "green" : "white"}
+          />
         </TouchableOpacity>
       </View>
 
