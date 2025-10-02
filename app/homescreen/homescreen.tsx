@@ -1,14 +1,50 @@
 // app/index.tsx (HomeScreen)
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { doc, getDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../../utils/firebaseConfig';
 import styles from './homestyles';
 
 export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [username, setUsername] = useState('User');
 
   const mood = typeof params.mood === 'string' ? params.mood : null;
+
+  // 🔐 Load username from Auth or Firestore
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(async (u) => {
+      if (!u) {
+        setUsername('User');
+        return;
+      }
+
+      if (u.displayName && u.displayName.trim()) {
+        setUsername(u.displayName.trim());
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, 'users', u.uid));
+        const data = snap.exists() ? snap.data() : null;
+        if (data?.username) {
+          setUsername(String(data.username));
+          return;
+        }
+      } catch {}
+
+      if (u.email) {
+        setUsername(u.email.split('@')[0]);
+      } else {
+        setUsername('User');
+      }
+    });
+
+    return unsub;
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -17,8 +53,8 @@ export default function HomeScreen() {
     return 'Good Evening';
   };
 
-  const moodSummary = mood 
-    ? `You seem ${mood.toLowerCase()}` 
+  const moodSummary = mood
+    ? `You seem ${mood.toLowerCase()}`
     : "Let's check your mood";
 
   return (
@@ -26,7 +62,7 @@ export default function HomeScreen() {
 
       {/* Top Navigation Bar */}
       <LinearGradient
-        colors={['#0d0b2f', '#2a1faa']} // Your gradient colors
+        colors={['#0d0b2f', '#2a1faa']}
         style={styles.navBar}
       >
         {/* App Name */}
@@ -46,7 +82,7 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {/* Greeting & Mood */}
         <Text style={styles.greeting}>{getGreeting()},</Text>
-        <Text style={styles.username}>User! 👋</Text>
+        <Text style={styles.username}>{username}! 👋</Text>
         <Text style={styles.subtitle}>{moodSummary}</Text>
 
         {/* Detect Mood Button */}
@@ -79,8 +115,5 @@ export default function HomeScreen() {
         </View>
       </View>
     </View>
-    
-
-    
   );
 }

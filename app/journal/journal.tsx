@@ -2,14 +2,26 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+} from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { db } from 'utils/firebaseConfig';
+import { auth, db } from 'utils/firebaseConfig';
 
 const moods = ['😄', '😀', '😊', '😍', '😔', '😢', '😭', '😠', '😤', '😡', '😱', '😨', '😳', '😐', '🤔', '🥱', '😴', '🥳'];
 
 export default function JournalScreen() {
+  const router = useRouter();
+
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [text, setText] = useState<string>('');
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
@@ -21,61 +33,75 @@ export default function JournalScreen() {
   const [isEntryFocused, setIsEntryFocused] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  // ====== Highlight helper (unchanged) ======
+  const highlightText = (textVal: string, queryText: string) => {
+    if (!queryText) return <Text style={{ color: '#fff' }}>{textVal}</Text>;
+    try {
+      const regex = new RegExp(`(${queryText})`, 'gi');
+      const parts = textVal.split(regex);
+      return (
+        <Text style={{ color: '#fff' }}>
+          {parts.map((part, index) => {
+            if (part.toLowerCase() === queryText.toLowerCase()) {
+              return (
+                <Text
+                  key={index}
+                  style={{
+                    backgroundColor: part.match(/[\u{1F600}-\u{1F64F}]/u) ? '#ffdd55' : 'yellow',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    borderRadius: 4,
+                    paddingHorizontal: 2,
+                  }}
+                >
+                  {part}
+                </Text>
+              );
+            }
+            return <Text key={index}>{part}</Text>;
+          })}
+        </Text>
+      );
+    } catch {
+      return <Text style={{ color: '#fff' }}>{textVal}</Text>;
+    }
+  };
 
-  // Highlight helper
-const highlightText = (text: string, query: string) => {
-  if (!query) return <Text style={{ color: '#fff' }}>{text}</Text>;
+  // ====== Helpers to build per-user paths ======
+  const getUserCollRef = () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error('Not signed in');
+    return collection(db, 'users', uid, 'journalEntries');
+  };
+  const getUserDocRef = (id: string) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error('Not signed in');
+    return doc(db, 'users', uid, 'journalEntries', id);
+  };
 
-  try {
-    const regex = new RegExp(`(${query})`, 'gi');
-    const parts = text.split(regex);
-
-    return (
-      <Text style={{ color: '#fff' }}>
-        {parts.map((part, index) => {
-          if (part.toLowerCase() === query.toLowerCase()) {
-            return (
-              <Text
-                key={index}
-                style={{
-                  backgroundColor: part.match(/[\u{1F600}-\u{1F64F}]/u) ? '#ffdd55' : 'yellow', // emoji vs text
-                  color: '#000',
-                  fontWeight: 'bold',
-                  borderRadius: 4,
-                  paddingHorizontal: 2,
-                }}
-              >
-                {part}
-              </Text>
-            );
-          }
-          return <Text key={index}>{part}</Text>;
-        })}
-      </Text>
-    );
-  } catch {
-    return <Text style={{ color: '#fff' }}>{text}</Text>;
-  }
-};
-
-
+  // ====== Load entries (only for logged-in user) ======
   const loadEntries = async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'journalEntries'));
-      const entries = snapshot.docs.map(doc => {
-        const data = doc.data();
+      if (!auth.currentUser) {
+        router.replace('/authpages/Login-page');
+        return;
+      }
+      const qRef = query(getUserCollRef(), orderBy('date', 'desc'));
+      const snapshot = await getDocs(qRef);
+      const entries = snapshot.docs.map(d => {
+        const data = d.data() as any;
         return {
-          id: doc.id,
+          id: d.id,
           mood: data.mood,
           text: data.text,
           time: data.time,
-          date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+          date: data?.date?.toDate ? data.date.toDate() : new Date(data.date),
           edited: data.edited || false,
         };
       });
-      setJournalEntries(entries.reverse());
+      setJournalEntries(entries);
     } catch (error) {
-      console.error("Error loading Firestore entries:", error);
+      console.error('Error loading Firestore entries:', error);
     }
   };
 
@@ -83,7 +109,7 @@ const highlightText = (text: string, query: string) => {
     try {
       await AsyncStorage.setItem('journalEntries', JSON.stringify(entries));
     } catch (error) {
-      console.error("Error saving entries:", error);
+      console.error('Error saving entries:', error);
     }
   };
 
@@ -92,12 +118,26 @@ const highlightText = (text: string, query: string) => {
   }, [journalEntries]);
 
   useEffect(() => {
-    loadEntries();
+    const unsub = auth.onAuthStateChanged(user => {
+      if (!user) {
+        // Not logged in → go to login
+        router.replace('/authpages/Login-page');
+      } else {
+        loadEntries();
+      }
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ====== Save (create/update) per-user ======
   const handleSave = async () => {
     if (!selectedMood || !text.trim()) {
-      alert('Please select a mood and enter some text.');
+      Alert.alert('Please select a mood and enter some text.');
+      return;
+    }
+    if (!auth.currentUser) {
+      router.replace('/authpages/Login-page');
       return;
     }
 
@@ -107,89 +147,73 @@ const highlightText = (text: string, query: string) => {
       month: 'short',
       day: 'numeric',
     });
-
     const formattedClock = timestamp.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
     });
-
     const formattedTime = `${formattedDate} ${formattedClock}`;
 
-    const updatedEntry = {
+    const entryData = {
       time: String(formattedTime),
       mood: String(selectedMood),
       text: String(text),
-      date: timestamp,
-      edited: false, // Default to false, will be set to true if edited later
+      date: timestamp,      // you can also use serverTimestamp() if preferred
+      edited: isEditing ? true : false,
     };
 
     try {
       if (isEditing && editingId) {
-        const entryRef = doc(db, 'journalEntries', editingId);
-        const updatedEntry = {
-          time: formattedTime,
-          mood: selectedMood,
-          text,
-          date: timestamp,
-          edited: true,
-        };
-        await updateDoc(entryRef, updatedEntry);
-
+        await updateDoc(getUserDocRef(editingId), entryData);
         const updated = journalEntries.map(entry =>
-          entry.id === editingId ? { id: editingId, ...updatedEntry } : entry
+          entry.id === editingId ? { id: editingId, ...entryData } : entry
         );
         setJournalEntries(updated);
         setIsEditing(false);
         setEditingId(null);
       } else {
-        const docRef = await addDoc(collection(db, 'journalEntries'), updatedEntry);
-        setJournalEntries([{ id: docRef.id, ...updatedEntry }, ...journalEntries]);
+        const docRef = await addDoc(getUserCollRef(), entryData);
+        setJournalEntries([{ id: docRef.id, ...entryData }, ...journalEntries]);
       }
-
       setText('');
       setSelectedMood('');
     } catch (error: any) {
-      alert(`Error saving to cloud: ${error.message || error}`);
+      Alert.alert('Cloud save error', error?.message ?? String(error));
     }
   };
 
+  // ====== Delete per-user ======
   const handleDelete = async (id: string) => {
     if (typeof id !== 'string' || !id.trim()) {
-      alert("Invalid document ID.");
+      Alert.alert('Invalid document ID.');
       return;
     }
-
+    if (!auth.currentUser) {
+      router.replace('/authpages/Login-page');
+      return;
+    }
     try {
-      const entryRef = doc(db, 'journalEntries', id);
-      await deleteDoc(entryRef);
-
-      const updated = journalEntries.filter(entry => entry.id !== id);
-      setJournalEntries(updated);
+      await deleteDoc(getUserDocRef(id));
+      setJournalEntries(prev => prev.filter(e => e.id !== id));
     } catch (error) {
-      console.error("Error deleting entry:", error);
-      alert("Failed to delete entry.");
+      console.error('Error deleting entry:', error);
+      Alert.alert('Failed to delete entry.');
     }
   };
 
-  // Filter + Search
+  // ====== Filter + Search (unchanged) ======
   const filteredEntries = journalEntries.filter(entry => {
     const matchDate =
       !filterDate || new Date(entry.date).toDateString() === filterDate.toDateString();
-
     const matchSearch =
       !searchQuery ||
       entry.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.mood.includes(searchQuery);
-
     return matchDate && matchSearch;
   });
-
-
 
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-
         {/*Header*/}
         <View style={styles.headerBar}>
           <Text style={styles.header}>📝 Mood Journal</Text>
@@ -198,7 +222,9 @@ const highlightText = (text: string, query: string) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.greeting}>Hey User! How are you feeling? </Text>
+        <Text style={styles.greeting}>
+          {auth.currentUser?.displayName ? `Hey ${auth.currentUser.displayName}!` : 'Hey User!'} How are you feeling?
+        </Text>
 
         {/* Mood Selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.moodScroll}>
@@ -215,19 +241,19 @@ const highlightText = (text: string, query: string) => {
 
         {/* Text Area */}
         <TextInput
-  style={[
-    styles.input,
-    isEntryFocused && { borderColor: '#3f34c0', borderWidth: 1 }
-  ]}
-  placeholder="What's on your mind?"
-  placeholderTextColor="#aaa"
-  multiline
-  numberOfLines={4}
-  value={text}
-  onChangeText={setText}
-  onFocus={() => setIsEntryFocused(true)}
-  onBlur={() => setIsEntryFocused(false)}
-/>
+          style={[
+            styles.input,
+            isEntryFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+          ]}
+          placeholder="What's on your mind?"
+          placeholderTextColor="#aaa"
+          multiline
+          numberOfLines={4}
+          value={text}
+          onChangeText={setText}
+          onFocus={() => setIsEntryFocused(true)}
+          onBlur={() => setIsEntryFocused(false)}
+        />
 
         <TouchableOpacity
           style={[styles.saveButton, (!text.trim() || !selectedMood) && { opacity: 0.4 }]}
@@ -242,7 +268,7 @@ const highlightText = (text: string, query: string) => {
 
         {isEditing && (
           <TouchableOpacity
-            style={[styles.saveButton, { marginTop: 10 }]} // similar style but red
+            style={[styles.saveButton, { marginTop: 10 }]}
             onPress={() => {
               setIsEditing(false);
               setEditingId(null);
@@ -256,7 +282,6 @@ const highlightText = (text: string, query: string) => {
           </TouchableOpacity>
         )}
 
-
         {/* Calendar */}
         {showDatePicker && (
           <DateTimePicker
@@ -265,9 +290,7 @@ const highlightText = (text: string, query: string) => {
             display="default"
             onChange={(event, selectedDate) => {
               setShowDatePicker(false);
-              if (selectedDate) {
-                setFilterDate(selectedDate);
-              }
+              if (selectedDate) setFilterDate(selectedDate);
             }}
           />
         )}
@@ -287,20 +310,20 @@ const highlightText = (text: string, query: string) => {
         {journalEntries.length > 0 && (
           <>
             <Text style={styles.subHeader}>────────── Past Journals ──────────</Text>
-            <TextInput
-  style={[
-  styles.input,
-  { marginBottom: 18 },
-  isSearchFocused && { borderColor: '#3f34c0', borderWidth: 1 }
-]}
 
-  placeholder="Search your past entries..."
-  placeholderTextColor="#aaa"
-  value={searchQuery}
-  onChangeText={setSearchQuery}
-  onFocus={() => setIsSearchFocused(true)}
-  onBlur={() => setIsSearchFocused(false)}
-/>
+            <TextInput
+              style={[
+                styles.input,
+                { marginBottom: 18 },
+                isSearchFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+              ]}
+              placeholder="Search your past entries..."
+              placeholderTextColor="#aaa"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
 
             {filteredEntries.map((entry) => (
               <View key={entry.id} style={styles.entryCard}>
@@ -351,16 +374,11 @@ const highlightText = (text: string, query: string) => {
                   </View>
                 </View>
 
-                <Text style={styles.entryMood}>
-  {highlightText(entry.mood, searchQuery)}
-</Text>
-<View>
-  {highlightText(entry.text, searchQuery)}
-  {entry.edited && (
-    <Text style={styles.editedLabel}>Edited...</Text>
-  )}
-</View>
-
+                <Text style={styles.entryMood}>{highlightText(entry.mood, searchQuery)}</Text>
+                <View>
+                  {highlightText(entry.text, searchQuery)}
+                  {entry.edited && <Text style={styles.editedLabel}>Edited...</Text>}
+                </View>
               </View>
             ))}
           </>
@@ -371,101 +389,21 @@ const highlightText = (text: string, query: string) => {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  header: {
-    color: '#fff',
-    fontSize: 26,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  greeting: {
-    color: '#fff',
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  moodScroll: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  moodOption: {
-    backgroundColor: '#1f1b5a',
-    padding: 12,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  selectedMood: {
-    backgroundColor: '#3f34c0',
-  },
-  moodEmoji: {
-    fontSize: 26,
-  },
-  input: {
-    backgroundColor: '#1f1b5a',
-    color: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    textAlignVertical: 'top',
-  },
-  saveButton: {
-    backgroundColor: '#5d4dfc',
-    padding: 14,
-    marginTop: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  saveText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  subHeader: {
-    color: '#ccc',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  entryCard: {
-    backgroundColor: '#2a2566',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-  },
-  entryTime: {
-    color: '#aaa',
-    marginBottom: 4,
-    fontSize: 12,
-  },
-  entryTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  entryMood: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  entryText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  entryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  editedLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 6,
-    textAlign: 'right',
-  },
+  container: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
+  header: { color: '#fff', fontSize: 26, textAlign: 'center', marginBottom: 8 },
+  greeting: { color: '#fff', fontSize: 16, marginBottom: 20 },
+  moodScroll: { flexDirection: 'row', marginBottom: 16 },
+  moodOption: { backgroundColor: '#1f1b5a', padding: 12, borderRadius: 20, marginRight: 10 },
+  selectedMood: { backgroundColor: '#3f34c0' },
+  moodEmoji: { fontSize: 26 },
+  input: { backgroundColor: '#1f1b5a', color: '#fff', borderRadius: 10, padding: 16, textAlignVertical: 'top' },
+  saveButton: { backgroundColor: '#5d4dfc', padding: 14, marginTop: 16, borderRadius: 10, alignItems: 'center' },
+  saveText: { color: '#fff', fontSize: 16 },
+  subHeader: { color: '#ccc', textAlign: 'center', marginVertical: 20 },
+  entryCard: { backgroundColor: '#2a2566', padding: 14, borderRadius: 12, marginBottom: 14 },
+  entryTime: { color: '#aaa', marginBottom: 4, fontSize: 12 },
+  entryMood: { fontSize: 20, marginBottom: 4 },
+  entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  headerBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  editedLabel: { color: '#aaa', fontSize: 12, marginTop: 6, textAlign: 'right' },
 });
