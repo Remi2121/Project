@@ -74,7 +74,8 @@
       ],
       "expo-video",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

@@ -8,6 +8,7 @@ import { collection, addDoc } from 'firebase/firestore';
 export default function MoodResult() {
     const { mood, confidence } = useLocalSearchParams();
     const router = useRouter();
+
     const moodEmojis: Record<string, string> = {
         Joy: '😊',
         Sorrow: '😢',
@@ -15,7 +16,9 @@ export default function MoodResult() {
         Surprise: '😲',
         Neutral: '😐',
     };
+
     const moodStr = Array.isArray(mood) ? mood[0] : mood;
+
     const saveMoodToFirestore = async () => {
   try {
     await addDoc(collection(db, 'moods'), {
@@ -31,11 +34,13 @@ export default function MoodResult() {
 
     return (
         <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
-            <Text style={styles.header}>DETECT MOOD</Text>
+            <Text style={styles.header}>MOOD DETECTION</Text>
+
             {mood ? (<Text style={styles.emoji}> {moodEmojis[moodStr] || '🤔'} </Text>
             ) : (
                 <Text style={{ color: 'red', marginTop: 20 }}>Mood not detected</Text>
             )}
+            
             <Text style={styles.moodText}> Detected Mood: <Text style={{ fontWeight: 'bold' }}>{mood}</Text>
             </Text>
             <Text style={styles.confidenceText}>Confidence: {confidence}</Text>
