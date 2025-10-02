@@ -1,48 +1,53 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  Timestamp,
+  where,
+} from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart as RNLineChart } from 'react-native-gifted-charts';
 
-import { db } from 'utils/firebaseConfig';
+import { auth, db } from 'utils/firebaseConfig';
 import styles from './mood_trends_styles';
-// TypeScript quirk workaround:
+
+// TS quirk workaround:
 const LineChartAny = RNLineChart as unknown as React.ComponentType<any>;
 
 type MoodKey = string;
 
-interface JournalEntry {
+interface MoodEntry {
   id: string;
   mood: MoodKey;
   text?: string;
-  time: Date; 
+  time: Date; // normalized Date
 }
 
 interface WeekBucket {
-  start: Date;                 
-  dayMood: (MoodKey | null)[]; 
+  start: Date;                  // week start (Sun)
+  dayMood: (MoodKey | null)[];  // 7 days
   dominantMood: MoodKey | null;
-  dominantCount: number;       
-  percentage: number;         
+  dominantCount: number;        // occurrences of dominant mood in week
+  percentage: number;           // dominantCount / 7 * 100
 }
 
-/** ===== Config ===== */
-const WEEKS_COUNT = 5; // change to 7 if you want 7 weeks on X-axis
-const FIRESTORE_COLLECTION = 'MoodHistory';
-const FIRESTORE_TIME_FIELD = 'createdAt';
+const WEEKS_COUNT = 5;
 
 // ---- Helpers ----
 const EMOJI_NAME: Record<string, string> = {
   '😊': 'Happy', '😐': 'Neutral', '😢': 'Sad', '😡': 'Angry', '🥱': 'Tired', '🤒': 'Sick',
 };
 const NAME_EMOJI: Record<string, string> = {
-  'happy': '😊', 'joy': '😊', 'good': '😊',
-  'neutral': '😐', 'ok': '😐',
-  'sad': '😢', 'down': '😢',
-  'angry': '😡', 'mad': '😡',
-  'tired': '🥱', 'sleepy': '🥱',
-  'sick': '🤒', 'ill': '🤒',
+  happy: '😊', joy: '😊', good: '😊',
+  neutral: '😐', ok: '😐', okay: '😐',
+  sad: '😢', down: '😢', sorrow: '😢',
+  angry: '😡', mad: '😡', anger: '😡',
+  tired: '🥱', sleepy: '🥱',
+  sick: '🤒', ill: '🤒',
 };
 
 const normalizeMood = (m: any): { name: string; emoji: string } => {
@@ -69,7 +74,9 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.get
 const toDate = (val: any): Date => {
   if (!val) return new Date(0);
   if (val instanceof Date) return val;
-  if (val?.toDate && typeof val.toDate === 'function') return val.toDate();
+  if (val?.toDate && typeof val.toDate === 'function') return val.toDate(); // Timestamp
+  if (typeof val?.seconds === 'number') return new Date(val.seconds * 1000);
+  if (typeof val === 'object' && val.date && val.time) return new Date(`${val.date} ${val.time}`);
   const d = new Date(val);
   return isNaN(d.getTime()) ? new Date(0) : d;
 };
@@ -82,84 +89,72 @@ const fmtRangeShort = (start: Date) => {
 const fmtDayLong = (d: Date) =>
   d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
-// // ✅ Local timezone YYYY-MM-DD (no UTC shift)
-// const formatLocalYMD = (d: Date) => {
-//   const y = d.getFullYear();
-//   const m = String(d.getMonth() + 1).padStart(2, '0');
-//   const day = String(d.getDate()).padStart(2, '0');
-//   return `${y}-${m}-${day}`;
-// };
+/** ===== Load per-user ONLY from MoodHistory ===== */
+async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<MoodEntry[]> {
+  const earliestWeekStart = addDays(startOfWeekSun(new Date()), -(weeksCount - 1) * 7);
+  const coll = collection(db, 'users', uid, 'MoodHistory');
+
+  // Prefer server-side range on createdAt; fallback to fetch-all
+  try {
+    const qMH = query(
+      coll,
+      where('createdAt', '>=', Timestamp.fromDate(earliestWeekStart)),
+      orderBy('createdAt', 'asc')
+    );
+    const snap = await getDocs(qMH);
+    if (!snap.empty) {
+      return snap.docs.map(doc => {
+        const d: any = doc.data();
+        const when = d.createdAt ?? d.timestamp ?? { date: d.date, time: d.time };
+        return { id: doc.id, mood: d.mood as MoodKey, text: d.text ?? '', time: toDate(when) };
+      }).filter(r => !isNaN(r.time.getTime()));
+    }
+  } catch {/* ignore */}
+
+  // fallback
+  const snapAll = await getDocs(coll);
+  return snapAll.docs
+    .map(doc => {
+      const d: any = doc.data();
+      const when = d.createdAt ?? d.timestamp ?? { date: d.date, time: d.time };
+      return { id: doc.id, mood: d.mood as MoodKey, text: d.text ?? '', time: toDate(when) };
+    })
+    .filter(r => !isNaN(r.time.getTime()) && r.time >= earliestWeekStart)
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+}
 
 export default function MoodTrendsComponent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // 🚀 Load last N weeks entries from Firestore (using createdAt)
+  // 🔐 Auth-guard + load
   useEffect(() => {
-    const load = async () => {
+    const unsub = auth.onAuthStateChanged(async (u) => {
+      if (!u) {
+        router.replace('/authpages/Login-page');
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
-
-        const now = new Date();
-        const currentWeekStart = startOfWeekSun(now);
-        const earliestWeekStart = addDays(currentWeekStart, -(WEEKS_COUNT - 1) * 7);
-
-        const q = query(
-          collection(db, FIRESTORE_COLLECTION),
-          where(FIRESTORE_TIME_FIELD, '>=', Timestamp.fromDate(earliestWeekStart)),
-          orderBy(FIRESTORE_TIME_FIELD, 'asc')
-        );
-
-        const snap = await getDocs(q);
-
-        const rows: JournalEntry[] = snap.docs.map((doc) => {
-          const data: any = doc.data();
-          const t = toDate(data[FIRESTORE_TIME_FIELD]);
-          const m = data.mood as MoodKey;
-          return { id: doc.id, mood: m, text: data.text ?? '', time: t };
-        });
-
+        const rows = await loadLastNWeeksMoodOnly(u.uid, WEEKS_COUNT);
         setEntries(rows);
       } catch (e: any) {
-        // Fallback: no composite index
-        try {
-          console.warn('Primary query failed; retrying without where/orderBy:', e?.message);
-          const snap = await getDocs(collection(db, FIRESTORE_COLLECTION));
-          const now = new Date();
-          const earliestWeekStart = addDays(startOfWeekSun(now), -(WEEKS_COUNT - 1) * 7);
-
-          const rows: JournalEntry[] = snap.docs
-            .map((doc) => {
-              const data: any = doc.data();
-              const t = toDate(data[FIRESTORE_TIME_FIELD]);
-              const m = data.mood as MoodKey;
-              return { id: doc.id, mood: m, text: data.text ?? '', time: t };
-            })
-            .filter((r) => r.time >= earliestWeekStart)
-            .sort((a, b) => a.time.getTime() - b.time.getTime());
-
-          setEntries(rows);
-        } catch (err: any) {
-          setError(err?.message ?? 'Failed to load data');
-        }
+        setError(e?.message ?? 'Failed to load data');
       } finally {
         setLoading(false);
       }
-    };
-    load();
-  }, []);
+    });
+    return unsub;
+  }, [router]);
 
   // 🧮 Build week buckets (oldest → newest)
   const weeks: WeekBucket[] = useMemo(() => {
-    const now = new Date();
-    const current = startOfWeekSun(now);
+    const current = startOfWeekSun(new Date());
     const starts: Date[] = [];
-    for (let i = WEEKS_COUNT - 1; i >= 0; i--) {
-      starts.push(addDays(current, -i * 7));
-    }
+    for (let i = WEEKS_COUNT - 1; i >= 0; i--) starts.push(addDays(current, -i * 7));
 
     const bucketMap = new Map<string, WeekBucket>();
     starts.forEach((s) => {
@@ -172,12 +167,12 @@ export default function MoodTrendsComponent() {
       });
     });
 
-    const chooseDayMood = (items: JournalEntry[]): MoodKey | null => {
+    const chooseDayMood = (items: MoodEntry[]): MoodKey | null => {
       if (items.length === 0) return null;
       const counts = new Map<string, number>();
       items.forEach((it) => {
-        const norm = normalizeMood(it.mood);
-        const key = norm.emoji || norm.name; // prefer emoji key; else name
+        const nm = normalizeMood(it.mood);
+        const key = nm.emoji || nm.name; // prefer emoji key; else name
         counts.set(key, (counts.get(key) ?? 0) + 1);
       });
       let best: string | null = null, bestCount = -1;
@@ -190,7 +185,7 @@ export default function MoodTrendsComponent() {
       const key = wStart.toISOString();
       if (!bucketMap.has(key)) continue;
       const week = bucketMap.get(key)!;
-      (week as any)._raw = (week as any)._raw ?? new Map<number, JournalEntry[]>();
+      (week as any)._raw = (week as any)._raw ?? new Map<number, MoodEntry[]>();
       const dayIdx = entry.time.getDay(); // 0..6
       const arr = (week as any)._raw.get(dayIdx) ?? [];
       arr.push(entry);
@@ -198,18 +193,14 @@ export default function MoodTrendsComponent() {
     }
 
     bucketMap.forEach((week) => {
-      const raw: Map<number, JournalEntry[]> = (week as any)._raw ?? new Map<number, JournalEntry[]>();
+      const raw: Map<number, MoodEntry[]> = (week as any)._raw ?? new Map<number, MoodEntry[]>();
 
       for (let d = 0; d < 7; d++) {
-        const moodKey = chooseDayMood(raw.get(d) ?? []);
-        week.dayMood[d] = moodKey;
+        week.dayMood[d] = chooseDayMood(raw.get(d) ?? []);
       }
 
       const counts = new Map<string, number>();
-      for (const mk of week.dayMood) {
-        if (!mk) continue;
-        counts.set(mk, (counts.get(mk) ?? 0) + 1);
-      }
+      week.dayMood.forEach((mk) => { if (mk) counts.set(mk, (counts.get(mk) ?? 0) + 1); });
       if (counts.size === 0) {
         week.dominantMood = null;
         week.dominantCount = 0;
@@ -227,32 +218,6 @@ export default function MoodTrendsComponent() {
     return starts.map((s) => bucketMap.get(s.toISOString())!);
   }, [entries]);
 
-  // // 📣 Console logs (oldest = week 1) — uses local YYYY-MM-DD
-  // const loggedRef = useRef<string | null>(null);
-  // useEffect(() => {
-  //   if (!weeks || weeks.length === 0) return;
-  //   const sig = weeks.map((w) => w.start.toISOString() + (w.dominantMood ?? '') + w.percentage).join('|');
-  //   if (loggedRef.current === sig) return;
-  //   loggedRef.current = sig;
-
-  //   weeks.forEach((w, idx) => {
-  //     const weekNo = idx + 1;
-  //     console.log(`week ${weekNo} - ${fmtRangeShort(w.start)}`);
-  //     for (let dIdx = 0; dIdx < 7; dIdx++) {
-  //       const dayDate = addDays(w.start, dIdx);
-  //       const localYMD = formatLocalYMD(dayDate);
-  //       const mKey = w.dayMood[dIdx];
-  //       const name = moodName(mKey);
-  //       const sticker = mKey ? (EMOJI_NAME[mKey] ? mKey : moodEmoji(mKey)) : '';
-  //       console.log(`week ${weekNo} - ${localYMD} , ${name}${sticker ? ' ' + sticker : ''}`);
-  //     }
-  //     const finalName = moodName(w.dominantMood);
-  //     const finalSticker = w.dominantMood ? (EMOJI_NAME[w.dominantMood] ? w.dominantMood : moodEmoji(w.dominantMood)) : '';
-  //     console.log(`week ${weekNo} - final mood ${finalName}${finalSticker ? ' ' + finalSticker : ''} , ${w.percentage}%`);
-  //   });
-  // }, [weeks]);
-
-  
   // 📈 Weekly chart — X-axis labels as "Week 1", "Week 2", ...
   const chartData = useMemo(() => {
     return weeks.map((w, idx) => {
@@ -309,22 +274,21 @@ export default function MoodTrendsComponent() {
         <Text style={styles.heading}>Mood Trends</Text>
 
         <View style={styles.chartContainer}>
-  <LineChartAny
-    data={chartData}
-    thickness={3}
-    color="#00e0ff"
-    curved
-    hideRules
-    hideAxesAndRules
-    yAxisTextStyle={{ color: 'transparent' }}
-    xAxisLabelTextStyle={{ color: 'white', fontSize: 12 }}
-    dataPointsColor="#00e0ff"
-    dataPointsRadius={4}
-    spacing={60}
-    maxValue={100}
-  />
-</View>
-
+          <LineChartAny
+            data={chartData}
+            thickness={3}
+            color="#00e0ff"
+            curved
+            hideRules
+            hideAxesAndRules
+            yAxisTextStyle={{ color: 'transparent' }}
+            xAxisLabelTextStyle={{ color: 'white', fontSize: 12 }}
+            dataPointsColor="#00e0ff"
+            dataPointsRadius={4}
+            spacing={60}
+            maxValue={100}
+          />
+        </View>
 
         <View style={styles.moodTextContainer}>
           <Text style={styles.moodText}>View your mood trends and insights</Text>
@@ -347,7 +311,6 @@ export default function MoodTrendsComponent() {
                 • <Text style={styles.weekBold}>{item.percentage}%</Text>
               </Text>
 
-              {/* Daily lines: Date — MoodName Sticker */}
               <View style={{ marginTop: 8 }}>
                 {Array.from({ length: 7 }).map((_, dIdx) => {
                   const dayDate = addDays(item.start, dIdx);
@@ -377,4 +340,3 @@ export default function MoodTrendsComponent() {
     </LinearGradient>
   );
 }
-
