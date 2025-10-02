@@ -91,6 +91,7 @@ export default function Layout() {
       <Tabs.Screen name="Player" options={{ href: null }} />
       <Tabs.Screen name="talesPlayer" options={{ href: null }} />
       <Tabs.Screen name="playlistDetails" options={{ href: null }} />
+      <Tabs.Screen name="microphoneResult" options={{ href: null }} />
     
     </Tabs>
   );
