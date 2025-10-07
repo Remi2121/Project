@@ -263,12 +263,11 @@
 
 
 // app/ProfilePage/Menu_Items/Settings.tsx
-import { useLayoutEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -329,7 +328,7 @@ export default function SettingsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack('../ProfileSideBar/ProfileSidebar.tsx')}>
           <Ionicons name="arrow-back" size={26} color={isDark ? 'white' : 'black'} />
         </TouchableOpacity>
         <Text style={styles.headerText}>{t.settings}</Text>
