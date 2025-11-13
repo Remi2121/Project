@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   appNameContainer: {
     flex: 1,
     alignItems: 'flex-start',
-    justifyContent: 'flex-end',
+
   },
   appName: {
     color: 'white',
@@ -36,9 +36,10 @@ const styles = StyleSheet.create({
   },
   
   loginButtonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    marginBottom:5
   },
   
   content: {
@@ -50,23 +51,26 @@ const styles = StyleSheet.create({
     color: '#2a1faa',
     fontSize: 30,
     fontWeight: '600',
+    marginTop:8
   },
   username: {
     color: '#2a1faa',
     fontSize: 20,
-    marginBottom: 6,
+    marginTop:8
   },
   subtitle: {
     color: '#2a1faa',
     fontSize: 20,
     marginBottom: 30,
+    marginTop:8
   },
   mainButton: {
     backgroundColor: '#2a1faa',
     padding: 24,
     borderRadius: 20,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop:2
   },
   mainText: {
     color: '#fff',
@@ -88,7 +92,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 15,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   tileText: {
     color: '#fff',

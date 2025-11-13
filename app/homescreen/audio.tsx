@@ -1,99 +1,170 @@
 // audio.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import {View, StyleSheet, Text, Alert, TouchableOpacity, ActivityIndicator} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Slider from '@react-native-community/slider';
-import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
+import { View, StyleSheet, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 
-const ASSEMBLY_API_KEY = 'c3a5d2f80bf34f659c14f164a4302baf';
+// Use environment variables for API keys
+const ASSEMBLY_API_KEY: string = "48ef25c7c2204041a6fef84c3184bf80";
 
-const uploadAudio = async (fileUri: string) => {
-  const response = await fetch(fileUri);
-  const blob = await response.blob();
-  const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
-    method: 'POST',
-    headers: { authorization: ASSEMBLY_API_KEY },
-    body: blob,
-  });
-  const json = await uploadRes.json();
-  return json.upload_url;
+// Emotion detection based on keywords
+const detectEmotionFromText = (text: string): string => {
+  if (!text) return 'Neutral';
+  
+  const lowerText = text.toLowerCase();
+  
+  const emotionKeywords = {
+    joy: ['happy', 'joy', 'excited', 'good', 'great', 'wonderful', 'amazing', 'love', 'excellent', 'fantastic', 'smile', 'cheerful', 'delighted', 'content', 'pleased', 'satisfied', 'joyful', 'ecstatic', 'thrilled'],
+    sorrow: ['sad', 'unhappy', 'depressed', 'bad', 'terrible', 'awful', 'hate', 'cry', 'miserable', 'upset','lonely', 'heartbroken', 'down', 'gloomy', 'sorrow', 'grief', 'melancholy', 'despair'],
+    anger: ['angry', 'mad', 'furious', 'annoyed', 'frustrated', 'hate', 'rage', 'irritated', 'pissed', 'bitter', 'resentful', 'jealous', 'hostile', 'aggressive', 'outraged', 'fuming', 'livid'],
+    anxious: ['anxious', 'nervous', 'worried', 'scared', 'afraid', 'panic', 'stress', 'tense', 'overwhelmed', 'insecure', 'uneasy', 'restless', 'apprehensive', 'fearful', 'terrified', 'dread'],
+    calm: ['calm', 'peaceful', 'relaxed', 'chill', 'serene', 'tranquil', 'quiet', 'content', 'balanced', 'grounded', 'soothing', 'composed', 'easygoing', 'placid', 'untroubled'],
+    surprise: ['surprised', 'shocked', 'amazed', 'astonished', 'startled', 'speechless', 'wow', 'unbelievable', 'incredible', 'unexpected', 'stunned', 'dumbfounded', 'astounded', 'flabbergasted'],
+  };
+
+  for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+    if (keywords.some(keyword => lowerText.includes(keyword))) {
+      return emotion.charAt(0).toUpperCase() + emotion.slice(1);
+    }
+  }
+  
+  return 'Neutral';
 };
 
-const requestTranscription = async (audioUrl: string) => {
-  const response = await fetch('https://api.assemblyai.com/v2/transcript', {
-    method: 'POST',
-    headers: {
-      authorization: ASSEMBLY_API_KEY,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ audio_url: audioUrl, }),
-  });
-  const json = await response.json();
-  return json.id;
-};
-
-const pollTranscription = async (transcriptId: string) => {
-  while (true) {
-    const res = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
-      headers: { authorization: ASSEMBLY_API_KEY },
+// Upload audio to AssemblyAI
+const uploadAudio = async (fileUri: string): Promise<string> => {
+  try {
+    const response = await fetch(fileUri);
+    const blob = await response.blob();
+    
+    const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
+      method: 'POST',
+      headers: { 
+        authorization: ASSEMBLY_API_KEY,
+      },
+      body: blob,
     });
-    const json = await res.json();
-    if (json.status === 'completed') return json;
-    if (json.status === 'error') throw new Error(json.error);
-    await new Promise((r) => setTimeout(r, 3000));
+    
+    if (!uploadRes.ok) {
+      throw new Error(`Upload failed: ${uploadRes.status}`);
+    }
+    
+    const json = await uploadRes.json();
+    return json.upload_url;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw new Error(`Audio upload failed: ${error}`);
   }
 };
 
+// Request transcription
+const requestTranscription = async (audioUrl: string): Promise<string> => {
+  try {
+    const response = await fetch('https://api.assemblyai.com/v2/transcript', {
+      method: 'POST',
+      headers: {
+        authorization: ASSEMBLY_API_KEY,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        audio_url: audioUrl,
+        language_detection: true
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Transcription request failed: ${response.status}`);
+    }
+    
+    const json = await response.json();
+    return json.id;
+  } catch (error) {
+    console.error('Transcription request error:', error);
+    throw new Error(`Transcription request error: ${error}`);
+  }
+};
+
+// Poll for transcription results
+const pollTranscription = async (transcriptId: string): Promise<any> => {
+  const maxAttempts = 30;
+  let attempts = 0;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const res = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+        headers: { authorization: ASSEMBLY_API_KEY },
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Polling failed: ${res.status}`);
+      }
+      
+      const json = await res.json();
+      
+      if (json.status === 'completed') {
+        return json;
+      }
+      if (json.status === 'error') {
+        throw new Error(`Transcription error: ${json.error}`);
+      }
+      
+      attempts++;
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    } catch (error) {
+      console.error('Polling error:', error);
+      throw new Error(`Polling error: ${error}`);
+    }
+  }
+  
+  throw new Error('Transcription timeout');
+};
+
 export default function AudioScreen() {
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const router = useRouter();
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingURI, setRecordingURI] = useState<string | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMillis, setPositionMillis] = useState(0);
-  const [durationMillis, setDurationMillis] = useState(1);
-  const [fullTranscriptText, setFullTranscriptText] = useState('');
-  const [animatedTranscript, setAnimatedTranscript] = useState('');
-  const [detectedEmotion, setDetectedEmotion] = useState('');
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   
-  const intervalRef = useRef<number | null>(null);
-  const animateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Initialize audio permissions and setup
   useEffect(() => {
-    (async () => {
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert('Permission required', 'Microphone access denied.');
-      }
-    })();
-    return () => {
-      sound?.unloadAsync();
-      stopTimer();
-      if (animateIntervalRef.current) clearInterval(animateIntervalRef.current);
-    };
-  }, [sound]);
-
-  useEffect(() => {
-    if (sound) {
-      const interval = setInterval(async () => {
-        const status = await sound.getStatusAsync();
-        if ('isLoaded' in status && status.isLoaded) {
-          setPositionMillis(status.positionMillis || 0);
-          setDurationMillis(status.durationMillis || 1);
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            setPositionMillis(0);
-          }
+    const setupAudio = async () => {
+      try {
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission required', 'Microphone access is required for voice mood detection.');
+          return;
         }
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [sound]);
+        
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (error) {
+        console.error('Audio setup error:', error);
+        Alert.alert('Error', 'Failed to setup audio.');
+      }
+    };
+
+    setupAudio();
+    
+    return () => {
+      // Cleanup
+      if (recording) {
+        recording.stopAndUnloadAsync();
+      }
+      stopTimer();
+    };
+  }, []);
 
   const startTimer = () => {
     setRecordingDuration(0);
@@ -109,202 +180,178 @@ export default function AudioScreen() {
     }
   };
 
- const animateTranscriptText = (text: string) => {
-    setAnimatedTranscript('');
-    let index = 0;
-    if (animateIntervalRef.current) clearInterval(animateIntervalRef.current);
-    animateIntervalRef.current = setInterval(() => {
-      setAnimatedTranscript((prev) => prev + text.charAt(index));
-      index++;
-      if (index >= text.length) {
-        if (animateIntervalRef.current) clearInterval(animateIntervalRef.current);
-      }
-    }, 40); // Adjust speed here (ms per char)
-  };
-
-  const record = async () => {
+  const startRecording = async () => {
+    if (isBusy) return;
+    
     try {
       setIsBusy(true);
-      await audioRecorder.prepareToRecordAsync();
-      await audioRecorder.record();
+      
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      
+      setRecording(recording);
       setIsRecording(true);
       setRecordingURI(null);
-      setFullTranscriptText('');
-      setAnimatedTranscript('');
-      setDetectedEmotion('');
       startTimer();
-    } catch (e) {
-      Alert.alert('Recording failed', String(e));
+    } catch (error) {
+      console.error('Recording error:', error);
+      Alert.alert('Recording failed', 'Please try again.');
     } finally {
       setIsBusy(false);
     }
   };
 
   const stopRecording = async () => {
-  try {
-    setIsBusy(true);
-    await audioRecorder.stop();
-    setIsRecording(false);
-    stopTimer();
-    const uri = audioRecorder.uri;
-    if (!uri) {
-      Alert.alert('Recording Error', 'No recording URI found.');
-      return;
-    }
-    setRecordingURI(uri);   
-  } catch (e) {
-    Alert.alert('Failed to stop recording', String(e));
-  } finally {
-    setIsBusy(false);
-  }
-};
-
-const sendForTranscription = async () => {
-  if (!recordingURI) return;
-  try {
-    setIsLoadingTranscript(true);
-    const audioUrl = await uploadAudio(recordingURI);
-    const transcriptId = await requestTranscription(audioUrl);
-    const result = await pollTranscription(transcriptId);
-    const text = result.text || '';
-    setFullTranscriptText(text);
-    animateTranscriptText(text);
-   
-  } catch (e) {
-    Alert.alert('Transcription Error', String(e));
-  } finally {
-    setIsLoadingTranscript(false);
-  }
-};
-
-  const playPauseToggle = async () => {
-    if (!recordingURI) return;
+    if (isBusy || !recording) return;
+    
     try {
-      if (!sound) {
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: recordingURI });
-        setSound(newSound);
-        await newSound.playAsync();
-        setIsPlaying(true);
-      } else {
-        const status = await sound.getStatusAsync();
-        if ('isLoaded' in status && status.isLoaded && status.isPlaying) {
-          await sound.pauseAsync();
-          setIsPlaying(false);
-        } else {
-          await sound.playAsync();
-          setIsPlaying(true);
-        }
+      setIsBusy(true);
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      
+      setIsRecording(false);
+      setRecording(null);
+      stopTimer();
+      
+      if (!uri) {
+        Alert.alert('Recording Error', 'No recording was captured. Please try again.');
+        return;
       }
-    } catch (e) {
-      Alert.alert('Playback error', String(e));
+      
+      setRecordingURI(uri);
+      
+      // Reset audio mode for playback
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+    } catch (error) {
+      console.error('Stop recording error:', error);
+      Alert.alert('Error', 'Failed to stop recording.');
+    } finally {
+      setIsBusy(false);
     }
   };
 
-  const seekAudio = async (value: number) => {
-    if (sound) await sound.setPositionAsync(value);
+  const sendForTranscription = async () => {
+    if (!recordingURI) return;
+    
+    try {
+      setIsLoadingTranscript(true);
+      const audioUrl = await uploadAudio(recordingURI);
+      const transcriptId = await requestTranscription(audioUrl);
+      const result = await pollTranscription(transcriptId);
+      
+      const text = result.text || 'No speech detected.';
+      
+      // Detect emotion from transcript
+      const emotion = detectEmotionFromText(text);
+      
+      // Navigate directly to microphone result screen
+      router.push({
+        pathname: '/microphoneResult',
+        params: { 
+          mood: emotion,
+          transcript: text
+        }
+      });
+      
+    } catch (error) {
+      console.error('Transcription error:', error);
+      Alert.alert(
+        'Transcription Error', 
+        'Failed to process audio. Please check your connection and try again.'
+      );
+    } finally {
+      setIsLoadingTranscript(false);
+    }
   };
 
-  const deleteRecording = async() => {
-    sound?.unloadAsync();
-    setSound(null);
-    setRecordingURI(null);
-    setIsPlaying(false);
-    setPositionMillis(0);
-    setDurationMillis(1);
-    setFullTranscriptText('');
-    setAnimatedTranscript('');
-    setDetectedEmotion('');
-    Alert.alert('Deleted');
-  };
-
-  const formatMillis = (millis: number) => {
-    const secs = Math.floor(millis / 1000);
-    const mins = (secs / 60) | 0;
-    const rem = secs % 60;
-    return `${mins}:${rem.toString().padStart(2, '0')}`;
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+      <Text style={styles.title}>Voice Mood Detection</Text>
+      <Text style={styles.subtitle}>Record your thoughts to detect your mood</Text>
+
+      {/* Recording Section */}
       {!recordingURI ? (
-        <TouchableOpacity
-          onPress={isRecording ? stopRecording : record}
-          style={styles.recordButton}
-          disabled={isBusy}
-        >
-          <Icon
-            name={isRecording ? 'pause-circle' : 'microphone'}
-            size={64}
-            color={isRecording ? '#f00' : '#1fb28a'}
-          />
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.voiceContainer}>
-          <TouchableOpacity onPress={playPauseToggle}>
-            <Icon
-              name={isPlaying ? 'pause-circle' : 'play-circle'}
-              size={42}
-              color="#1fb28a"
+        <View style={styles.recordingSection}>
+          <TouchableOpacity
+            onPress={isRecording ? stopRecording : startRecording}
+            style={[styles.recordButton, isRecording && styles.recordingActive]}
+            disabled={isBusy}
+          >
+            <Ionicons
+              name={isRecording ? 'stop' : 'mic'}
+              size={80}
+              color={isRecording ? '#ff4444' : '#4CAF50'}
             />
+            <Text style={styles.recordButtonText}>
+              {isRecording ? 'Stop Recording' : 'Start Recording'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.recordingCompleteSection}>
+          <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
+          <Text style={styles.recordingCompleteText}>Recording Complete!</Text>
+          <Text style={styles.recordingDuration}>
+            Duration: {formatTime(recordingDuration)}
+          </Text>
+        </View>
+      )}
+
+      {/* Recording Indicator */}
+      {isRecording && (
+        <View style={styles.recordingIndicator}>
+          <View style={styles.recordingDot} />
+          <Text style={styles.recordingTimer}>
+            Recording: {formatTime(recordingDuration)}
+          </Text>
+        </View>
+      )}
+
+      {/* Action Buttons */}
+      {recordingURI && !isLoadingTranscript && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.analyzeButton}
+            onPress={sendForTranscription}
+            disabled={isLoadingTranscript}
+          >
+            <Text style={styles.analyzeButtonText}>Analyze Mood</Text>
           </TouchableOpacity>
 
-          <Slider
-            style={styles.voiceSlider}
-            minimumValue={0}
-            maximumValue={durationMillis}
-            value={positionMillis}
-            onSlidingComplete={seekAudio}
-            minimumTrackTintColor="#1fb28a"
-            maximumTrackTintColor="#ccc"
-            thumbTintColor="#1fb28a"
-          />
-
-          <Text style={styles.timeText}>{formatMillis(positionMillis)}</Text>
-
-          <TouchableOpacity onPress={deleteRecording}>
-            <Icon name="trash-can-outline" size={28} color="crimson" />
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              setRecordingURI(null);
+              setIsRecording(false);
+            }}
+          >
+            <Text style={styles.retryButtonText}>Record Again</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {isRecording && (
-        <Text style={styles.timer}>
-          {formatMillis(recordingDuration * 1000)}
-        </Text>
-      )}
-
-      {recordingURI && !fullTranscriptText && !isLoadingTranscript && (
-  <TouchableOpacity
-    style={{
-      backgroundColor: '#1fb28a',
-      paddingHorizontal: 24,
-      paddingVertical: 10,
-      borderRadius: 25,
-      marginTop: 20,
-    }}
-    onPress={sendForTranscription}
-  >
-    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Send</Text>
-  </TouchableOpacity>
-)}
-
-
+      {/* Loading Indicator */}
       {isLoadingTranscript && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1fb28a" />
-          <Text style={{ marginTop: 8, color: '#fff' }}>Fetching transcript...</Text>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Analyzing your voice for mood detection...</Text>
         </View>
       )}
-
-      {!isLoadingTranscript && animatedTranscript !== '' && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultLabel}>Transcript:</Text>
-          <Text style={styles.transcript}>{animatedTranscript}</Text>
-          <Text style={styles.resultLabel}>Detected Emotion:</Text>
-          <Text style={styles.emotion}>{detectedEmotion}</Text>
-        </View>
-      )}
-
     </LinearGradient>
   );
 }
@@ -312,78 +359,115 @@ const sendForTranscription = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f9f9f9',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 60,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  recordingSection: {
+    alignItems: 'center',
+    flex: 1, 
+    justifyContent: 'center',
   },
   recordButton: {
-    marginBottom: 20,
+    alignItems: 'center',
+    padding: 20,
   },
-  timer: {
+  recordingActive: {
+    backgroundColor: 'rgba(255,68,68,0.1)',
+    borderRadius: 50,
+  },
+  recordButtonText: {
+    color: 'white',
     marginTop: 10,
     fontSize: 16,
-    color: 'white',
+    fontWeight: '600',
   },
-  voiceContainer: {
+  recordingCompleteSection: {
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  recordingCompleteText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 50,
+    marginBottom: 5,
+  },
+  recordingDuration: {
+    color: '#ccc',
+    fontSize: 16,
+    marginTop: 5,
+  },
+  recordingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    justifyContent: 'center',
+    marginTop: 40,
   },
-  voiceSlider: {
-    flex: 1,
-    marginHorizontal: 10,
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#ff4444',
+    marginRight: 8,
+   
   },
-  timeText: {
-    fontSize: 12,
-    color: '#555',
-    width: 40,
-    textAlign: 'center',
+  recordingTimer: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    
   },
-  resultBox: {
-  marginTop: 30,
-  padding: 16,
-  backgroundColor: '#fff',
-  borderRadius: 20,
-  width: '100%',
-  shadowColor: '#000',
-  shadowOpacity: 0.1,
-  shadowOffset: { width: 0, height: 4 },
-  shadowRadius: 8,
-  elevation: 3,
-},
-
-resultLabel: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  marginTop: 8,
-  marginBottom: 4,
-  color: '#1f1f1f',
-},
-
-transcript: {
-  fontSize: 14,
-  color: '#333',
-  lineHeight: 20,
-},
-
-emotion: {
-  fontSize: 16,
-  color: '#6a1b9a',
-  fontWeight: '600',
-  marginTop: 4,
-},
-loadingContainer: {
-    marginTop: 30,
+  buttonContainer: {
+    alignItems: 'center',
+    gap: 40,
+  },
+  analyzeButton: {
+    backgroundColor: '#4CAF50',
+    padding:20,
+    borderRadius: 10,
+    marginTop: 50,
+    minWidth: 100,
     alignItems: 'center',
   },
-
+  analyzeButtonText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  retryButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 20,
+    borderRadius: 10,
+    minWidth: 100,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  retryButtonText: {
+    color: '#4CAF50',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 15,
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });

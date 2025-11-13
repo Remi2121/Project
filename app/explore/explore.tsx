@@ -7,7 +7,7 @@ import { ActivityIndicator, Alert, Image, ScrollView, Text, TextInput, Touchable
 
 import type { UnknownOutputParams } from 'expo-router';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from 'utils/firebaseConfig';
+import { auth, db } from 'utils/firebaseConfig'; // ✅ import auth as well
 import { listTracksByMood, type StoredTrack } from 'utils/storageAudio';
 import styles from '../explore/explorestyles';
 
@@ -110,6 +110,17 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   const moodParamRaw = typeof routeParams?.mood === 'string' ? String(routeParams!.mood) : '';
   const moodFromParam = useMemo(() => normalizeToMainMood(moodParamRaw), [moodParamRaw]);
 
+  /** ===== 🔐 User helpers ===== */
+  const requireUser = () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error('NOT_SIGNED_IN');
+    return uid;
+  };
+  const userColl = (sub: 'MoodHistory' ) => {
+    const uid = requireUser();
+    return collection(db, 'users', uid, sub);
+  };
+
   // Prefill suggestions for all moods (from cache if available; fetch otherwise)
   useEffect(() => {
     (async () => {
@@ -123,6 +134,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
         setSuggestions(map as Record<MainMood, StoredTrack[]>);
       } finally { setSuggestionsLoading(false); }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // If opened with ?mood=... param, load that mood (from cache)
@@ -131,34 +143,84 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
       setMoodInput(moodFromParam);
       void fetchFromStorage(moodFromParam);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moodFromParam]);
 
+  // If not signed in, send to Login (so data is per-user)
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(u => {
+      if (!u) router.replace('/authpages/Login-page');
+    });
+    return unsub;
+  }, [router]);
+
+  /** ===== Write a mood search to user's MoodHistory ===== */
   async function logMood(mainMood: MainMood) {
-    try { await addDoc(collection(db, 'MoodHistory'), { mood: mainMood, createdAt: serverTimestamp() }); }
-    catch (e) { console.warn('Failed to log MoodHistory:', e); }
+    try {
+      await addDoc(userColl('MoodHistory'), {
+        mood: mainMood,
+        createdAt: serverTimestamp(),
+        source: 'ExploreSearch',
+      });
+    } catch (e) {
+      console.warn('Failed to log MoodHistory:', e);
+    }
+  }
+
+  /** ===== Write a track open to user's TrackOpens ===== */
+  async function logTrackOpen(track: StoredTrack, mood: MainMood | null) {
+    try {
+      await addDoc(userColl('MoodHistory'), {
+        name: track.name,
+        mood: mood ?? 'neutral',
+        createdAt: serverTimestamp(),
+        source: 'ExploreOpen',
+      });
+    } catch (e) {
+      console.warn('Failed to log TrackOpens:', e);
+    }
   }
 
   async function fetchFromStorage(mainMood: MainMood) {
     try {
+      // ensure user present
+      try { requireUser(); } catch {
+        Alert.alert('Login required', 'Please sign in to search by mood.', [
+          { text: 'OK', onPress: () => router.replace('/authpages/Login-page') },
+        ]);
+        return;
+      }
+
       setLoading(true);
       const tracks = await getTracksCached(mainMood); // <-- use cache
       setSearchResults(tracks);
       setCurrentMood(mainMood);
       await logMood(mainMood);
-      if (!tracks.length) Alert.alert('No Results', `No audio files found in "${mainMood}/" folder.`);
+
+      if (!tracks.length) {
+        Alert.alert('No Results', `No audio files found in "${mainMood}/" folder.`);
+      }
     } catch (e: any) {
-      console.error(e); Alert.alert('Error', e?.code || 'Could not fetch audio from Firebase Storage.');
-    } finally { setLoading(false); }
+      console.error(e);
+      Alert.alert('Error', e?.code || 'Could not fetch audio from Firebase Storage.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function onSearchPress() {
     const normalized = normalizeToMainMood(moodInput);
-    if (!normalized) { Alert.alert('Unknown mood', 'Type happy/sad/anger/surprise/neutral or use emoji 😊 😢 😠 😲 😐'); return; }
+    if (!normalized) {
+      Alert.alert('Unknown mood', 'Type happy/sad/anger/surprise/neutral or use emoji 😊 😢 😠 😲 😐');
+      return;
+    }
     await fetchFromStorage(normalized);
   }
 
   // Navigate helper (RAW URL — no encode)
   function openPlayer(track: StoredTrack, mood: MainMood | null) {
+    // log open per-user
+    logTrackOpen(track, mood).catch(() => {});
     const m = mood ?? 'neutral';
     router.push({
       pathname: '/explore/player',
@@ -172,21 +234,17 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
 
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
-
-      {/* ✅ Added Favorites + Playlist buttons */}
-      
-
-
       <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
 
       <View style={{flexDirection:"row", justifyContent:"flex-end", paddingTop:40, paddingHorizontal:16}}>
         <TouchableOpacity onPress={()=>router.push("/explore/favorites")} style={{marginRight:20}}>
-        <Ionicons name="heart" size={26} color="red"/>
+          <Ionicons name="heart" size={26} color="red"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={()=>router.push("/explore/playlist")}>
-      <Ionicons name="musical-notes" size={26} color="white"/>
-      </TouchableOpacity>
-   </View>
+          <Ionicons name="musical-notes" size={26} color="white"/>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.logoContainer}>
         <Lottie source={require('../../assets/animation/explorelogo.json')} autoPlay loop style={styles.logo} />
       </View>
@@ -202,6 +260,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
               placeholderTextColor="white"
               value={moodInput}
               onChangeText={setMoodInput}
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={onSearchPress} style={{ padding: 10 }}>
               <Ionicons name="search" size={24} color="white" />
