@@ -1855,6 +1855,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 28,
     fontWeight: "700",
+    marginLeft: 6,
   },
   // New container for the horizontal tabs
   tabsContainer: {

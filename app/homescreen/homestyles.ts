@@ -51,26 +51,23 @@ const styles = StyleSheet.create({
     color: '#2a1faa',
     fontSize: 30,
     fontWeight: '600',
-    marginTop:8
   },
   username: {
     color: '#2a1faa',
     fontSize: 20,
-    marginTop:8
+    marginBottom: 6,
   },
   subtitle: {
     color: '#2a1faa',
     fontSize: 20,
     marginBottom: 30,
-    marginTop:8
   },
   mainButton: {
     backgroundColor: '#2a1faa',
     padding: 24,
     borderRadius: 20,
     alignItems: 'center',
-    marginBottom: 30,
-    marginTop:2
+    marginBottom: 20,
   },
   mainText: {
     color: '#fff',
@@ -92,7 +89,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 15,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tileText: {
     color: '#fff',
