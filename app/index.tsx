@@ -1,14 +1,18 @@
+// app/index.tsx  (Welcome / Splash Screen)
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import 'react-native-gesture-handler';
-import Animated, {
+import Animated,
+{
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import styles from './homeStyles'; // Make sure your styles are correctly defined
+
+// 🔥 theme hook – same file path you already use in other screens
+import { useSettings } from './utilis/Settings';
 
 export default function WelcomeScreen() {
   const fullBigText = 'Moodify';
@@ -19,7 +23,10 @@ export default function WelcomeScreen() {
   const opacity = useSharedValue(1);
   const router = useRouter();
 
-  // ✅ Correct function to navigate
+  // 🔥 get theme (dark / light)
+  const { isDark } = useSettings();
+  const styles = getStyles(isDark);
+
   const navigateToTabs = () => {
     router.push('/(tabs)');
   };
@@ -48,11 +55,10 @@ export default function WelcomeScreen() {
       }
     }, intervalTime);
 
-    // Animate opacity and navigate
     const timeout = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 700 }, (finished) => {
         if (finished) {
-          runOnJS(navigateToTabs)(); // ✅ Fixed usage
+          runOnJS(navigateToTabs)();
         }
       });
     }, 5000);
@@ -61,7 +67,7 @@ export default function WelcomeScreen() {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -86,3 +92,41 @@ export default function WelcomeScreen() {
   );
 }
 
+// 🔧 Theme-aware styles JUST for this screen
+const getStyles = (dark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: dark ? '#121212' : '#f8f9fa',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backgroundImage: {
+      ...StyleSheet.absoluteFillObject,
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+      opacity: dark ? 0.45 : 0.6,
+    },
+    icon: {
+      width: 120,
+      height: 120,
+      resizeMode: 'contain',
+      marginBottom: 24,
+    },
+    HomefirstContainer: {
+      paddingHorizontal: 24,
+      alignItems: 'center',
+    },
+    BigText: {
+      fontSize: 42,
+      fontWeight: '800',
+      color: dark ? '#ffffff' : '#000000',
+      marginBottom: 12,
+    },
+    welcomeText: {
+      fontSize: 16,
+      textAlign: 'center',
+      color: dark ? '#dddddd' : '#333333',
+    },
+  });

@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f12ff', // modern gradient-like purple background
+    backgroundColor: '#1f1f41ff', // modern gradient-like purple background
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,

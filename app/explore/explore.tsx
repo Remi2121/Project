@@ -233,15 +233,15 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
   }
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
-      <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
+    <LinearGradient colors={['#ffffffff', '#fdfdfdff']} style={styles.gradient}>
+
 
       <View style={{flexDirection:"row", justifyContent:"flex-end", paddingTop:40, paddingHorizontal:16}}>
         <TouchableOpacity onPress={()=>router.push("/explore/favorites")} style={{marginRight:20}}>
           <Ionicons name="heart" size={26} color="red"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={()=>router.push("/explore/playlist")}>
-          <Ionicons name="musical-notes" size={26} color="white"/>
+          <Ionicons name="musical-notes" size={26} color="black"/>
         </TouchableOpacity>
       </View>
 
