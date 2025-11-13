@@ -1,6 +1,5 @@
-//recommendList.tsx
+// recommendList.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -10,94 +9,121 @@ export default function Recommendation() {
   const router = useRouter();
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.header}>You Seem {typeof mood === 'string' ? mood : '...'}...</Text>
-        <Text style={{ color: '#ffffff', fontSize: 16, textAlign: 'center', marginBottom: 20, }}>Here are some suggestions to help you feel better.</Text>
-        <Text style={{ color: '#ffffff', fontSize: 16, textAlign: 'center', marginBottom: 20, }}>Tap on any tile to explore more.</Text>
-        
+        <Text style={styles.description}>
+          Here are some suggestions to help you feel better.
+        </Text>
+        <Text style={styles.description}>
+          Tap on any tile to explore more.
+        </Text>
+
         <View style={styles.grid}>
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/explore' as any, params: { mood } })}>
-            <Ionicons name="play-circle" style={{ fontSize: 70, color: '#fff' }} />
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() =>
+              router.push({ pathname: '/(tabs)/explore' as any, params: { mood } })
+            }>
+            <Ionicons name="play-circle" style={styles.icon} />
             <Text style={styles.tileText}>Play Music</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/meditation/stressRelief' as any, })}>
-            <Text style={styles.icon}>🧘</Text>
-            <Text style={styles.tileText}> Take Meditation</Text>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push({ pathname: '/meditation/stressRelief' as any })}>
+            <Text style={styles.emoji}>🧘</Text>
+            <Text style={styles.tileText}>Take Meditation</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/journal/journal' as any,})}>
-            <Text style={styles.icon}>📘</Text>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push({ pathname: '/journal/journal' as any })}>
+            <Text style={styles.emoji}>📘</Text>
             <Text style={styles.tileText}>Add to Journal</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() =>router.push({ pathname: '/(tabs)/mood_trends' as any,})}>
-            <Text style={styles.icon}>📊</Text>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push({ pathname: '/(tabs)/mood_trends' as any })}>
+            <Text style={styles.emoji}>📊</Text>
             <Text style={styles.tileText}>Check Mood Trends</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/(tabs)/chatbot' as any, params: { topic: mood } })}>
-            <Text style={styles.icon}>💬</Text>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() =>
+              router.push({ pathname: '/(tabs)/chatbot' as any, params: { topic: mood } })
+            }>
+            <Text style={styles.emoji}>💬</Text>
             <Text style={styles.tileText}>Talk to Chatbot</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({ pathname: '/journal' as any,})}>
-            <Ionicons name="calendar-outline" style={{ fontSize: 70, color: '#fff' }} />
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push({ pathname: '/journal' as any })}>
+            <Ionicons name="calendar-outline" style={styles.icon} />
             <Text style={styles.tileText}>Mood Calendar</Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
+
+const themeColor = '#2a1faa';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 80,
     paddingHorizontal: 24,
-    backgroundColor: '#0d0b2f',
+    backgroundColor: '#ffffff',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  header: {
+    color: themeColor,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  description: {
+    color: themeColor,
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 15,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
   },
   tile: {
-    backgroundColor: '#1f1b5a',
+    backgroundColor: '#f2f2ff',
     width: '48%',
     padding: 20,
     borderRadius: 15,
     alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 2,
+    borderColor: themeColor,
   },
   icon: {
+    fontSize: 70,
+    color: themeColor,
+  },
+  emoji: {
     fontSize: 60,
-    color: '#fff',
+    color: themeColor,
   },
   tileText: {
-    color: '#fff',
+    color: themeColor,
     marginTop: 8,
     fontSize: 14,
+    fontWeight: '600',
   },
-  header: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  description: {
-    color: '#ffffff',
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-
 });

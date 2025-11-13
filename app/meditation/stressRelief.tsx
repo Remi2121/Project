@@ -49,7 +49,8 @@ const notify = (msg: string) => {
 };
 
 // ====== Constants for local files ======
-const ROOT = FileSystem.documentDirectory + "moodify/";
+const DOCUMENT_DIR = (FileSystem as any).documentDirectory ?? (FileSystem as any).cacheDirectory ?? "";
+const ROOT = DOCUMENT_DIR + "moodify/";
 const FAV_DIR = ROOT + "/favorites/";
 const PL_DIR = ROOT + "playlists/";
 const LOGIN_ROUTE = "/authpages/Login-page";
