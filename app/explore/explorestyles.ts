@@ -20,8 +20,8 @@ const styles = StyleSheet.create({
   headerinput: {
     fontSize: 20,
     textAlign: 'left',
-    color: 'lightblue',
     marginTop: 10,
+    color: 'black',
   },
 
   logoContainer: {
@@ -79,8 +79,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: 'white',
+    borderBottomWidth: 2,
+    backgroundColor: 'black',
+    borderRadius: 20,  
   },
 
  
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   },
 
   searchResultsHeader: {
-    color: 'white',
+    color: 'black',
     fontSize: 20,
     fontWeight: 'bold',
   },

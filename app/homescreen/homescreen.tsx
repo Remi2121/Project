@@ -5,12 +5,19 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../utils/firebaseConfig';
-import styles from './homestyles';
+
+// 🔥 THEME
+import { useSettings } from '../utilis/Settings';
+import getHomeStyles from './homest';
 
 export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [username, setUsername] = useState('User');
+
+  // 🔥 Theme state from global settings
+  const { isDark } = useSettings();
+  const styles = getHomeStyles(isDark);
 
   const mood = typeof params.mood === 'string' ? params.mood : null;
 
@@ -59,17 +66,20 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-
       {/* Top Navigation Bar */}
       <LinearGradient
-        colors={['#0d0b2f', '#2a1faa']}
+        colors={
+          isDark
+            ? ['#050509', '#141327'] // 🔥 Dark mode gradient
+            : ['#0d0b2f', '#2a1faa'] // 🔆 Light mode gradient (original)
+        }
         style={styles.navBar}
       >
         {/* App Name */}
         <View style={styles.appNameContainer}>
           <Text style={styles.appName}>Moodify</Text>
         </View>
-        
+
         {/* Login Button */}
         <TouchableOpacity
           onPress={() => router.push('../authpages/Login-page')}
@@ -86,29 +96,46 @@ export default function HomeScreen() {
         <Text style={styles.subtitle}>{moodSummary}</Text>
 
         {/* Detect Mood Button */}
-        <TouchableOpacity style={styles.mainButton} onPress={() => router.push('/detect-options')}>
+        <TouchableOpacity
+          style={styles.mainButton}
+          onPress={() => router.push('/detect-options')}
+        >
           <Text style={styles.icon}>🎭</Text>
           <Text style={styles.mainText}>Detect Mood</Text>
         </TouchableOpacity>
 
         {/* Grid Buttons */}
         <View style={styles.grid}>
-          <TouchableOpacity style={styles.tile} onPress={() => router.push('/explore')}>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push('/explore')}
+          >
             <Text style={styles.icon}>🎵</Text>
             <Text style={styles.tileText}>Music</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push({pathname:'../meditation/stressRelief' as any})}>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() =>
+              router.push({ pathname: '../meditation/stressRelief' as any })
+            }
+          >
             <Text style={styles.icon}>🧘</Text>
             <Text style={styles.tileText}>Meditation</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push('/journal')}>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push('/journal')}
+          >
             <Text style={styles.icon}>📘</Text>
             <Text style={styles.tileText}>Mood Journal</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tile} onPress={() => router.push('/(tabs)/mood_trends')}>
+          <TouchableOpacity
+            style={styles.tile}
+            onPress={() => router.push('/(tabs)/mood_trends')}
+          >
             <Text style={styles.icon}>📈</Text>
             <Text style={styles.tileText}>Mood Trends</Text>
           </TouchableOpacity>

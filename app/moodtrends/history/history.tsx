@@ -4,14 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import {
-  addDoc,
   collection,
-  deleteDoc,
-  doc,
   getDocs,
   orderBy,
   query,
-  updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from 'utils/firebaseConfig'; // ✅ import auth
 import styles from './history_styles';
@@ -50,18 +46,14 @@ const requireUid = () => {
 };
 const userColl = (sub: 'journalEntries' | 'MoodHistory') =>
   collection(db, 'users', requireUid(), sub);
-const userDoc = (sub: 'journalEntries' | 'MoodHistory', id: string) =>
-  doc(db, 'users', requireUid(), sub, id);
+
 
 const History: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
 
-  const [text, setText] = useState('');
-  const [selectedMood, setSelectedMood] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
+
+  const [filterDate] = useState<Date | null>(null);
 
   const [activeSection, setActiveSection] = useState<'history' | 'moods'>('history');
 
@@ -110,49 +102,9 @@ const History: React.FC = () => {
     }
   };
 
-  /** Create or update entry (per user) */
-  const handleSave = async () => {
-    try {
-      const updatedEntry: Omit<JournalEntry, 'id'> = {
-        text,
-        mood: selectedMood,
-        time: new Date().toLocaleTimeString(),
-        date: new Date().toLocaleDateString(),
-        edited: isEditing,
-      };
 
-      if (isEditing && editingId) {
-        await updateDoc(userDoc('journalEntries', editingId), updatedEntry as any);
-        setJournalEntries((prev) =>
-          prev.map((e) => (e.id === editingId ? { id: editingId, ...updatedEntry } : e))
-        );
-        setIsEditing(false);
-        setEditingId(null);
-      } else {
-        const ref = await addDoc(userColl('journalEntries'), updatedEntry as any);
-        setJournalEntries((prev) => [{ id: ref.id, ...updatedEntry }, ...prev]);
-      }
 
-      setText('');
-      setSelectedMood('');
-    } catch (error: any) {
-      Alert.alert('Error', `Error saving to cloud: ${error?.message || error}`);
-    }
-  };
 
-  /** Delete (per user) */
-  const handleDelete = async (id: string) => {
-    if (!id?.trim()) {
-      Alert.alert('Invalid ID', 'Invalid document ID.');
-      return;
-    }
-    try {
-      await deleteDoc(userDoc('journalEntries', id));
-      setJournalEntries((prev) => prev.filter((e) => e.id !== id));
-    } catch (error) {
-      Alert.alert('Failed', 'Failed to delete entry.');
-    }
-  };
 
   /** Filter by a chosen date (if provided) */
   const filteredEntries = useMemo(() => {

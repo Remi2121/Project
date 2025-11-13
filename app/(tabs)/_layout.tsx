@@ -2,8 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
-import highlate from '../../assets/images/highlate.png';
+import { StyleSheet, View } from 'react-native';
 
 // Icon and label mappings
 const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -31,18 +30,20 @@ type TabIconProps = {
 const TabIcon = ({ focused, icon }: TabIconProps) => {
   if (focused) {
     return (
-      <ImageBackground
-        source={highlate}
-        style={styles.tabIconContainer}
-        resizeMode="stretch"
-      >
-        <Ionicons name={icon} size={30} color="#ffffff" style={{ paddingBottom: 20 }} />
-      </ImageBackground>
+
+        <Ionicons
+          name={icon}
+          size={30}
+          color="#007BFF"
+          style={{ paddingBottom: 0 }}
+        />
+     
     );
   }
+
   return (
       <View style={styles.tabIconDefault}>
-        <Ionicons name={icon} size={24} color="#1e46bdff" style={{ paddingBottom: 2 }}  />
+        <Ionicons name={icon} size={24} color="#052278ff" style={{ paddingBottom: 2 }}  />
       </View>
 
     );
@@ -52,13 +53,28 @@ export default function Layout() {
   return (
     <Tabs
       screenOptions={({ route }: { route: { name: string } }) => ({
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#1f0404ff',
+        tabBarActiveTintColor: '#1e46bdff',
+        tabBarInactiveTintColor: '#052278ff',
         tabBarLabelStyle: { fontSize: 12 },
         tabBarStyle: {
+          position: 'absolute',
+          top:760,     
+          left: 16,                 
+          right: 16,
+          bottom: 16,               
           height: 100,
-          paddingBottom: 5,
-          paddingTop: 12,
+          paddingBottom: 6,
+          paddingTop: 8,
+          borderRadius: 20,          
+          overflow: 'hidden',       
+          backgroundColor: 'transparent',
+          // shadow (iOS)
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
+          // elevation (Android)
+          elevation: 8,
         },
         headerShown: false,
         tabBarBackground: () => (
@@ -92,7 +108,6 @@ export default function Layout() {
       <Tabs.Screen name="talesPlayer" options={{ href: null }} />
       <Tabs.Screen name="playlistDetails" options={{ href: null }} />
       <Tabs.Screen name="microphoneResult" options={{ href: null }} />
-    
     </Tabs>
   );
 }
