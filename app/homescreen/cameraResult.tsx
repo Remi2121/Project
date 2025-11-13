@@ -1,5 +1,4 @@
 // cameraResult.tsx
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import React from 'react';
@@ -10,11 +9,11 @@ export default function MoodResult() {
   const { mood, confidence } = useLocalSearchParams();
   const router = useRouter();
 
-  // Normalize router params to strings
+  // Normalize router params
   const moodRaw = Array.isArray(mood) ? mood[0] : (mood ?? '');
   const confRaw = Array.isArray(confidence) ? confidence[0] : (confidence ?? '');
 
-  // UI emoji map (camera labels)
+  // Emoji map
   const moodEmojis: Record<string, string> = {
     Joy: '😊',
     Sorrow: '😢',
@@ -23,7 +22,7 @@ export default function MoodResult() {
     Neutral: '😐',
   };
 
-  // Map camera labels -> app mood keys
+  // Map to app mood keys
   const normalizeToAppMood = (m: string) => {
     const k = (m || '').trim().toLowerCase();
     if (k === 'joy') return 'happy';
@@ -36,7 +35,6 @@ export default function MoodResult() {
 
   const normalizedMood = normalizeToAppMood(moodRaw);
 
-  // Confidence as number or null (never undefined)
   const confidenceNum = (() => {
     const n = Number(confRaw);
     return Number.isFinite(n) ? n : null;
@@ -53,8 +51,8 @@ export default function MoodResult() {
 
     try {
       const payload: any = {
-        moodOriginal: moodRaw,     // e.g. "Joy" from camera
-        mood: normalizedMood,      // e.g. "happy" for app
+        moodOriginal: moodRaw,
+        mood: normalizedMood,
         source: 'camera',
         createdAt: serverTimestamp(),
       };
@@ -70,7 +68,7 @@ export default function MoodResult() {
   };
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.header}>DETECT MOOD</Text>
 
       {moodRaw ? (
@@ -80,25 +78,28 @@ export default function MoodResult() {
       )}
 
       <Text style={styles.moodText}>
-        Detected Mood: <Text style={{ fontWeight: 'bold' }}>{moodRaw || '—'}</Text>
+        Detected Mood: <Text style={styles.boldText}>{moodRaw || '—'}</Text>
       </Text>
 
       <Text style={styles.moodText}>
-        Normalized: <Text style={{ fontWeight: 'bold' }}>{normalizedMood}</Text>
+        Normalized: <Text style={styles.boldText}>{normalizedMood}</Text>
       </Text>
 
       <Text style={styles.confidenceText}>Confidence: {formatConfidence(confRaw)}</Text>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={saveMoodToFirestore}>
-          <Text style={styles.buttonText}>     Confirm     </Text>
+          <Text style={styles.buttonText}>Confirm</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.replace({ pathname: '/camera' as any })}>
-          <Text style={styles.buttonText}>    Try Again    </Text>
+        <TouchableOpacity
+          style={[styles.button, styles.button]}
+          onPress={() => router.replace({ pathname: '/camera' as any })}
+        >
+          <Text style={[styles.buttonText, styles.buttonText]}>Try Again</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -109,13 +110,62 @@ function formatConfidence(v: any) {
   return n >= 0 && n <= 1 ? `${Math.round(n * 100)}%` : `${n}`;
 }
 
+const themeColor = '#2a1faa';
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d0b2f', alignItems: 'center', padding: 20 },
-  header: { color: '#fff', fontSize: 26, marginTop: 60 },
-  emoji: { fontSize: 120, marginTop: 50 },
-  moodText: { color: '#fff', fontSize: 20, marginTop: 12 },
-  confidenceText: { color: '#ccc', fontSize: 16, marginTop: 8 },
-  buttonContainer: { flexDirection: 'column', alignItems: 'center', marginTop: 50, gap: 40 },
-  button: { backgroundColor: '#2a1faa', padding: 20, borderRadius: 10 },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    padding: 20,
+  },
+  header: {
+    color: themeColor,
+    fontSize: 26,
+    marginTop: 60,
+    fontWeight: 'bold',
+  },
+  emoji: {
+    fontSize: 120,
+    marginTop: 50,
+  },
+  moodText: {
+    color: themeColor,
+    fontSize: 20,
+    marginTop: 12,
+  },
+  boldText: {
+    fontWeight: 'bold',
+    color: themeColor,
+  },
+  confidenceText: {
+    color: '#555',
+    fontSize: 16,
+    marginTop: 8,
+  },
+  buttonContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 50,
+    gap: 30,
+  },
+  button: {
+    backgroundColor: themeColor,
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: themeColor,
+  },
+  secondaryButtonText: {
+    color: themeColor,
+  },
 });

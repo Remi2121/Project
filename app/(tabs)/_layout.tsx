@@ -42,23 +42,19 @@ const TabIcon = ({ focused, icon }: TabIconProps) => {
   }
 
   return (
-    <View style={styles.tabIconDefault}>
-      <Ionicons
-        name={icon}
-        size={24}
-        color="#000000"
-        style={{ paddingBottom: 2 }}
-      />
-    </View>
-  );
+      <View style={styles.tabIconDefault}>
+        <Ionicons name={icon} size={24} color="#052278ff" style={{ paddingBottom: 2 }}  />
+      </View>
+
+    );
 };
 
 export default function Layout() {
   return (
     <Tabs
       screenOptions={({ route }: { route: { name: string } }) => ({
-        tabBarActiveTintColor: '#ff0000ff',
-        tabBarInactiveTintColor: '#000000ff',
+        tabBarActiveTintColor: '#1e46bdff',
+        tabBarInactiveTintColor: '#052278ff',
         tabBarLabelStyle: { fontSize: 12 },
         tabBarStyle: {
           position: 'absolute',
@@ -83,7 +79,7 @@ export default function Layout() {
         headerShown: false,
         tabBarBackground: () => (
           <LinearGradient
-            colors={['#ffffffff', '#ffffffff']}
+            colors={['#ffffffff', '#f9f9f9ff']}
             style={StyleSheet.absoluteFill}
           />
         ),
