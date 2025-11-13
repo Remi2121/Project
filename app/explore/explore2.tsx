@@ -7,15 +7,15 @@ import React, { useEffect, useState } from 'react';
 
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Linking,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { db } from 'utils/firebaseConfig';
 import styles from '../explore/explorestyles';
@@ -152,7 +152,7 @@ const fetchPlaylists = async () => {
   }, []);
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
+    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={styles.gradient}>
       <Image
         source={require('../../assets/images/bg.png')}
         style={styles.bgImage}
