@@ -8,7 +8,7 @@ import { auth, db } from '../../utils/firebaseConfig';
 
 // 🔥 THEME
 import { useSettings } from '../utilis/Settings';
-import getHomeStyles from './homestyles';
+import getHomeStyles from './homest';
 
 export default function HomeScreen() {
   const router = useRouter();

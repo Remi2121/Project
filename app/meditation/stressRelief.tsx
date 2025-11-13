@@ -933,10 +933,11 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     justifyContent: "space-between" 
   },
-  header: { 
-    color: "#fff", 
-    fontSize: 28, 
-    fontWeight: "700" 
+  header: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "700",
+    marginLeft: 6,
   },
   tabsContainer: { 
     height: 120
