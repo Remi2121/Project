@@ -1,5 +1,5 @@
 // detect-options.tsx
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -7,15 +7,18 @@ import LottieView from 'lottie-react-native';
 
 export default function DetectMoodOptionScreen() {
   const router = useRouter();
+  const themeColor = '#2a1faa'; // main theme color
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
-      <Text style={styles.title}>Let’s Find Out Your Mood!</Text>
-        <Text style={{ color: 'white', fontSize: 16, textAlign: 'center', marginBottom: 20 }}>
-            Choose how you want to detect your mood</Text>
+    <View style={styles.container}>
+      <Text style={[styles.title, { color: themeColor }]}>Let’s Find Out Your Mood!</Text>
+      <Text style={[styles.subtitle, { color: themeColor }]}>
+        Choose how you want to detect your mood
+      </Text>
+
       {/* mood Animation */}
       <LottieView
-        source={require('../../assets/animation/Medit.json')} 
+        source={require('../../assets/animation/Medit.json')}
         style={styles.image}
         resizeMode="contain"
         autoPlay
@@ -23,14 +26,21 @@ export default function DetectMoodOptionScreen() {
       />
 
       <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push({pathname:'/camera' as any})}>
-          <Ionicons name="camera" size={30} color="white"  />
+        <TouchableOpacity
+          style={[styles.iconButton, { borderColor: themeColor }]}
+          onPress={() => router.push({ pathname: '/camera' as any })}
+        >
+          <Ionicons name="camera" size={30} color={themeColor} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push({pathname:'/audio' as any})}>
-          <MaterialIcons name="keyboard-voice" size={30} color="white" />
+
+        <TouchableOpacity
+          style={[styles.iconButton, { borderColor: themeColor }]}
+          onPress={() => router.push({ pathname: '/audio' as any })}
+        >
+          <MaterialIcons name="keyboard-voice" size={30} color={themeColor} />
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -39,32 +49,36 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 80,
     alignItems: 'center',
-    backgroundColor: '#0d0b2f',
+    backgroundColor: '#ffffff', // white background
   },
   title: {
-    color: '#fff',
     fontSize: 32,
     textAlign: 'center',
     fontWeight: '600',
-    marginBottom: 30,
+    marginBottom: 20,
     paddingHorizontal: 30,
     lineHeight: 36,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   image: {
     width: 300,
     height: 300,
     marginBottom: 20,
-    
   },
   iconRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  width: '80%',
-  marginTop: 40,
-},
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '80%',
+    marginTop: 40,
+  },
   iconButton: {
-    backgroundColor: '#1f1b5a',
     padding: 20,
     borderRadius: 50,
+    borderWidth: 2, // outline using theme color
+    backgroundColor: '#ffffff', // keep icons visible
   },
 });
