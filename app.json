@@ -73,7 +73,9 @@
         }
       ],
       "expo-video",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

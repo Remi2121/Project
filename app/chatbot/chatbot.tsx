@@ -2,27 +2,90 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, Image, ScrollView, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Alert, Button, Image, ScrollView, Text, TextInput } from 'react-native';
 import styles from './chatbotstyles';
 
-type Props = {
-  routeParams?: UnknownOutputParams;
-};
+import { useRouter } from 'expo-router';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { auth, db } from 'utils/firebaseConfig';
+
+type Props = { routeParams?: UnknownOutputParams };
 
 const Chatbot: React.FC<Props> = ({ routeParams }) => {
+  const router = useRouter();
+
+  // NOTE: still using "topic" for input state, but we will SAVE as "mood"
   const [topic, setTopic] = useState('');
   const [tips, setTips] = useState('');
   const [question] = useState('How are you feeling today?');
   const [loading, setLoading] = useState(false);
 
+  // recent from MoodHistory (per user)
+  const [recent, setRecent] = useState<{ id: string; mood: string; tag?: string; createdAt?: Date }[]>([]);
+
   const validMoods = [
-    "anxiety", "depression", "stress", "self-care", "mindfulness",
-    "mental health", "wellbeing", "coping", "therapy", "burnout",
-    "emotions", "mental fitness", "resilience", "sleep", "loneliness",
-    "social anxiety", "panic attack", "self-esteem", "sad", "alone", "happy",
-    "angry", "frustrated", "overwhelmed", "nervous","anger"
+    "anxiety","depression","stress","self-care","mindfulness",
+    "mental health","wellbeing","coping","therapy","burnout",
+    "emotions","mental fitness","resilience","sleep","loneliness",
+    "social anxiety","panic attack","self-esteem","sad","alone","happy",
+    "angry","frustrated","overwhelmed","nervous","anger","calm","neutral"
   ];
 
+  /** ===== Helpers: user-scoped paths ===== */
+  const requireUser = () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error('NOT_SIGNED_IN');
+    return uid;
+  };
+  const userHistoryColl = () => {
+    const uid = requireUser();
+    return collection(db, 'users', uid, 'MoodHistory');
+  };
+
+  /** ===== Load recent (reads mood field, not topic) ===== */
+  const loadRecent = async () => {
+    try {
+      const qRef = query(userHistoryColl(), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(qRef);
+      const rows = snap.docs.map(d => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          mood: (data.mood ?? data.topic ?? '').toString(),
+          tag: data.tag ?? undefined,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : undefined,
+        };
+      });
+      setRecent(rows.slice(0, 5));
+    } catch (e: any) {
+      console.log('loadRecent error:', e?.message ?? e);
+    }
+  };
+
+  /** ===== Save one session per user ===== */
+  const saveSession = async (payload: {
+    mood: string;     // normalized mood key (e.g., "sad")
+    tips: string;
+    raw?: any;
+  }) => {
+    await addDoc(userHistoryColl(), {
+      mood: payload.mood,               // <- main field
+      tag: `mood-${payload.mood}`,      // <- "mood-sad" like you asked
+      tips: payload.tips,
+      source: 'chatbot',
+      createdAt: serverTimestamp(),
+      raw: payload.raw ?? null,
+    });
+  };
+
+  /** ===== Fetch tips & store per user ===== */
   const getTips = async () => {
     setLoading(true);
     setTips('');
@@ -30,20 +93,30 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     const normalizedTopic = topic.trim().toLowerCase();
 
     if (!validMoods.includes(normalizedTopic)) {
-      setTips("This is not a mental health related mood.");
+      setTips('This is not a mental health related mood.');
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch('http://192.168.239.146:8000/get_tips', {
+      try {
+        requireUser();
+      } catch {
+        Alert.alert('Login required', 'Please sign in to use the chatbot.', [
+          { text: 'OK', onPress: () => router.replace('/authpages/Login-page') },
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch('http://192.168.8.158:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: normalizedTopic }),
       });
 
       const text = await res.text();
-      let data;
+      let data: any;
       try {
         data = JSON.parse(text);
       } catch (err) {
@@ -54,6 +127,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
       }
 
       if (typeof data.tips === 'string') {
+        // make numbered list
         const tipsArray = data.tips.split(/\d+\.\s/);
         tipsArray.shift();
         const numberedTips = tipsArray
@@ -61,20 +135,28 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           .join('\n\n');
 
         setTips(numberedTips);
+
+        // 🔐 Save using "mood" + "mood-<mood>" tag
+        await saveSession({
+          mood: normalizedTopic,
+          tips: numberedTips,
+          raw: data,
+        });
+
+        loadRecent();
       } else {
         setTips('This is not a mental health related concept.');
       }
     } catch (err) {
       console.error(err);
       setTips('Error fetching tips.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // 🔁 Automatically fetch tips if topic is passed in routeParams
+  /** ===== Auto-run by route param ===== */
   const topicParam = typeof routeParams?.topic === 'string' ? routeParams.topic : '';
-
   useEffect(() => {
     if (topicParam) {
       const normalized = topicParam.trim().toLowerCase();
@@ -83,11 +165,24 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
       if (validMoods.includes(normalized)) {
         getTips();
       } else {
-        setTips("This is not a mental health related mood.");
+        setTips('This is not a mental health related mood.');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicParam]);
+
+  /** ===== Ensure user present & load recent once ===== */
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (!u) {
+        router.replace('/authpages/Login-page');
+      } else {
+        loadRecent();
+      }
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
@@ -101,6 +196,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           style={{ height: 200 }}
         />
         <Text style={styles.question}>{question}</Text>
+
         <TextInput
           style={styles.input}
           placeholder="Describe your feeling..."
@@ -109,7 +205,9 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           placeholderTextColor="white"
           autoCapitalize="none"
         />
+
         <Button title="Get Tips" onPress={getTips} />
+
         {loading ? (
           <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 20 }} />
         ) : (
