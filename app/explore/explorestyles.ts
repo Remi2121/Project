@@ -1,15 +1,11 @@
 import { StyleSheet } from 'react-native';
 
+const BLUE = '#2a1faa';   // main blue
+
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
-    position: 'relative',
-  },
-
-  bgImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '50%',
+    backgroundColor: 'white',   // FULL WHITE
   },
 
   scrollContainer: {
@@ -18,10 +14,11 @@ const styles = StyleSheet.create({
   },
 
   headerinput: {
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: '700',
     textAlign: 'left',
     marginTop: 10,
-    color: 'black',
+    color: BLUE,
   },
 
   logoContainer: {
@@ -33,8 +30,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 100,
     height: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   textContainer: {
@@ -42,64 +37,43 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 
-  input: {
-    borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 10,
-    color: 'white',
-    marginRight: 20,
-  },
-
-  moodText: {
-    fontSize: 20,
-    color: 'white',
-    marginTop: 8,
-  },
-
-  moodItem: {
-    marginBottom: 20,
-  },
-
-  squareRow: {
-    flexDirection: 'row',
-    marginTop: 10,
-    flexWrap: 'wrap',
-  },
-
-  squareBox: {
-    width: 80,
-    height: 80,
-    backgroundColor: 'blue',
-    margin: 3,
-    borderRadius: 5,
-  },
-
+  /** INPUT BOX BLUE THEME */
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 2,
-    backgroundColor: 'black',
-    borderRadius: 20,  
+    borderWidth: 1.5,
+    borderColor: BLUE,
+
+    borderRadius: 15,
+    paddingHorizontal: 10,
   },
 
- 
+  input: {
+    flex: 1,
+    padding: 10,
+    color: BLUE,
+    fontSize: 16,
+  },
+
+  /** SEARCH RESULTS */
   searchResultsContainer: {
-    marginTop: 20,
-    justifyContent: 'center',
+    marginTop: 25,
   },
 
   searchResultsHeader: {
-    color: 'black',
+    color: BLUE,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    marginBottom: 10,
   },
 
   playlistCard: {
-    padding: 15,
-    marginVertical: 15,
-    borderRadius: 12,
+    padding: 12,
+    marginVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: BLUE,
+    backgroundColor: '#EAF2FF', // soft blue background
     alignItems: 'center',
     marginRight: 20,
   },
@@ -108,73 +82,74 @@ const styles = StyleSheet.create({
     width: 200,
     height: 150,
     borderRadius: 12,
-    marginBottom: 15,
+    marginBottom: 12,
   },
 
   playlistNameLarge: {
-    color: '#fff',
+    color: 'black',
     fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 5,
   },
 
   playlistTapText: {
-    color: '#fff',
-    textAlign: 'center',
+    color: 'black',
+    opacity: 0.7,
     marginBottom: 8,
   },
 
+  /** SUGGESTIONS TITLE */
   suggestionsHeader: {
-    color: 'white',
-    fontSize: 22,
-    marginTop: 30,
+    color: BLUE,
+    fontSize: 24,
+    marginTop: 35,
     fontWeight: 'bold',
   },
 
+  /** EACH MOOD SECTION */
   moodSectionContainer: {
     marginTop: 25,
   },
 
-moodSectionTitle: {
-  color: 'white',
-  fontSize: 26,   
-  fontWeight: '700',
-  marginBottom: 12,
-  
-},
+  moodSectionTitle: {
+    color: BLUE,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
 
   suggestionsScrollView: {
     paddingLeft: 0,
   },
 
-  
-playlistCardSmall: {
-  width: 250,     
-  height: 250,
-  marginRight: 18,
-  borderRadius: 12,
-  padding: 12,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+  /** SUGGESTION CARDS */
+  playlistCardSmall: {
+    width: 200,
+    height: 230,
+    marginRight: 18,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: BLUE,
+    backgroundColor: '#EAF2FF',
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
+  playlistImageSmall: {
+    width: 160,
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
 
-playlistImageSmall: {
-  width: 200,     
-  height: 200,    
-  borderRadius: 10,
-  marginBottom: 10,
-  resizeMode: 'cover',
-},
-
-playlistNameSmall: {
-  fontSize: 14,
-  color: 'white',
-  textAlign: 'center',  
-  height: 40,           
-},
-
+  playlistNameSmall: {
+    fontSize: 15,
+    color: 'black',
+    textAlign: 'center',
+    height: 40,
+    fontWeight: '600',
+  },
 });
 
 export default styles;

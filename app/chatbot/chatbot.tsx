@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, Image, ScrollView, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Alert, Button, ScrollView, Text, TextInput } from 'react-native';
 import styles from './chatbotstyles';
 
 import { useRouter } from 'expo-router';
@@ -185,24 +185,24 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
   }, []);
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
-      <Image source={require('../../assets/images/bg.png')} style={styles.bgImage} />
+    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={styles.gradient}>
+  
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <Text style={styles.header}>Your AI Meditation Doctor</Text>
         <Lottie
           source={require('../../assets/animation/doctoranimation.json')}
           autoPlay
           loop
-          style={{ height: 200 }}
+          style={{ height: 300 ,  }}
         />
         <Text style={styles.question}>{question}</Text>
 
         <TextInput
           style={styles.input}
           placeholder="Describe your feeling..."
+          placeholderTextColor="#2a1faa" 
           value={topic}
           onChangeText={setTopic}
-          placeholderTextColor="white"
           autoCapitalize="none"
         />
 
