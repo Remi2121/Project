@@ -18,26 +18,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     padding: 10,
-    color: 'white',
-    borderColor: 'white'
+    borderColor: '#2a1faa'
   },
   tips: {
     marginTop: 20,
     fontSize: 18,
-    color: 'white',
+    color: '#2a1faa',
     textAlign: 'justify'
   },
   header:{
     fontSize: 20,
     textAlign: 'center',
-    color: 'lightblue',
+    color: '#2a1faa',
     marginBottom: 20
   },
-  bgImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '50%',
-  }
+
 });
 
 export default styles;
