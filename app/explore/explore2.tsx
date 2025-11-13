@@ -153,10 +153,7 @@ const fetchPlaylists = async () => {
 
   return (
     <LinearGradient colors={['#ffffffff', '#ffffffff']} style={styles.gradient}>
-      <Image
-        source={require('../../assets/images/bg.png')}
-        style={styles.bgImage}
-      />
+ 
       <View style={styles.logoContainer}>
         <Lottie
           source={require('../../assets/animation/explorelogo.json')}
@@ -173,13 +170,14 @@ const fetchPlaylists = async () => {
         <View style={styles.textContainer}>
           <Text style={styles.headerinput}>Search Mood</Text>
           <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="Describe your Mood..."
-              placeholderTextColor="white"
-              value={mood}
-              onChangeText={setMood}
-            />
+        <TextInput
+        style={[styles.input, { flex: 1 }]}
+        placeholder="Describe your Mood..."
+        placeholderTextColor="#1a61c6ff"   // 🔵 BLUE COLOR
+        value={mood}
+        onChangeText={setMood}
+      />
+
             <TouchableOpacity onPress={fetchPlaylists} style={{ padding: 10 }}>
               <Ionicons name="search" size={24} color="white" />
             </TouchableOpacity>

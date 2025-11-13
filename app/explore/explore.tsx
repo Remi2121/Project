@@ -257,7 +257,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
             <TextInput
               style={[styles.input, { flex: 1 }]}
               placeholder="Type mood or emoji (😊 😢 😠 😲 😐)"
-              placeholderTextColor="white"
+              placeholderTextColor="#2a1faa" 
               value={moodInput}
               onChangeText={setMoodInput}
               autoCapitalize="none"
@@ -275,7 +275,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
               <Text style={styles.searchResultsHeader}>Search Results</Text>
               {searchResults.map((t, idx) => (
                 <TouchableOpacity key={idx} onPress={() => openPlayer(t, currentMood)}>
-                  <LinearGradient colors={['#0d0b2f', '#2a5faa']} style={styles.playlistCard}>
+                  <LinearGradient colors={['#2a2761ff', '#2a5faa']} style={styles.playlistCard}>
                     {currentMood && (
                       <Image
                         source={getCoverFor(currentMood, t.name)}
@@ -302,7 +302,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestionsScrollView}>
                 {(suggestions[mood] || []).map((t, idx) => (
                   <TouchableOpacity key={idx} onPress={() => openPlayer(t, mood)}>
-                    <LinearGradient colors={['#0d0b2f', '#2a5faa']} style={styles.playlistCardSmall}>
+                    <LinearGradient colors={['#1e0d6aff', '#732aaaff']} style={styles.playlistCardSmall}>
                       <Image
                         source={getCoverFor(mood, t.name)}
                         style={styles.playlistImageSmall}
