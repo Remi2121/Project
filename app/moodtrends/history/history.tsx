@@ -9,7 +9,7 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore';
-import { auth, db } from 'utils/firebaseConfig'; // ✅ import auth
+import { auth, db } from 'utils/firebaseConfig';
 import styles from './history_styles';
 
 /** Types */
@@ -17,8 +17,8 @@ type JournalEntry = {
   id: string;
   text: string;
   mood: string;
-  time: string; // e.g. toLocaleTimeString()
-  date: string; // e.g. toLocaleDateString()
+  time: string;
+  date: string;
   edited?: boolean;
 };
 
@@ -26,8 +26,8 @@ type MoodEntry = {
   id: string;
   mood: string;
   confidence?: number;
-  timestamp?: any;    // Firestore Timestamp | number | string (legacy name)
-  createdAt?: any;    // Firestore Timestamp | number | string (newer name)
+  timestamp?: any;
+  createdAt?: any;
 };
 
 /** Utils */
@@ -38,7 +38,6 @@ const tsToDate = (ts: any): Date => {
   return new Date(ts);
 };
 
-/** 🔐 User-scoped helpers */
 const requireUid = () => {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('NOT_SIGNED_IN');
@@ -47,17 +46,12 @@ const requireUid = () => {
 const userColl = (sub: 'journalEntries' | 'MoodHistory') =>
   collection(db, 'users', requireUid(), sub);
 
-
 const History: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
-
-
   const [filterDate] = useState<Date | null>(null);
-
   const [activeSection, setActiveSection] = useState<'history' | 'moods'>('history');
 
-  /** 🔐 Guard: redirect to Login if not signed in; otherwise load data */
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) {
@@ -67,13 +61,11 @@ const History: React.FC = () => {
       await Promise.all([fetchJournalEntries(), fetchMoodEntries()]);
     });
     return unsub;
-     
   }, []);
 
-  /** Fetch journal entries (per user) */
   const fetchJournalEntries = async () => {
     try {
-      const q = query(userColl('journalEntries')); // add orderBy if you add createdAt
+      const q = query(userColl('journalEntries'));
       const snap = await getDocs(q);
       const entries: JournalEntry[] = [];
       snap.forEach((d) => entries.push({ id: d.id, ...(d.data() as Omit<JournalEntry, 'id'>) }));
@@ -83,10 +75,8 @@ const History: React.FC = () => {
     }
   };
 
-  /** Fetch mood entries (per user) */
   const fetchMoodEntries = async () => {
     try {
-      // Prefer ordering by createdAt if present; fallback without orderBy
       let qRef: any;
       try {
         qRef = query(userColl('MoodHistory'), orderBy('createdAt', 'desc'));
@@ -102,11 +92,6 @@ const History: React.FC = () => {
     }
   };
 
-
-
-
-
-  /** Filter by a chosen date (if provided) */
   const filteredEntries = useMemo(() => {
     if (!filterDate) return journalEntries;
     const key = filterDate.toDateString();
@@ -128,37 +113,39 @@ const History: React.FC = () => {
   };
 
   return (
-    <LinearGradient colors={["#1f1b5a", "#3f34c0"]} style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.replace("/(tabs)/mood_trends")}
-        style={styles.backButton}
-        accessibilityLabel="Go to Home">
-        <Text style={styles.backIcon}>←</Text>
-      </TouchableOpacity>
-
-      <ScrollView>
-        <Text style={styles.header}>Mood History</Text>
-
-        {/* Toggle buttons */}
-        <View style={styles.toggleButtonsContainer}>
+    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.topWrap}>
           <TouchableOpacity
-            style={[styles.toggleButton, activeSection === 'history' && styles.activeButton]}
-            onPress={() => setActiveSection('history')}
-          >
-            <Text style={styles.toggleButtonText}>History Mood Journal</Text>
+            onPress={() => router.replace("/(tabs)/mood_trends")}
+            style={styles.backButton}
+            accessibilityLabel="Go to Home">
+            <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleButton, activeSection === 'moods' && styles.activeButton]}
-            onPress={() => setActiveSection('moods')}
-          >
-            <Text style={styles.toggleButtonText}>Mood Entries</Text>
-          </TouchableOpacity>
+
+          <Text style={styles.header}>Mood History</Text>
+
+          <View style={styles.toggleButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.toggleButton, activeSection === 'history' && styles.activeButton]}
+              onPress={() => setActiveSection('history')}
+            >
+              <Text style={[styles.toggleButtonText, activeSection === 'history' && styles.activeButtonText]}>History Mood Journal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, activeSection === 'moods' && styles.activeButton]}
+              onPress={() => setActiveSection('moods')}
+            >
+              <Text style={[styles.toggleButtonText, activeSection === 'moods' && styles.activeButtonText]}>Mood Entries</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Sections */}
         {activeSection === 'history' && (
           <View style={styles.section}>
             <Text style={styles.subHeader}>History Mood Journal</Text>
+            {filteredEntries.length === 0 && <Text style={styles.emptyText}>No journal entries yet.</Text>}
             {filteredEntries.map((entry) => (
               <View key={entry.id} style={styles.entryCard}>
                 <Text style={styles.entryTime}>{entry.time}</Text>
@@ -173,8 +160,8 @@ const History: React.FC = () => {
         {activeSection === 'moods' && (
           <View style={styles.section}>
             <Text style={styles.subHeader}>Mood Entries</Text>
+            {moodEntries.length === 0 && <Text style={styles.emptyText}>No mood entries yet.</Text>}
             {moodEntries.map((entry) => {
-              // support both 'createdAt' and legacy 'timestamp'
               const when = entry.createdAt ?? entry.timestamp;
               return (
                 <View key={entry.id} style={styles.entryCard}>

@@ -43,19 +43,19 @@ export default function Favorites() {
 
   return (
     <LinearGradient
-      colors={["#0d0b2f", "#2a1faa"]}
+      colors={["#ffffffff", "#ebe0e0ff"]}
       style={{ flex: 1, paddingTop: 50 }}
     >
       <TouchableOpacity
         onPress={() => router.push("/(tabs)/explore")}
         style={{ paddingLeft: 20, marginBottom: 10 }}
       >
-        <Ionicons name="arrow-back" size={28} color="white" />
+        <Ionicons name="arrow-back" size={28} color="#2a1faa" />
       </TouchableOpacity>
 
       <Text
         style={{
-          color: "white",
+          color: "#2a1faa",
           fontSize: 22,
           fontWeight: "bold",
           textAlign: "center",
@@ -70,7 +70,7 @@ export default function Favorites() {
             <View
               style={{
                 padding: 14,
-                backgroundColor: "#1c1c3c",
+                backgroundColor: "#64648eff",
                 borderRadius: 10,
                 marginBottom: 10,
               }}
@@ -85,7 +85,7 @@ export default function Favorites() {
 
         {songs.length === 0 && (
           <Text
-            style={{ color: "#aaa", textAlign: "center", marginTop: 40 }}
+            style={{ color: "#2a1faa", textAlign: "center", marginTop: 40 }}
           >
             No favorites yet.
           </Text>

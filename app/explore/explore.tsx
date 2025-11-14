@@ -249,7 +249,8 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
         <Lottie source={require('../../assets/animation/explorelogo.json')} autoPlay loop style={styles.logo} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
+
         <View style={styles.textContainer}>
           <Text style={styles.headerinput}>Search Mood</Text>
 

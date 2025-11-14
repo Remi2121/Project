@@ -9,7 +9,7 @@ import {
   where,
 } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart as RNLineChart } from 'react-native-gifted-charts';
 
 import { auth, db } from 'utils/firebaseConfig';
@@ -28,16 +28,15 @@ interface MoodEntry {
 }
 
 interface WeekBucket {
-  start: Date;                  // week start (Sun)
-  dayMood: (MoodKey | null)[];  // 7 days
+  start: Date;
+  dayMood: (MoodKey | null)[];
   dominantMood: MoodKey | null;
-  dominantCount: number;        // occurrences of dominant mood in week
-  percentage: number;           // dominantCount / 7 * 100
+  dominantCount: number;
+  percentage: number;
 }
 
 const WEEKS_COUNT = 5;
 
-// ---- Helpers ----
 const EMOJI_NAME: Record<string, string> = {
   '😊': 'Happy', '😐': 'Neutral', '😢': 'Sad', '😡': 'Angry', '🥱': 'Tired', '🤒': 'Sick',
 };
@@ -53,7 +52,7 @@ const NAME_EMOJI: Record<string, string> = {
 const normalizeMood = (m: any): { name: string; emoji: string } => {
   if (!m) return { name: '—', emoji: '' };
   const raw = String(m).trim();
-  if (EMOJI_NAME[raw]) return { name: EMOJI_NAME[raw], emoji: raw }; // emoji input
+  if (EMOJI_NAME[raw]) return { name: EMOJI_NAME[raw], emoji: raw };
   const key = raw.toLowerCase();
   const emoji = NAME_EMOJI[key] ?? '';
   const name  = key ? key.charAt(0).toUpperCase() + key.slice(1) : '—';
@@ -66,7 +65,7 @@ const moodEmoji = (m: MoodKey | null): string => (m ? normalizeMood(m).emoji : '
 const startOfWeekSun = (d: Date) => {
   const date = new Date(d);
   date.setHours(0, 0, 0, 0);
-  const day = date.getDay(); // 0=Sun
+  const day = date.getDay();
   date.setDate(date.getDate() - day);
   return date;
 };
@@ -74,7 +73,7 @@ const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.get
 const toDate = (val: any): Date => {
   if (!val) return new Date(0);
   if (val instanceof Date) return val;
-  if (val?.toDate && typeof val.toDate === 'function') return val.toDate(); // Timestamp
+  if (val?.toDate && typeof val.toDate === 'function') return val.toDate();
   if (typeof val?.seconds === 'number') return new Date(val.seconds * 1000);
   if (typeof val === 'object' && val.date && val.time) return new Date(`${val.date} ${val.time}`);
   const d = new Date(val);
@@ -89,12 +88,10 @@ const fmtRangeShort = (start: Date) => {
 const fmtDayLong = (d: Date) =>
   d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
-/** ===== Load per-user ONLY from MoodHistory ===== */
 async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<MoodEntry[]> {
   const earliestWeekStart = addDays(startOfWeekSun(new Date()), -(weeksCount - 1) * 7);
   const coll = collection(db, 'users', uid, 'MoodHistory');
 
-  // Prefer server-side range on createdAt; fallback to fetch-all
   try {
     const qMH = query(
       coll,
@@ -111,7 +108,6 @@ async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<
     }
   } catch {/* ignore */}
 
-  // fallback
   const snapAll = await getDocs(coll);
   return snapAll.docs
     .map(doc => {
@@ -129,7 +125,6 @@ export default function MoodTrendsComponent() {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔐 Auth-guard + load
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) {
@@ -150,7 +145,6 @@ export default function MoodTrendsComponent() {
     return unsub;
   }, [router]);
 
-  // 🧮 Build week buckets (oldest → newest)
   const weeks: WeekBucket[] = useMemo(() => {
     const current = startOfWeekSun(new Date());
     const starts: Date[] = [];
@@ -172,7 +166,7 @@ export default function MoodTrendsComponent() {
       const counts = new Map<string, number>();
       items.forEach((it) => {
         const nm = normalizeMood(it.mood);
-        const key = nm.emoji || nm.name; // prefer emoji key; else name
+        const key = nm.emoji || nm.name;
         counts.set(key, (counts.get(key) ?? 0) + 1);
       });
       let best: string | null = null, bestCount = -1;
@@ -186,7 +180,7 @@ export default function MoodTrendsComponent() {
       if (!bucketMap.has(key)) continue;
       const week = bucketMap.get(key)!;
       (week as any)._raw = (week as any)._raw ?? new Map<number, MoodEntry[]>();
-      const dayIdx = entry.time.getDay(); // 0..6
+      const dayIdx = entry.time.getDay();
       const arr = (week as any)._raw.get(dayIdx) ?? [];
       arr.push(entry);
       (week as any)._raw.set(dayIdx, arr);
@@ -218,7 +212,6 @@ export default function MoodTrendsComponent() {
     return starts.map((s) => bucketMap.get(s.toISOString())!);
   }, [entries]);
 
-  // 📈 Weekly chart — X-axis labels as "Week 1", "Week 2", ...
   const chartData = useMemo(() => {
     return weeks.map((w, idx) => {
       const e = w.dominantMood ? (EMOJI_NAME[w.dominantMood] ? w.dominantMood : moodEmoji(w.dominantMood)) : '';
@@ -243,10 +236,10 @@ export default function MoodTrendsComponent() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
+      <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
           <ActivityIndicator size="large" color="#00e0ff" />
-          <Text style={{ color: 'white', marginTop: 10 }}>Loading mood trends…</Text>
+          <Text style={{ color: '#2a1faa', marginTop: 10 }}>Loading mood trends…</Text>
         </View>
       </LinearGradient>
     );
@@ -254,89 +247,60 @@ export default function MoodTrendsComponent() {
 
   if (error) {
     return (
-      <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
+      <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{ color: 'white' }}>Error: {error}</Text>
+          <Text style={{ color: '#2a1faa' }}>Error: {error}</Text>
         </View>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.gradient}>
-      <View style={styles.container}>
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          style={styles.backButton}
-          accessibilityLabel="Go to Home">
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.heading}>Mood Trends</Text>
+    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+      <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+            style={styles.backButton}
+            accessibilityLabel="Go to Home">
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
 
-        <View style={styles.chartContainer}>
-          <LineChartAny
-            data={chartData}
-            thickness={3}
-            color="#00e0ff"
-            curved
-            hideRules
-            hideAxesAndRules
-            yAxisTextStyle={{ color: 'transparent' }}
-            xAxisLabelTextStyle={{ color: 'white', fontSize: 12 }}
-            dataPointsColor="#00e0ff"
-            dataPointsRadius={4}
-            spacing={60}
-            maxValue={100}
-          />
+          <Text style={styles.heading}>Mood Trends</Text>
+
+          <View style={styles.chartContainer}>
+            <LineChartAny
+              data={chartData}
+              thickness={3}
+              color="#00e0ff"
+              curved
+              hideRules
+              hideAxesAndRules
+              yAxisTextStyle={{ color: 'transparent' }}
+              xAxisLabelTextStyle={{ color: '#2a1faa', fontSize: 12 }}
+              dataPointsColor="#00e0ff"
+              dataPointsRadius={4}
+              spacing={60}
+              maxValue={100}
+            />
+          </View>
+
+          <View style={styles.moodTextContainer}>
+            <Text style={styles.moodText}>View your mood trends and insights</Text>
+          </View>
+
+          <View style={styles.buttonRow}>
+            {buttons.map((btn, index) => (
+              <TouchableOpacity key={index} style={styles.button} onPress={btn.onPress}>
+                <View style={styles.buttonContent}>
+                  <Text style={styles.emojiText}>{btn.icon}</Text>
+                  <Text style={styles.buttonText}>{btn.label}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-
-        <View style={styles.moodTextContainer}>
-          <Text style={styles.moodText}>View your mood trends and insights</Text>
-        </View>
-
-        <FlatList
-          data={weeks}
-          keyExtractor={(w) => w.start.toISOString()}
-          contentContainerStyle={{ paddingTop: 10 }}
-          renderItem={({ item, index }) => (
-            <View style={styles.weekCard}>
-              <Text style={styles.weekTitle}>
-                Wk {index + 1} • {fmtRangeShort(item.start)}
-              </Text>
-              <Text style={styles.weekLine}>
-                Dominant{' '}
-                <Text style={styles.weekBold}>
-                  {moodName(item.dominantMood)} {moodEmoji(item.dominantMood)}
-                </Text>{' '}
-                • <Text style={styles.weekBold}>{item.percentage}%</Text>
-              </Text>
-
-              <View style={{ marginTop: 8 }}>
-                {Array.from({ length: 7 }).map((_, dIdx) => {
-                  const dayDate = addDays(item.start, dIdx);
-                  const mk = item.dayMood[dIdx];
-                  return (
-                    <Text key={dIdx} style={styles.weekLineSmall}>
-                      {fmtDayLong(dayDate)} — {moodName(mk)} {moodEmoji(mk)}
-                    </Text>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-        />
-
-        <View style={styles.buttonRow}>
-          {buttons.map((btn, index) => (
-            <TouchableOpacity key={index} style={styles.button} onPress={btn.onPress}>
-              <View style={styles.buttonContent}>
-                <Text style={styles.emojiText}>{btn.icon}</Text>
-                <Text style={styles.buttonText}>{btn.label}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      </ScrollView>
     </LinearGradient>
   );
 }

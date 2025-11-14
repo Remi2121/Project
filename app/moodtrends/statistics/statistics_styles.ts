@@ -1,127 +1,148 @@
 import { StyleSheet } from 'react-native';
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    
-  },
-  backButton: {
-  position: 'absolute',
-  justifyContent: 'center',
-  top: 40,   
-  left: 15,
-  zIndex: 10,
-  borderRadius: 800,
-  paddingVertical: 6,
-  paddingHorizontal: 10,
-},
-backIcon: {
-  color: 'white',
-  fontSize: 30,
-  fontWeight: '700',
+const PRIMARY = '#2a1faa';
+const FG = '#0022ffff';
+const MUTED = '#0055ffff';
+const CARD = '#ffffff';
+const CARD_BORDER = '#005effff';
 
-},
-  center: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    padding: 16 
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#ffffff' },
+
+  innerWrap: {
+    flex: 1,
+    paddingTop: 30,
   },
-  muted: { 
-    color: '#6b7280', 
-    marginTop: 8, 
-    textAlign: 'center' 
+
+  backButton: {
+    position: 'absolute',
+    justifyContent: 'center',
+    top: 16,
+    left: 12,
+    zIndex: 10,
+    borderRadius: 800,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
-  error: { 
-    color: '#ef4444', 
-    textAlign: 'center' 
+  backIcon: {
+    color: PRIMARY,
+    fontSize: 30,
+    fontWeight: '700',
+  },
+
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    backgroundColor: '#ffffff',
+  },
+  muted: {
+    color: MUTED,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  error: {
+    color: '#ef4444',
+    textAlign: 'center',
   },
 
   tabs: {
     flexDirection: 'row',
-    color: '#6695e8ff',
     gap: 8,
     paddingHorizontal: 12,
-    paddingTop: 85,
-    paddingBottom: 4,
- 
+    paddingTop: 44,
+    paddingBottom: 8,
+    backgroundColor: '#ffffff',
   },
   tabBtn: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#f6f8fb',
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#334155',
+    borderColor: '#e6edf9',
   },
   tabBtnActive: {
-    backgroundColor: '#1e293b',
-    borderColor: '#60a5fa',
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
   },
-  tabTxt: { 
-    color: '#9ca3af', 
-    fontWeight: '600' 
+  tabTxt: {
+    color: MUTED,
+    fontWeight: '600',
   },
-  tabTxtActive: { 
-    color: '#e5e7eb' 
+  tabTxtActive: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
 
   card: {
-    backgroundColor: '#234387ff',
-    borderRadius: 16,
+    backgroundColor: CARD,
+    height:'auto',
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#5487daff',
-    top: 65
+    borderWidth: 3,
+    borderColor: CARD_BORDER,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  h2: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    marginBottom: 8, 
-    color: '#e5e7eb' 
+
+  h2: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: FG,
   },
-  sub: { 
-    color: '#9ca3af', 
-    marginTop: 6 
+  sub: {
+    color: MUTED,
+    marginTop: 6,
   },
-  legendRow: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    gap: 8 
+
+  legendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
   },
-  legendItem: { 
-    color: '#9ca3af', 
-    marginRight: 12 
+  legendItem: {
+    color: MUTED,
+    marginRight: 12,
   },
-  axis: { 
-    color: '#9ca3af' ,
-    fontSize: 12
+
+  axis: {
+    color: MUTED,
+    fontSize: 12,
   },
 
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#60a5fa',
+    backgroundColor: '#f3f6ff',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
     justifyContent: 'space-between',
   },
-  dateTxt: { 
-    color: '#000000ff' 
+  dateTxt: {
+    color: FG,
+    fontSize: 14,
   },
-  dateMood: { 
-    color: '#e5e7eb', 
-    fontSize: 18 
+  dateMood: {
+    color: PRIMARY,
+    fontSize: 16,
+    fontWeight: '700',
   },
 
-  avgBig: { 
-    fontSize: 28, 
-    fontWeight: '800', 
-    color: '#e5e7eb', 
-    marginTop: 4 
+  avgBig: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: FG,
+    marginTop: 4,
   },
 });
 
