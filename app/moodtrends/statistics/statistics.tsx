@@ -1,13 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  Timestamp,
-  where,
-} from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,7 +15,7 @@ import { BarChart } from 'react-native-gifted-charts';
 import { auth, db } from 'utils/firebaseConfig';
 import styles from './statistics_styles';
 
-/** ===== Types ===== */
+/** ===== Types & config (kept as before) ===== */
 type MoodKey = string;
 type MoodInfo = { key: string; name: string; emoji: string; value: number };
 
@@ -45,7 +38,6 @@ type BarDatum = { value: number; label?: string; frontColor?: string };
 
 const WEEKS_COUNT = 5;
 
-/** Mood scale (edit as you like) */
 const MOOD_SCALE: MoodInfo[] = [
   { key: 'angry',    name: 'Angry',    emoji: '😡', value: 1 },
   { key: 'sad',      name: 'Sad',      emoji: '😢', value: 2 },
@@ -58,7 +50,6 @@ const MOOD_BY_KEY   = new Map(MOOD_SCALE.map(m => [m.key.toLowerCase(), m]));
 const MOOD_BY_EMOJI = new Map(MOOD_SCALE.map(m => [m.emoji, m]));
 const FALLBACK_MOOD: MoodInfo = { key: 'neutral', name: 'Neutral', emoji: '😐', value: 3.5 };
 
-/** Date helpers (LOCAL) */
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function startOfWeekSun(d: Date) { const x = startOfDay(d); x.setDate(x.getDate() - x.getDay()); return x; }
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -76,12 +67,10 @@ function getLastMonthRangeLocal(ref = new Date()) {
     end:   new Date(year, month, 0, 23, 59, 59, 999),
   };
 }
-
-/** Robust toDate: Timestamp, {date,time}, timestamp, ISO, Date */
 function toDate(tsLike: any): Date {
   if (!tsLike) return new Date(NaN);
   if (tsLike instanceof Date) return tsLike;
-  if (tsLike?.toDate) return tsLike.toDate();               // Firestore Timestamp
+  if (tsLike?.toDate) return tsLike.toDate();
   if (typeof tsLike?.seconds === 'number') return new Date(tsLike.seconds * 1000);
   if (typeof tsLike === 'object') {
     if (tsLike.createdAt) return toDate(tsLike.createdAt);
@@ -92,9 +81,7 @@ function toDate(tsLike: any): Date {
   const d = new Date(tsLike);
   return isNaN(d.getTime()) ? new Date(NaN) : d;
 }
-
-/** Normalize mood -> MoodInfo */
-function normalizeMood(m?: string | null): MoodInfo {
+function normalizeMood(m?: string): MoodInfo {
   if (!m) return FALLBACK_MOOD;
   const s = String(m).trim();
   return MOOD_BY_EMOJI.get(s)
@@ -102,15 +89,13 @@ function normalizeMood(m?: string | null): MoodInfo {
       || { ...FALLBACK_MOOD, key: s.toLowerCase(), name: s };
 }
 
-type TabKey = 'freq' | 'date' | 'avg';
-
 /** ===== Screen (MoodHistory ONLY) ===== */
 const Statistics: React.FC = () => {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [empty, setEmpty] = useState(false);
-  const [tab, setTab] = useState<TabKey>('freq');
+  const [tab, setTab] = useState<'freq' | 'date' | 'avg'>('freq');
 
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
@@ -130,7 +115,6 @@ const Statistics: React.FC = () => {
         const uid = u.uid;
         const moodHistoryColl = collection(db, 'users', uid, 'MoodHistory');
 
-        // Try ranged query on createdAt; fallback to fetch-all and local filter
         let rows: MoodEntry[] = [];
         try {
           const qy = query(
@@ -156,7 +140,6 @@ const Statistics: React.FC = () => {
             .sort((a,b) => a.time.getTime() - b.time.getTime());
         }
 
-        console.log('[Statistics:MoodOnly] MH:', rows.length);
         setEntries(rows);
         setEmpty(rows.length === 0);
       } catch (e: any) {
@@ -169,8 +152,7 @@ const Statistics: React.FC = () => {
     return unsub;
   }, []);
 
-  /** ===== Derived stats ===== */
-  const weeks: WeekBucket[] = useMemo(() => {
+  const weeks = useMemo(() => {
     const now = new Date();
     const current = startOfWeekSun(now);
     const starts: Date[] = [];
@@ -328,16 +310,15 @@ const Statistics: React.FC = () => {
   }
 
   return (
-    <LinearGradient colors={['#1f1b5a', '#3f34c0']} style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.replace('/(tabs)/mood_trends')}
-        style={styles.backButton}
-        accessibilityLabel="Go to Home">
-        <Text style={styles.backIcon}>←</Text>
-      </TouchableOpacity>
+    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.container}>
+      <View style={styles.innerWrap}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)/mood_trends')}
+          style={styles.backButton}
+          accessibilityLabel="Go to Home">
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
 
-      <View style={styles.container}>
-        {/* Tabs */}
         <View style={styles.tabs}>
           <TabButton label="Mood Frequency" active={tab === 'freq'} onPress={() => setTab('freq')} />
           <TabButton label="Date-wise (30d)" active={tab === 'date'} onPress={() => setTab('date')} />
@@ -347,7 +328,7 @@ const Statistics: React.FC = () => {
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           {tab === 'freq' && (
             <View style={styles.card}>
-              <Text style={styles.h2}>📊 Mood frequency — last 5 weeks</Text>
+              <Text style={styles.h2}> Mood frequency — last 5 weeks</Text>
               <BarChart
                 data={moodFreq5Weeks.bars}
                 barWidth={28}
@@ -355,11 +336,11 @@ const Statistics: React.FC = () => {
                 xAxisLabelTextStyle={styles.axis}
                 noOfSections={4}
                 barBorderRadius={10}
-                frontColor="#60a5fa"
+                frontColor="#1372e7ff"
                 spacing={14}
                 isAnimated
                 showFractionalValues
-                height={Dimensions.get('window').height * 0.5}
+                height={Dimensions.get('window').height * 0.45}
               />
               <View style={{ height: 8 }} />
               <View style={styles.legendRow}>
@@ -392,7 +373,7 @@ const Statistics: React.FC = () => {
 
           {tab === 'avg' && (
             <View style={styles.card}>
-              <Text style={styles.h2}>📈 Average mood — last month</Text>
+              <Text style={styles.h2}> Average mood — last month</Text>
               <Text style={styles.avgBig}>
                 {avgMoodLastMonth.emoji} {avgMoodLastMonth.label}
               </Text>
@@ -408,7 +389,6 @@ const Statistics: React.FC = () => {
 
 export default Statistics;
 
-/** Small components */
 const TabButton: React.FC<{ label: string; active?: boolean; onPress: () => void }> = ({
   label, active, onPress,
 }) => (

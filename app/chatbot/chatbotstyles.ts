@@ -26,12 +26,17 @@ const styles = StyleSheet.create({
     color: '#2a1faa',
     textAlign: 'justify'
   },
-  header:{
-    fontSize: 20,
-    textAlign: 'center',
-    color: '#2a1faa',
-    marginBottom: 20
-  },
+header: {
+  fontSize: 20,
+  textAlign: 'center',          
+  textAlignVertical: 'center',  
+  color: '#2a1faa',
+  marginBottom: 20,
+  backgroundColor: '#6a8fdeff',
+  height: 40,
+  borderRadius: 50,
+},
+
 
 });
 

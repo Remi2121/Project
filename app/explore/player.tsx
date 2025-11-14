@@ -59,7 +59,7 @@ function getCoverFor(mood: MainMood, trackName?: string): ImageSourcePropType {
   const set = coverByMood[mood];
   if (isTamil) return set.tamil;
   if (isEnglish) return set.english;
-  return set.default; // ✅ always returns a valid image
+  return set.default; 
 }
 
 /** Require user helper */
@@ -245,8 +245,8 @@ export default function Player() {
         songs: [{ name: trackName, mood, url }]
       });
     });
-    setIsInPlaylist(true); // ✅ turn icon green
-    Alert.alert("Added to Playlist ✅", `${trackName} added`);
+    setIsInPlaylist(true); 
+    Alert.alert("Added to Playlist ", `${trackName} added`);
   }
 
   async function togglePlay() {
@@ -287,10 +287,10 @@ export default function Player() {
   }, []);
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={s.container}>
+    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={handleBack} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={26} color="#fff" />
+          <Ionicons name="chevron-back" size={26} color="#2a1faa" />
         </TouchableOpacity>
         <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>
         <View style={{ width: 26 }} />
@@ -311,7 +311,7 @@ export default function Player() {
           <Ionicons
             name={isFav ? "heart" : "heart-outline"}
             size={32}
-            color={isFav ? "red" : "white"}
+            color={isFav ? "red" : "#2a1faa"}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {
@@ -321,7 +321,7 @@ export default function Player() {
           <Ionicons
             name={isInPlaylist ? "checkmark-circle" : "add-circle-outline"}
             size={32}
-            color={isInPlaylist ? "green" : "white"}
+            color={isInPlaylist ? "green" : "#2a1faa"}
           />
         </TouchableOpacity>
       </View>
@@ -329,16 +329,16 @@ export default function Player() {
       {/* Controls */}
       <View style={s.controls}>
         <TouchableOpacity style={s.iconBtn} onPress={stop}>
-          <Ionicons name="stop-circle" size={38} color="#fff" />
+          <Ionicons name="stop-circle" size={38} color="#2a1faa" />
           <Text style={s.ctrlLabel}>Stop</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={s.playBtn} onPress={togglePlay}>
-          <Ionicons name={isPlaying ? 'pause' : 'play'} size={30} color="#1c54e2ff" />
+          <Ionicons name={isPlaying ? 'pause' : 'play'} size={30} color="#ffffffff" />
         </TouchableOpacity>
 
         <TouchableOpacity style={s.iconBtn} onPress={nextTrack}>
-          <Ionicons name="play-skip-forward" size={38} color="#fff" />
+          <Ionicons name="play-skip-forward" size={38} color="#2a1faa" />
           <Text style={s.ctrlLabel}>Next</Text>
         </TouchableOpacity>
       </View>
@@ -363,14 +363,14 @@ const s = StyleSheet.create({
   container: { flex: 1, paddingTop: 50, paddingHorizontal: 18 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { padding: 6 },
-  headerTitle: { color: '#fff', fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
+  headerTitle: { color: '#2a1faa', fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
 
   coverWrap: { marginTop: 24, alignItems: 'center' },
-  cover: { width: 280, height: 280, borderRadius: 12 },
+  cover: { width: 280, height: 280, borderRadius: 12 ,borderColor: '#2a1faa',borderWidth:10 },
 
   meta: { marginTop: 18, alignItems: 'center' },
-  title: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  subtitle: { color: '#ccead7', marginTop: 4 },
+  title: { color: '#2a1faa', fontSize: 18, fontWeight: '700' },
+  subtitle: { color: '#2a1faa', marginTop: 4 },
 
   actionsRow: {
     flexDirection: "row",
@@ -388,17 +388,17 @@ const s = StyleSheet.create({
   },
   iconBtn: { alignItems: 'center' },
   playBtn: {
-    width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff',
+    width: 72, height: 72, borderRadius: 36, backgroundColor: '#2a1faa',
     alignItems: 'center', justifyContent: 'center',
   },
   ctrlLabel: { color: '#fff', marginTop: 4, fontSize: 12 },
 
-  speedRow: { marginTop: 18, flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 20 },
+  speedRow: { color:'#2a1faa',marginTop: 18, flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 20 },
   speedPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 1, borderColor: '#2a1faa',
   },
-  speedPillActive: { backgroundColor: '#ffffff', borderColor: '#ffffff' },
-  speedTxt: { color: '#ffffff' },
+  speedPillActive: { backgroundColor: '#ffffff', borderColor: '#1906e7ff' },
+  speedTxt: { color: '#2a1faa' },
   speedTxtActive: { color: '#0b5d34', fontWeight: '700' },
 });

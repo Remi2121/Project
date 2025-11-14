@@ -1,3 +1,4 @@
+// AutoPredictor.tsx  — updated to full white background + readable styles
 import RingProgress from '@/components/RingProgress';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -13,16 +14,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from 'utils/firebaseConfig';
 
-// ─── Config ───────────────────────────────────────────────────────────────────
 const TZ = 'Asia/Colombo';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+
 type RealMood = 'happy' | 'sad' | 'angry' | 'tired' | 'sick' | 'neutral' | 'calm' | 'excited' | 'anxious';
 type Rule = { pred: string; pct: number; reason: string };
 type RuleMap = Record<string, Rule>;
 type DayRow = { key: string; date: Date; mood: RealMood };
 
-// ─── Rules & mappings ─────────────────────────────────────────────────────────
+
 const RULES: RuleMap = require('../../../tools/data/mood_rules.json');
 
 const EMOJI_TO_REAL: Record<string, RealMood> = {
@@ -37,7 +37,7 @@ const MOODN_TO_REAL: Record<string, RealMood> = {
   'Mood 1': 'happy', 'Mood 2': 'sad', 'Mood 3': 'angry', 'Mood 4': 'tired', 'Mood 5': 'sick',
 };
 
-// ─── Time helpers (TZ safe) ───────────────────────────────────────────────────
+
 function toDayKeyTZ(d: Date, tz = TZ) {
   const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
   return fmt.format(d); // YYYY-MM-DD
@@ -49,7 +49,7 @@ function startOfDayTZ(d: Date, tz = TZ) {
 }
 function addDaysUTC(d: Date, n: number) { const x = new Date(d.getTime()); x.setUTCDate(x.getUTCDate() + n); return x; }
 
-// ─── Normalize ────────────────────────────────────────────────────────────────
+
 const norm = (s: any) => String(s || '').trim();
 const lower = (s: any) => norm(s).toLowerCase();
 
@@ -76,7 +76,7 @@ function toMoodN(input: string) {
 }
 const key5 = (a: string[]) => a.join('|');
 
-// ─── Predictor (unchanged) ────────────────────────────────────────────────────
+
 function findPctFromExcelReason(reason: string, predMoodN?: string): number | null {
   const entries = Object.values(RULES);
   for (const r of entries) {
@@ -128,7 +128,7 @@ function predictFromRules(last5Real: RealMood[]) {
   return { moodReal: (MOODN_TO_REAL[last5N[4]] || 'neutral'), pct: 0.6, reason: 'No matching rule in Excel (add this sequence in your sheet).' };
 }
 
-// ─── Date parsing (supports Timestamp or ISO) ─────────────────────────────────
+
 function toDateFlexible(v: any): Date {
   if (!v) return new Date(NaN);
   if (v?.toDate?.()) return v.toDate();
@@ -136,7 +136,7 @@ function toDateFlexible(v: any): Date {
   return new Date(v);
 }
 
-// ─── LOAD ONLY FROM MoodHistory ───────────────────────────────────────────────
+
 async function loadLast5DailyMoodsForUser(uid: string): Promise<DayRow[]> {
   const today0 = startOfDayTZ(new Date());
   const start = addDaysUTC(today0, -(5 - 1));  // 5 days window start
@@ -204,7 +204,7 @@ function collapseRowsToDaily(rows: { when: any; mood: any }[]): DayRow[] {
   });
 }
 
-// ─── UI helpers ───────────────────────────────────────────────────────────────
+
 function moodEmoji(m: RealMood) {
   const map: Record<RealMood, string> = {
     happy: '😊', sad: '😢', angry: '😡', tired: '🥱', sick: '🤒',
@@ -214,19 +214,19 @@ function moodEmoji(m: RealMood) {
 }
 function moodColor(m: RealMood) {
   switch (m) {
-    case 'happy': return '#22c55e';
+    case 'happy': return '#22c5adff';
     case 'sad': return '#3b82f6';
     case 'angry': return '#ef4444';
     case 'tired': return '#a855f7';
     case 'sick': return '#f59e0b';
     case 'neutral': return '#94a3b8';
-    default: return '#00E0FF';
+    default: return '#2a1faa';
   }
 }
 function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function fmtDayNice(d: Date) { return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+
 export default function AutoPredictor() {
   const router = useRouter();
   const [busy, setBusy] = useState(true);
@@ -264,15 +264,21 @@ export default function AutoPredictor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // PRIMARY colors for white background
+  const PRIMARY = '#2a1faa';
+  const FG = '#07203a'; // dark text on white
+  const SUB = '#5a73a4ff';
+
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    // single plain white background (LinearGradient left intentionally white-to-white)
+    <LinearGradient colors={['#ffffff', '#ffffff']} style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 140, backgroundColor: '#ffffff' }}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/mood_trends')} style={{ paddingVertical: 8 }}>
-          <Text style={{ color: '#fff', fontSize: 30, paddingTop: 5, paddingRight: 5 }}>←</Text>
+          <Text style={{ color: PRIMARY, fontSize: 30, paddingTop: 5, paddingRight: 5 }}>←</Text>
         </TouchableOpacity>
 
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', marginTop: 6 }}>
-          Last 5 Days → Predict Day 6
+        <Text style={{ color: PRIMARY, fontSize: 22, fontWeight: '800', marginTop: 6 }}>
+          Last 5 Days and  Predict Day 6
         </Text>
 
         <View style={{ height: 10 }} />
@@ -282,25 +288,25 @@ export default function AutoPredictor() {
           disabled={busy}
           style={{
             alignSelf: 'flex-start',
-            backgroundColor: '#00e0ff',
+            backgroundColor: PRIMARY,
             paddingHorizontal: 16,
             paddingVertical: 10,
             borderRadius: 10,
-            opacity: busy ? 0.6 : 1
+            opacity: busy ? 0.7 : 1
           }}>
-          {busy ? <ActivityIndicator color="#00121a" /> :
-            <Text style={{ color: '#00121a', fontWeight: '400' }}>Refresh</Text>}
+          {busy ? <ActivityIndicator color="#ffffff" /> :
+            <Text style={{ color: '#ffffff', fontWeight: '600' }}>Refresh</Text>}
         </TouchableOpacity>
 
         <View style={{ height: 16 }} />
         <View style={{ gap: 10 }}>
           {busy ? (
-            <View style={{ padding: 16, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10 }}>
-              <ActivityIndicator color="#fff" />
+            <View style={{ padding: 16, backgroundColor: '#89c8edff', borderRadius: 10 }}>
+              <ActivityIndicator color={PRIMARY} />
             </View>
           ) : err ? (
-            <View style={{ padding: 16, backgroundColor: 'rgba(255,64,64,0.18)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,64,64,0.35)' }}>
-              <Text style={{ color: '#ffd3d3' }}>{err}</Text>
+            <View style={{ padding: 16, backgroundColor: '#fff1f1', borderRadius: 10, borderWidth: 1, borderColor: '#ffd3d3' }}>
+              <Text style={{ color: '#b03a3a' }}>{err}</Text>
             </View>
           ) : (
             <>
@@ -310,15 +316,15 @@ export default function AutoPredictor() {
                   style={{
                     padding: 14,
                     borderRadius: 12,
-                    backgroundColor: 'rgba(0,224,255,0.10)',
-                    borderWidth: 1,
-                    borderColor: 'rgba(0,224,255,0.28)'
+                    backgroundColor: '#f0fbff',
+                    borderWidth: 3,
+                    borderColor: '#001affff'
                   }}>
-                  <Text style={{ color: '#cfe8ff', fontWeight: '700' }}>
+                  <Text style={{ color: PRIMARY, fontWeight: '700' }}>
                     Day {idx + 1} • {fmtDayNice(d.date)}
                   </Text>
-                  <Text style={{ color: '#eaffff', marginTop: 4, fontSize: 16 }}>
-                    {moodEmoji(d.mood)} {d.mood}
+                  <Text style={{ color: FG, marginTop: 4, fontSize: 16 }}>
+                    {moodEmoji(d.mood)} {cap(d.mood)}
                   </Text>
                 </View>
               ))}
@@ -332,12 +338,12 @@ export default function AutoPredictor() {
           style={{
             padding: 16,
             borderRadius: 12,
-            backgroundColor: 'rgba(0,224,255,0.12)',
-            borderWidth: 1,
-            borderColor: 'rgba(0,224,255,0.35)'
+            backgroundColor: '#f0fbff',
+            borderWidth: 3,
+            borderColor: '#001affff'
           }}>
           {busy ? (
-            <Text style={{ color: '#fff' }}>Predicting…</Text>
+            <Text style={{ color: SUB }}>Predicting…</Text>
           ) : prediction ? (
             <>
               <View style={{ alignItems: 'center', marginBottom: 10 }}>
@@ -346,19 +352,19 @@ export default function AutoPredictor() {
                   strokeWidth={20}
                   progress={prediction.pct}
                   color={moodColor(prediction.moodReal)}
-                  backgroundColor="rgba(255,255,255,0.15)"
+                  backgroundColor="#96d6fbff"
                   center={<Text style={{ fontSize: 48 }}>{moodEmoji(prediction.moodReal)}</Text>}
                 />
-                <Text style={{ color: '#eaffff', fontSize: 18, fontWeight: '800', marginTop: 8 }}>
+                <Text style={{ color: FG, fontSize: 18, fontWeight: '800', marginTop: 8 }}>
                   {cap(prediction.moodReal)} • {(prediction.pct * 100).toFixed(0)}%
                 </Text>
-                <Text style={{ color: '#bfefff', marginTop: 6, opacity: 0.9 }}>
+                <Text style={{ color: SUB, marginTop: 6 }}>
                   {prediction.reason}
                 </Text>
               </View>
             </>
           ) : (
-            <Text style={{ color: '#fff' }}>Not enough data. Add moods for the last 5 days.</Text>
+            <Text style={{ color: SUB }}>Not enough data. Add moods for the last 5 days.</Text>
           )}
         </View>
       </ScrollView>

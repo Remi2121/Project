@@ -38,18 +38,18 @@ export default function Playlist() {
   }, []);
 
   return (
-    <LinearGradient colors={["#0d0b2f", "#2a1faa"]} style={{ flex: 1, paddingTop: 50 }}>
+    <LinearGradient colors={["#ffffffff", "#ffffffff"]} style={{ flex: 1, paddingTop: 50 }}>
       {/* Back Button */}
       <TouchableOpacity
         onPress={() => router.push("/(tabs)/explore")}
         style={{ paddingLeft: 20, marginBottom: 10 }}
       >
-        <Ionicons name="arrow-back" size={28} color="white" />
+        <Ionicons name="arrow-back" size={28} color="#2a1faa" />
       </TouchableOpacity>
 
       <Text
         style={{
-          color: "white",
+          color: "#2a1faa",
           fontSize: 22,
           fontWeight: "bold",
           textAlign: "center",
@@ -64,7 +64,7 @@ export default function Playlist() {
             key={i}
             style={{
               padding: 14,
-              backgroundColor: "#1c1c3c",
+              backgroundColor: "#494994ff",
               borderRadius: 10,
               marginBottom: 10,
             }}
@@ -75,7 +75,7 @@ export default function Playlist() {
         ))}
 
         {songs.length === 0 && (
-          <Text style={{ color: "#aaa", textAlign: "center", marginTop: 40 }}>
+          <Text style={{ color: "#2a1faa", textAlign: "center", marginTop: 40 }}>
             Playlist is empty.
           </Text>
         )}

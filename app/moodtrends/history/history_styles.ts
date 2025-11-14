@@ -1,40 +1,59 @@
 import { StyleSheet } from 'react-native';
 
+const PRIMARY = '#2a1faa';
+const MUTED = '#3434e1ff';
+const CARD = '#0509eeff';
+
 const styles = StyleSheet.create({
+  gradient: { flex: 1, backgroundColor: '#ffffff' },
+
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: '#ffffff',
+    paddingBottom: 140,
+    paddingTop: 20,
+  },
+
+  topWrap: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+
   header: {
     fontSize: 25,
-    color: '#fff',
-    marginBottom: 20,
+    color: PRIMARY,
+    marginBottom: 12,
     textAlign: 'center',
+    fontWeight: '700',
+    paddingTop:20
   },
-  backButton: {
-  position: 'absolute',
-  justifyContent: 'center',
-  top: 50,   
-  left: 15,
-  zIndex: 10,
-  borderRadius: 800,
-  paddingVertical: 6,
-  paddingHorizontal: 10,
-},
-backIcon: {
-  color: 'white',
-  fontSize: 30,
-  fontWeight: '700',
 
-},
-  container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
+  backButton: {
+    position: 'absolute',
+    justifyContent: 'center',
+    top: 8,
+    left: 10,
+    zIndex: 10,
+    borderRadius: 800,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
+  backIcon: {
+    color: PRIMARY,
+    fontSize: 30,
+    fontWeight: '700',
+  },
+
   toggleButtonsContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-    justifyContent: 'space-around',
+    marginBottom: 18,
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   toggleButton: {
-    backgroundColor: '#1f1b5a',
+    backgroundColor: '#ffffff',
+    borderWidth: 3,
+    borderColor: '#0707ffff',
     padding: 10,
     borderRadius: 10,
     flex: 1,
@@ -42,48 +61,74 @@ backIcon: {
     alignItems: 'center',
   },
   activeButton: {
-    backgroundColor: '#3f34c0',
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
   },
   toggleButtonText: {
-    color: '#fff',
+    color: MUTED,
     fontSize: 16,
   },
+  activeButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+
   section: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   subHeader: {
-    color: '#ccc',
+    color: MUTED,
     textAlign: 'center',
-    marginVertical: 20,
+    marginVertical: 4,
   },
+
+  emptyText: {
+    textAlign: 'center',
+    color: MUTED,
+    marginBottom: 12,
+  },
+
   entryCard: {
-    backgroundColor: '#2a2566',
+    borderColor:CARD,
+    borderRadius:30,
+    borderWidth:3,
     padding: 14,
-    borderRadius: 12,
     marginBottom: 14,
+    
+  
   },
   entryTime: {
-    color: '#aaa',
-    marginBottom: 4,
+    color: MUTED,
+    marginBottom: 6,
     fontSize: 12,
   },
   entryMood: {
-    fontSize: 20,
-    marginBottom: 4,
-    color: 'white',
+    fontSize: 18,
+    marginBottom: 6,
+    color: PRIMARY,
+    fontWeight: '700',
   },
   entryText: {
-    color: '#fff',
+    color: '#222',
     fontSize: 15,
   },
   moodEmojiOnly: {
     fontSize: 28,
-    color: '#fff',
+    color: '#222',
   },
   moodLabel: {
     fontSize: 15,
-    color: '#ccc',
+    color: MUTED,
   },
+  editedLabel: {
+    color: MUTED,
+    fontSize: 12,
+    marginTop: 6,
+    textAlign: 'right',
+  },
+
+  // icons / extras
   iconsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -94,12 +139,6 @@ backIcon: {
   },
   deleteIcon: {
     marginLeft: 10,
-  },
-  editedLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 6,
-    textAlign: 'right',
   },
 });
 

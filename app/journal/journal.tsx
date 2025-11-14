@@ -35,7 +35,7 @@ export default function JournalScreen() {
 
   // ====== Highlight helper (unchanged) ======
   const highlightText = (textVal: string, queryText: string) => {
-    if (!queryText) return <Text style={{ color: '#fff' }}>{textVal}</Text>;
+    if (!queryText) return <Text style={{ color: '#2a1faa' }}>{textVal}</Text>;
     try {
       const regex = new RegExp(`(${queryText})`, 'gi');
       const parts = textVal.split(regex);
@@ -212,7 +212,7 @@ export default function JournalScreen() {
   });
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
         {/*Header*/}
         <View style={styles.headerBar}>
@@ -243,10 +243,11 @@ export default function JournalScreen() {
         <TextInput
           style={[
             styles.input,
-            isEntryFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+            isEntryFocused && { borderColor: '#0712e9ff', borderWidth: 1 }
           ]}
           placeholder="What's on your mind?"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#0026ffff"
+          
           multiline
           numberOfLines={4}
           value={text}
@@ -261,7 +262,7 @@ export default function JournalScreen() {
           disabled={!text.trim() || !selectedMood}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="save-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <Ionicons name="save-outline" size={18} color="#000000ff" style={{ marginRight: 6 }} />
             <Text style={styles.saveText}> Save Entry</Text>
           </View>
         </TouchableOpacity>
@@ -309,7 +310,7 @@ export default function JournalScreen() {
 
         {journalEntries.length > 0 && (
           <>
-            <Text style={styles.subHeader}>────────── Past Journals ──────────</Text>
+            <Text style={styles.subHeader}>────────Past Journals ───────</Text>
 
             <TextInput
               style={[
@@ -318,7 +319,7 @@ export default function JournalScreen() {
                 isSearchFocused && { borderColor: '#3f34c0', borderWidth: 1 }
               ]}
               placeholder="Search your past entries..."
-              placeholderTextColor="#aaa"
+              placeholderTextColor="#162ceeff"
               value={searchQuery}
               onChangeText={setSearchQuery}
               onFocus={() => setIsSearchFocused(true)}
@@ -330,14 +331,14 @@ export default function JournalScreen() {
                 <View style={styles.entryHeader}>
                   <View style={{ marginBottom: 4 }}>
                     <Text style={styles.entryTime}>
-                      <Ionicons name="calendar-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleDateString('en-US', {
+                      <Ionicons name="calendar-outline" size={14} color="#061efcff" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
                     </Text>
                     <Text style={styles.entryTime}>
-                      <Ionicons name="time-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleTimeString('en-US', {
+                      <Ionicons name="time-outline" size={14} color="#061efcff" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true,
@@ -347,7 +348,7 @@ export default function JournalScreen() {
 
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity
-                      style={{ marginRight: 16 }}
+                      style={{ marginRight: 16  }}
                       onPress={() => {
                         setIsEditing(true);
                         setEditingId(entry.id);
@@ -355,7 +356,7 @@ export default function JournalScreen() {
                         setSelectedMood(entry.mood);
                       }}
                     >
-                      <Ionicons name="pencil-outline" size={20} color="#aaa" />
+                      <Ionicons name="pencil-outline" size={20} color="#061efcff" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -369,7 +370,7 @@ export default function JournalScreen() {
                           ]
                         )
                       }>
-                      <Ionicons name="trash-outline" size={20} color="#aaa" />
+                      <Ionicons name="trash-outline" size={20} color="#061efcff" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -390,20 +391,20 @@ export default function JournalScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
-  header: { color: '#fff', fontSize: 26, textAlign: 'center', marginBottom: 8 },
-  greeting: { color: '#fff', fontSize: 16, marginBottom: 20 },
+  header: { color: '#2a1faa', fontSize: 26, textAlign: 'center', marginBottom: 8 },
+  greeting: { color: '#2a1faa', fontSize: 16, marginBottom: 20 },
   moodScroll: { flexDirection: 'row', marginBottom: 16 },
-  moodOption: { backgroundColor: '#1f1b5a', padding: 12, borderRadius: 20, marginRight: 10 },
+  moodOption: { backgroundColor: '#6dacd5ff', padding: 12, borderRadius: 20, marginRight: 10 },
   selectedMood: { backgroundColor: '#3f34c0' },
   moodEmoji: { fontSize: 26 },
-  input: { backgroundColor: '#1f1b5a', color: '#fff', borderRadius: 10, padding: 16, textAlignVertical: 'top' },
-  saveButton: { backgroundColor: '#5d4dfc', padding: 14, marginTop: 16, borderRadius: 10, alignItems: 'center' },
-  saveText: { color: '#fff', fontSize: 16 },
-  subHeader: { color: '#ccc', textAlign: 'center', marginVertical: 20 },
-  entryCard: { backgroundColor: '#2a2566', padding: 14, borderRadius: 12, marginBottom: 14 },
-  entryTime: { color: '#aaa', marginBottom: 4, fontSize: 12 },
-  entryMood: { fontSize: 20, marginBottom: 4 },
+  input: { backgroundColor: '#ffffffff', color: '#2a1faa', borderRadius: 10,borderWidth:3,borderColor:'#2a1faa', padding: 16, textAlignVertical: 'top' },
+  saveButton: { backgroundColor: '#000dffff', padding: 14, marginTop: 16, borderRadius: 10, alignItems: 'center' },
+  saveText: { color: '#000000ff', fontSize: 16 },
+  subHeader: { color: '#2a1faa', textAlign: 'center', marginVertical: 20 },
+  entryCard: { backgroundColor: '#ffffffff', padding: 14, borderRadius: 12, marginBottom: 14,borderWidth:2,borderColor:'#2a1faa' },
+  entryTime: { color:'#061efcff', marginBottom: 4, fontSize: 12 },
+  entryMood: { fontSize: 20, marginBottom: 4,color:'#2a1faa' },
   entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   headerBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  editedLabel: { color: '#aaa', fontSize: 12, marginTop: 6, textAlign: 'right' },
+  editedLabel: { color:'#061efcff', fontSize: 12, marginTop: 6, textAlign: 'right' },
 });
