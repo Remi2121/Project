@@ -4,11 +4,13 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { auth, db } from "utils/firebaseConfig"; // ✅ import auth
+import { auth, db } from "utils/firebaseConfig";
+import { useSettings } from '../utilis/Settings';
 
 export default function Playlist() {
   const router = useRouter();
   const [songs, setSongs] = useState<any[]>([]);
+  const { isDark } = useSettings();
 
   useEffect(() => {
     (async () => {
@@ -38,23 +40,20 @@ export default function Playlist() {
   }, []);
 
   return (
-    <LinearGradient colors={["#ffffffff", "#ffffffff"]} style={{ flex: 1, paddingTop: 50 }}>
+    <LinearGradient
+  colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#ffffffff']}
+  style={{ flex: 1, paddingTop: 50 }}
+>
+
       {/* Back Button */}
       <TouchableOpacity
         onPress={() => router.push("/(tabs)/explore")}
         style={{ paddingLeft: 20, marginBottom: 10 }}
       >
-        <Ionicons name="arrow-back" size={28} color="#2a1faa" />
+        <Ionicons name="arrow-back" size={28} color={isDark ? '#e6e6e6' : '#2a1faa'} />
       </TouchableOpacity>
 
-      <Text
-        style={{
-          color: "#2a1faa",
-          fontSize: 22,
-          fontWeight: "bold",
-          textAlign: "center",
-        }}
-      >
+      <Text style={{ color: isDark ? '#fff' : '#2a1faa', fontSize: 22, fontWeight: 'bold', textAlign: 'center' }}>
         My Playlist 🎶
       </Text>
 
@@ -64,13 +63,13 @@ export default function Playlist() {
             key={i}
             style={{
               padding: 14,
-              backgroundColor: "#494994ff",
+              backgroundColor: isDark ? '#2f2d45' : '#494994ff',
               borderRadius: 10,
               marginBottom: 10,
             }}
           >
-            <Text style={{ color: "white", fontSize: 16 }}>{s.name}</Text>
-            <Text style={{ color: "#aaa" }}>{s.mood}</Text>
+            <Text style={{ color: isDark ? '#fff' : 'white', fontSize: 16 }}>{s.name}</Text>
+            <Text style={{ color: isDark ? '#bbb' : '#aaa' }}>{s.mood}</Text>
           </View>
         ))}
 

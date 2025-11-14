@@ -5,8 +5,12 @@ import { collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { auth, db } from "utils/firebaseConfig";
+import { useSettings } from '../utilis/Settings';
+
 
 export default function Favorites() {
+    const { isDark } = useSettings();
+
   const router = useRouter();
   const [songs, setSongs] = useState<any[]>([]);
 
@@ -42,27 +46,24 @@ export default function Favorites() {
   }
 
   return (
-    <LinearGradient
-      colors={["#ffffffff", "#ebe0e0ff"]}
-      style={{ flex: 1, paddingTop: 50 }}
-    >
+<LinearGradient
+  colors={isDark ? ['#0b0b10', '#1a1620'] : ['#ffffffff', '#ebe0e0ff']}
+  style={{ flex: 1, paddingTop: 50 }}
+>
+
       <TouchableOpacity
         onPress={() => router.push("/(tabs)/explore")}
         style={{ paddingLeft: 20, marginBottom: 10 }}
       >
-        <Ionicons name="arrow-back" size={28} color="#2a1faa" />
+        <Ionicons name="arrow-back" size={28} color={isDark ? '#e6e6e6' : '#2a1faa'} />
       </TouchableOpacity>
 
-      <Text
-        style={{
-          color: "#2a1faa",
-          fontSize: 22,
-          fontWeight: "bold",
-          textAlign: "center",
-        }}
-      >
-        Favorites ❤️
-      </Text>
+      <Text style={{
+  color: isDark ? '#fff' : '#2a1faa',
+  fontSize: 22,
+  fontWeight: "bold",
+  textAlign: "center"
+}}>Favorites ❤️</Text>
 
       <ScrollView style={{ marginTop: 20, paddingHorizontal: 20 }}>
         {songs.map((s, i) => (
@@ -70,15 +71,15 @@ export default function Favorites() {
             <View
               style={{
                 padding: 14,
-                backgroundColor: "#64648eff",
+                backgroundColor: isDark ? '#3b3750' : '#64648eff',
                 borderRadius: 10,
                 marginBottom: 10,
               }}
             >
-              <Text style={{ color: "white", fontSize: 16 }}>
+              <Text style={{ color: isDark ? '#fff' : 'white', fontSize: 16 }}>
                 {s.name || s.id}
               </Text>
-              <Text style={{ color: "#aaa" }}>{s.mood || "—"}</Text>
+              <Text style={{ color: isDark ? '#bbb' : '#aaa' }}>{s.mood || "—"}</Text>
             </View>
           </TouchableOpacity>
         ))}

@@ -18,6 +18,9 @@ import { Alert, Image, ImageSourcePropType, StyleSheet, Text, TouchableOpacity, 
 import { auth, db } from "utils/firebaseConfig";
 import type { StoredTrack } from 'utils/storageAudio';
 import { listTracksByMood } from 'utils/storageAudio';
+import { useSettings } from '../utilis/Settings';
+
+
 
 type MainMood = 'happy' | 'sad' | 'anger' | 'surprise' | 'neutral';
 
@@ -286,11 +289,20 @@ export default function Player() {
     };
   }, []);
 
+    // theme
+  const { isDark } = useSettings();
+  const s = getPlayerStyles(isDark);
+
+
   return (
-    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={s.container}>
+  <LinearGradient
+  colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#ffffffff']}
+  style={s.container}
+>
+
       <View style={s.header}>
         <TouchableOpacity onPress={handleBack} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={26} color="#2a1faa" />
+          <Ionicons name="chevron-back" size={26} color={isDark ? '#e6e6e6' : '#2a1faa'} />
         </TouchableOpacity>
         <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>
         <View style={{ width: 26 }} />
@@ -402,3 +414,49 @@ const s = StyleSheet.create({
   speedTxt: { color: '#2a1faa' },
   speedTxtActive: { color: '#0b5d34', fontWeight: '700' },
 });
+
+const getPlayerStyles = (dark: boolean) =>
+  StyleSheet.create({
+    container: { flex: 1, paddingTop: 50, paddingHorizontal: 18, backgroundColor: dark ? '#07070a' : 'transparent' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    backBtn: { padding: 6 },
+    headerTitle: { color: dark ? '#e6e6e6' : '#2a1faa', fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
+
+    coverWrap: { marginTop: 24, alignItems: 'center' },
+    cover: { width: 280, height: 280, borderRadius: 12, borderColor: dark ? '#444366' : '#2a1faa', borderWidth: 10 },
+
+    meta: { marginTop: 18, alignItems: 'center' },
+    title: { color: dark ? '#fff' : '#2a1faa', fontSize: 18, fontWeight: '700' },
+    subtitle: { color: dark ? '#cfcfcf' : '#2a1faa', marginTop: 4 },
+
+    actionsRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 40,
+      marginVertical: 20,
+    },
+
+    controls: {
+      marginTop: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+    },
+    iconBtn: { alignItems: 'center' },
+    playBtn: {
+      width: 72, height: 72, borderRadius: 36, backgroundColor: dark ? '#3a2a88' : '#2a1faa',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    ctrlLabel: { color: '#fff', marginTop: 4, fontSize: 12 },
+
+    speedRow: { color: dark ? '#e6e6e6' : '#2a1faa', marginTop: 18, flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 20 },
+    speedPill: {
+      paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+      borderWidth: 1, borderColor: dark ? '#555577' : '#2a1faa',
+    },
+    speedPillActive: { backgroundColor: dark ? '#ffffff10' : '#ffffff', borderColor: dark ? '#6f6cff' : '#1906e7ff' },
+    speedTxt: { color: dark ? '#e6e6e6' : '#2a1faa' },
+    speedTxtActive: { color: dark ? '#c8ffd1' : '#0b5d34', fontWeight: '700' },
+  });
+

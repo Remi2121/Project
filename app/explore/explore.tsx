@@ -9,7 +9,9 @@ import type { UnknownOutputParams } from 'expo-router';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from 'utils/firebaseConfig'; // ✅ import auth as well
 import { listTracksByMood, type StoredTrack } from 'utils/storageAudio';
-import styles from '../explore/explorestyles';
+import { getExploreStyles } from '../explore/explorestyles';
+import { useSettings } from '../utilis/Settings';
+
 
 /** ===== MAIN MOODS ===== */
 const MAIN_MOODS = ['happy', 'sad', 'anger', 'surprise', 'neutral'] as const;
@@ -232,8 +234,18 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
     });
   }
 
+    // theme: must call hooks inside component
+  const { isDark } = useSettings();
+  const styles = getExploreStyles(isDark);
+
+
   return (
-    <LinearGradient colors={['#ffffffff', '#fdfdfdff']} style={styles.gradient}>
+
+    
+    <LinearGradient
+  colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#fdfdfdff']}
+  style={styles.gradient}
+>
 
 
       <View style={{flexDirection:"row", justifyContent:"flex-end", paddingTop:40, paddingHorizontal:16}}>
@@ -241,7 +253,7 @@ const Explore: React.FC<Props> = ({ routeParams }) => {
           <Ionicons name="heart" size={26} color="red"/>
         </TouchableOpacity>
         <TouchableOpacity onPress={()=>router.push("/explore/playlist")}>
-          <Ionicons name="musical-notes" size={26} color="black"/>
+          <Ionicons name="musical-notes" size={26} color="#2a1faa"/>
         </TouchableOpacity>
       </View>
 
