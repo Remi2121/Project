@@ -3,7 +3,6 @@ import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, ScrollView, Text, TextInput } from 'react-native';
-import styles from './chatbotstyles';
 
 import { useRouter } from 'expo-router';
 import {
@@ -16,10 +15,17 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from 'utils/firebaseConfig';
 
+// THEME imports (new)
+import { useSettings } from '../utilis/Settings';
+import { getChatbotStyles } from './chatbotstyles';
+
 type Props = { routeParams?: UnknownOutputParams };
 
 const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const router = useRouter();
+
+    const { isDark } = useSettings();
+  const styles = getChatbotStyles(isDark);
 
   // NOTE: still using "topic" for input state, but we will SAVE as "mood"
   const [topic, setTopic] = useState('');
@@ -185,7 +191,10 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
   }, []);
 
   return (
-    <LinearGradient colors={['#ffffffff', '#ffffffff']} style={styles.gradient}>
+    <LinearGradient
+      colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#ffffffff']}
+      style={styles.gradient}
+    >
   
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <Text style={styles.header}>Your AI Meditation Doctor</Text>
@@ -200,16 +209,16 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         <TextInput
           style={styles.input}
           placeholder="Describe your feeling..."
-          placeholderTextColor="#2a1faa" 
+          placeholderTextColor={isDark ? '#bdbdbd' : '#2a1faa'}
           value={topic}
           onChangeText={setTopic}
           autoCapitalize="none"
         />
 
-        <Button title="Get Tips" onPress={getTips} />
+         <Button title="Get Tips" onPress={getTips} color={isDark ? '#6f6cff' : undefined} />
 
         {loading ? (
-          <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 20 }} />
+          <ActivityIndicator size="large" color={isDark ? '#ffffff' : '#2a1faa'} style={{ marginTop: 20 }} />
         ) : (
           <Text style={styles.tips}>{tips}</Text>
         )}
