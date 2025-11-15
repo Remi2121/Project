@@ -69,6 +69,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+     scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 140,
+  },
   mainText: {
     color: '#fff',
     fontSize: 18,

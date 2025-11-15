@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from "@react-native-community/slider";
 import { Audio } from "expo-av";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Favorite = {
   id: string;

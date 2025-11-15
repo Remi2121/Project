@@ -5,9 +5,16 @@ import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../utils/firebaseConfig';
 
+// theme hook (same as your journal screen)
+import { useSettings } from '../utilis/Settings';
+
 export default function MoodResult() {
   const { mood, confidence } = useLocalSearchParams();
   const router = useRouter();
+
+  // theme
+  const { isDark } = useSettings();
+  const styles = getCameraStyles(isDark);
 
   // Normalize router params
   const moodRaw = Array.isArray(mood) ? mood[0] : (mood ?? '');
@@ -74,7 +81,7 @@ export default function MoodResult() {
       {moodRaw ? (
         <Text style={styles.emoji}>{moodEmojis[moodRaw] || '🤔'}</Text>
       ) : (
-        <Text style={{ color: 'red', marginTop: 20 }}>Mood not detected</Text>
+        <Text style={styles.missingText}>Mood not detected</Text>
       )}
 
       <Text style={styles.moodText}>
@@ -88,15 +95,15 @@ export default function MoodResult() {
       <Text style={styles.confidenceText}>Confidence: {formatConfidence(confRaw)}</Text>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={saveMoodToFirestore}>
-          <Text style={styles.buttonText}>Confirm</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={saveMoodToFirestore}>
+          <Text style={styles.primaryButtonText}>Confirm</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.button]}
+          style={[styles.secondaryButton]}
           onPress={() => router.replace({ pathname: '/camera' as any })}
         >
-          <Text style={[styles.buttonText, styles.buttonText]}>Try Again</Text>
+          <Text style={styles.secondaryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -110,62 +117,94 @@ function formatConfidence(v: any) {
   return n >= 0 && n <= 1 ? `${Math.round(n * 100)}%` : `${n}`;
 }
 
-const themeColor = '#2a1faa';
+/**
+ * Style factory: returns styles tuned for dark or light theme.
+ * Adjust palette here if you want different colors across the app.
+ */
+const getCameraStyles = (dark: boolean) => {
+  const palette = {
+    background: dark ? '#07070a' : '#ffffff',
+    surface: dark ? '#0f0f16' : '#ffffff',
+    headerText: dark ? '#e6e6e6' : '#2a1faa',
+    accent: dark ? '#6f6cff' : '#2a1faa',
+    accentOnDarkText: '#ffffff',
+    muted: dark ? '#b9b9ff' : '#555555',
+    danger: '#ff5a5f',
+  };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    padding: 20,
-  },
-  header: {
-    color: themeColor,
-    fontSize: 26,
-    marginTop: 60,
-    fontWeight: 'bold',
-  },
-  emoji: {
-    fontSize: 120,
-    marginTop: 50,
-  },
-  moodText: {
-    color: themeColor,
-    fontSize: 20,
-    marginTop: 12,
-  },
-  boldText: {
-    fontWeight: 'bold',
-    color: themeColor,
-  },
-  confidenceText: {
-    color: '#555',
-    fontSize: 16,
-    marginTop: 8,
-  },
-  buttonContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: 50,
-    gap: 30,
-  },
-  button: {
-    backgroundColor: themeColor,
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: themeColor,
-  },
-  secondaryButtonText: {
-    color: themeColor,
-  },
-});
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: palette.background,
+      alignItems: 'center',
+      padding: 20,
+    },
+    header: {
+      color: palette.headerText,
+      fontSize: 26,
+      marginTop: 60,
+      fontWeight: 'bold',
+    },
+    emoji: {
+      fontSize: 120,
+      marginTop: 50,
+      // subtle shadow on dark to make emoji pop
+      textShadowColor: dark ? 'rgba(0,0,0,0.6)' : undefined,
+      textShadowOffset: dark ? { width: 0, height: 3 } : undefined,
+      textShadowRadius: dark ? 6 : undefined,
+    },
+    moodText: {
+      color: palette.headerText,
+      fontSize: 20,
+      marginTop: 12,
+    },
+    boldText: {
+      fontWeight: 'bold',
+      color: palette.headerText,
+    },
+    confidenceText: {
+      color: palette.muted,
+      fontSize: 16,
+      marginTop: 8,
+    },
+    missingText: {
+      color: palette.danger,
+      marginTop: 20,
+      fontSize: 16,
+    },
+    buttonContainer: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      marginTop: 50,
+      gap: 20,
+    },
+    primaryButton: {
+      backgroundColor: palette.accent,
+      paddingVertical: 15,
+      paddingHorizontal: 40,
+      borderRadius: 10,
+      minWidth: 180,
+      alignItems: 'center',
+    },
+    primaryButtonText: {
+      color: dark ? palette.accentOnDarkText : '#ffffff',
+      fontWeight: 'bold',
+      fontSize: 18,
+    },
+    secondaryButton: {
+      backgroundColor: dark ? '#121217' : '#ffffff',
+      borderWidth: 2,
+      borderColor: palette.accent,
+      paddingVertical: 14,
+      paddingHorizontal: 36,
+      borderRadius: 10,
+      minWidth: 180,
+      alignItems: 'center',
+    },
+    secondaryButtonText: {
+      color: palette.accent,
+      fontWeight: 'bold',
+      fontSize: 18,
+    },
+  });
+};

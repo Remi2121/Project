@@ -7,7 +7,10 @@ const getHomeStyles = (dark: boolean) =>
       flex: 1,
       backgroundColor: dark ? '#121212' : 'white',
     },
-
+    scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 140,
+  },
     // Top Navigation Bar
     navBar: {
       flexDirection: 'row',
@@ -72,7 +75,7 @@ const getHomeStyles = (dark: boolean) =>
     },
 
     mainButton: {
-      backgroundColor: dark ? '#333333' : '#2a1faa',
+      backgroundColor: dark ? '#3e16b5ff' : '#2a1faa',
       padding: 24,
       borderRadius: 20,
       alignItems: 'center',
@@ -98,7 +101,7 @@ const getHomeStyles = (dark: boolean) =>
     },
 
     tile: {
-      backgroundColor: dark ? '#262450' : '#1f1b5a',
+      backgroundColor: dark ? '#2d2980ff' : '#1f1b5a',
       width: '48%',
       padding: 20,
       borderRadius: 15,

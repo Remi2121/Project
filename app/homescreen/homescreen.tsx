@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View, } from 'react-native';
 import { auth, db } from '../../utils/firebaseConfig';
 
 // 🔥 THEME
@@ -87,7 +87,7 @@ export default function HomeScreen() {
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
       </LinearGradient>
-
+<ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
       {/* Main Content */}
       <View style={styles.content}>
         {/* Greeting & Mood */}
@@ -119,6 +119,7 @@ export default function HomeScreen() {
             onPress={() =>
               router.push({ pathname: '../meditation/stressRelief' as any })
             }
+            
           >
             <Text style={styles.icon}>🧘</Text>
             <Text style={styles.tileText}>Meditation</Text>
@@ -141,6 +142,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      </ScrollView>
     </View>
+
   );
 }
