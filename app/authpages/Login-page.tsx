@@ -1,10 +1,14 @@
+// Login.tsx
 import { useRouter } from 'expo-router';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
-import styles from './authstyles';
+
+// theme
+import { useSettings } from '../utilis/Settings';
+import { getAuthStyles } from './authstyles';
 
 export default function Login() {
   const router = useRouter();
@@ -14,8 +18,11 @@ export default function Login() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // theme
+  const { isDark } = useSettings();
+  const styles = getAuthStyles(isDark);
+
   // Track auth state but DON'T auto-redirect;
-  // we show choices if already logged in.
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -57,7 +64,6 @@ export default function Login() {
     }
   };
 
-  // If already signed in, show choices: continue or switch account
   if (currentUser) {
     return (
       <KeyboardAvoidingView
@@ -89,7 +95,7 @@ export default function Login() {
 
         <Animatable.View animation="fadeInUp" delay={600} duration={800} style={{ width: '100%' }}>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#555' }]}
+            style={[styles.button, { backgroundColor: isDark ? '#333' : '#555' }]}
             onPress={onUseDifferentAccount}
             activeOpacity={0.8}
           >
@@ -100,7 +106,6 @@ export default function Login() {
     );
   }
 
-  // Otherwise, show the normal login form
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -116,7 +121,7 @@ export default function Login() {
           zIndex: 10,
         }}
       >
-        <Text style={{ fontSize: 30, color: '#fff', fontWeight: 'bold' }}>← </Text>
+        <Text style={styles.backArrow}>←</Text>
       </TouchableOpacity>
 
       <Animatable.Text animation="fadeInDown" duration={1200} style={styles.title}>
@@ -126,8 +131,8 @@ export default function Login() {
       <Animatable.View animation="fadeInUp" delay={200} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Email"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
-          placeholderTextColor="#555"
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -139,8 +144,8 @@ export default function Login() {
       <Animatable.View animation="fadeInUp" delay={400} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Password"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
-          placeholderTextColor="#555"
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           secureTextEntry
           value={password}
           onChangeText={setPassword}

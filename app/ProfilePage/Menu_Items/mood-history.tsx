@@ -1,24 +1,25 @@
+// app/moodtrends/history.tsx
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   collection,
   getDocs,
   orderBy,
-  query
+  query,
 } from 'firebase/firestore';
-import { auth, db } from 'utils/firebaseConfig'; // ✅ import auth
+import { auth, db } from '../../../utils/firebaseConfig';
+import { useSettings } from '../../utilis/Settings';
+import { getHistoryStyles } from './moodhistorystyles';
 
-
-/** Types */
 type JournalEntry = {
   id: string;
   text: string;
   mood: string;
-  time: string; // e.g. toLocaleTimeString()
-  date: string; // e.g. toLocaleDateString()
+  time: string;
+  date: string;
   edited?: boolean;
 };
 
@@ -26,11 +27,10 @@ type MoodEntry = {
   id: string;
   mood: string;
   confidence?: number;
-  timestamp?: any;    // Firestore Timestamp | number | string (legacy name)
-  createdAt?: any;    // Firestore Timestamp | number | string (newer name)
+  timestamp?: any;
+  createdAt?: any;
 };
 
-/** Utils */
 const tsToDate = (ts: any): Date => {
   if (!ts) return new Date(NaN);
   if (typeof ts === 'object' && typeof ts.toDate === 'function') return ts.toDate();
@@ -38,7 +38,6 @@ const tsToDate = (ts: any): Date => {
   return new Date(ts);
 };
 
-/** 🔐 User-scoped helpers */
 const requireUid = () => {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('NOT_SIGNED_IN');
@@ -47,15 +46,16 @@ const requireUid = () => {
 const userColl = (sub: 'journalEntries' | 'MoodHistory') =>
   collection(db, 'users', requireUid(), sub);
 
-
 const History: React.FC = () => {
+  const router = useRouter();
+  const { isDark } = useSettings();
+  const styles = getHistoryStyles(isDark);
+
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [filterDate] = useState<Date | null>(null);
-
   const [activeSection, setActiveSection] = useState<'history' | 'moods'>('history');
 
-  /** 🔐 Guard: redirect to Login if not signed in; otherwise load data */
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) {
@@ -65,13 +65,12 @@ const History: React.FC = () => {
       await Promise.all([fetchJournalEntries(), fetchMoodEntries()]);
     });
     return unsub;
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Fetch journal entries (per user) */
   const fetchJournalEntries = async () => {
     try {
-      const q = query(userColl('journalEntries')); // add orderBy if you add createdAt
+      const q = query(userColl('journalEntries'));
       const snap = await getDocs(q);
       const entries: JournalEntry[] = [];
       snap.forEach((d) => entries.push({ id: d.id, ...(d.data() as Omit<JournalEntry, 'id'>) }));
@@ -81,10 +80,8 @@ const History: React.FC = () => {
     }
   };
 
-  /** Fetch mood entries (per user) */
   const fetchMoodEntries = async () => {
     try {
-      // Prefer ordering by createdAt if present; fallback without orderBy
       let qRef: any;
       try {
         qRef = query(userColl('MoodHistory'), orderBy('createdAt', 'desc'));
@@ -100,11 +97,6 @@ const History: React.FC = () => {
     }
   };
 
-
-
-
-
-  /** Filter by a chosen date (if provided) */
   const filteredEntries = useMemo(() => {
     if (!filterDate) return journalEntries;
     const key = filterDate.toDateString();
@@ -125,44 +117,48 @@ const History: React.FC = () => {
     }
   };
 
+  const GRADIENT = isDark ? (['#07070aff', '#0f0f16ff'] as const) : (['#ffffffff', '#ffffff'] as const);
+
   return (
-    <LinearGradient colors={["#1f1b5a", "#3f34c0"]} style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.replace("/(tabs)/profile")}
-        style={styles.backButton}
-        accessibilityLabel="Go to Home">
-        <Text style={styles.backIcon}>←</Text>
-      </TouchableOpacity>
-
-      <ScrollView>
-        <Text style={styles.header}>Mood History</Text>
-
-        {/* Toggle buttons */}
-        <View style={styles.toggleButtonsContainer}>
+    <LinearGradient colors={GRADIENT} style={styles.gradient}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.topWrap}>
           <TouchableOpacity
-            style={[styles.toggleButton, activeSection === 'history' && styles.activeButton]}
-            onPress={() => setActiveSection('history')}
-          >
-            <Text style={styles.toggleButtonText}>History Mood Journal</Text>
+            onPress={() => router.replace("/(tabs)/profile")}
+            style={styles.backButton}
+            accessibilityLabel="Go to Mood Trends">
+            <Text style={[styles.backIcon, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleButton, activeSection === 'moods' && styles.activeButton]}
-            onPress={() => setActiveSection('moods')}
-          >
-            <Text style={styles.toggleButtonText}>Mood Entries</Text>
-          </TouchableOpacity>
+
+          <Text style={[styles.header, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>Mood History</Text>
+
+          <View style={styles.toggleButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.toggleButton, activeSection === 'history' && styles.activeButton]}
+              onPress={() => setActiveSection('history')}
+            >
+              <Text style={[styles.toggleButtonText, activeSection === 'history' && styles.activeButtonText]}>History Mood Journal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, activeSection === 'moods' && styles.activeButton]}
+              onPress={() => setActiveSection('moods')}
+            >
+              <Text style={[styles.toggleButtonText, activeSection === 'moods' && styles.activeButtonText]}>Mood Entries</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Sections */}
         {activeSection === 'history' && (
           <View style={styles.section}>
-            <Text style={styles.subHeader}>History Mood Journal</Text>
+            <Text style={[styles.subHeader, { color: isDark ? '#cfcfcf' : '#3434e1ff' }]}>History Mood Journal</Text>
+            {filteredEntries.length === 0 && <Text style={[styles.emptyText, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>No journal entries yet.</Text>}
             {filteredEntries.map((entry) => (
-              <View key={entry.id} style={styles.entryCard}>
-                <Text style={styles.entryTime}>{entry.time}</Text>
-                <Text style={styles.entryMood}>{entry.mood}</Text>
-                <Text style={styles.entryText}>{entry.text}</Text>
-                {entry.edited ? <Text style={styles.editedLabel}>edited</Text> : null}
+              <View key={entry.id} style={[styles.entryCard, { backgroundColor: isDark ? '#0f1016' : '#ffffff', borderColor: isDark ? '#2e2b4a' : '#0509eeff' }]}>
+                <Text style={[styles.entryTime, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>{entry.time}</Text>
+                <Text style={[styles.entryMood, { color: isDark ? '#9aa3ff' : '#2a1faa' }]}>{entry.mood}</Text>
+                <Text style={[styles.entryText, { color: isDark ? '#e6e6e6' : '#222' }]}>{entry.text}</Text>
+                {entry.edited ? <Text style={[styles.editedLabel, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>edited</Text> : null}
               </View>
             ))}
           </View>
@@ -170,21 +166,21 @@ const History: React.FC = () => {
 
         {activeSection === 'moods' && (
           <View style={styles.section}>
-            <Text style={styles.subHeader}>Mood Entries</Text>
+            <Text style={[styles.subHeader, { color: isDark ? '#cfcfcf' : '#3434e1ff' }]}>Mood Entries</Text>
+            {moodEntries.length === 0 && <Text style={[styles.emptyText, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>No mood entries yet.</Text>}
             {moodEntries.map((entry) => {
-              // support both 'createdAt' and legacy 'timestamp'
               const when = entry.createdAt ?? entry.timestamp;
               return (
-                <View key={entry.id} style={styles.entryCard}>
-                  <Text style={styles.entryTime}>{tsToDate(when).toLocaleString()}</Text>
+                <View key={entry.id} style={[styles.entryCard, { backgroundColor: isDark ? '#0f1016' : '#ffffff', borderColor: isDark ? '#2e2b4a' : '#0509eeff' }]}>
+                  <Text style={[styles.entryTime, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>{tsToDate(when).toLocaleString()}</Text>
 
                   <View style={{ alignItems: 'flex-start', marginBottom: 8 }}>
-                    <Text style={styles.moodEmojiOnly}>{getMoodEmoji(entry.mood)}</Text>
-                    <Text style={styles.moodLabel}>{entry.mood}</Text>
+                    <Text style={[styles.moodEmojiOnly, { color: isDark ? '#e6e6e6' : '#222' }]}>{getMoodEmoji(entry.mood)}</Text>
+                    <Text style={[styles.moodLabel, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>{entry.mood}</Text>
                   </View>
 
                   {typeof entry.confidence !== 'undefined' && (
-                    <Text style={styles.entryText}>Confidence: {entry.confidence}</Text>
+                    <Text style={[styles.entryText, { color: isDark ? '#e6e6e6' : '#222' }]}>Confidence: {entry.confidence}</Text>
                   )}
                 </View>
               );
@@ -195,110 +191,5 @@ const History: React.FC = () => {
     </LinearGradient>
   );
 };
-
-
-const styles = StyleSheet.create({
-  header: {
-    fontSize: 25,
-    color: '#fff',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  backButton: {
-  position: 'absolute',
-  justifyContent: 'center',
-  top: 50,   
-  left: 15,
-  zIndex: 10,
-  borderRadius: 800,
-  paddingVertical: 6,
-  paddingHorizontal: 10,
-},
-backIcon: {
-  color: 'white',
-  fontSize: 30,
-  fontWeight: '700',
-
-},
-  container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  toggleButtonsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    justifyContent: 'space-around',
-  },
-  toggleButton: {
-    backgroundColor: '#1f1b5a',
-    padding: 10,
-    borderRadius: 10,
-    flex: 1,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  activeButton: {
-    backgroundColor: '#3f34c0',
-  },
-  toggleButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  subHeader: {
-    color: '#ccc',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  entryCard: {
-    backgroundColor: '#2a2566',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-  },
-  entryTime: {
-    color: '#aaa',
-    marginBottom: 4,
-    fontSize: 12,
-  },
-  entryMood: {
-    fontSize: 20,
-    marginBottom: 4,
-    color: 'white',
-  },
-  entryText: {
-    color: '#fff',
-    fontSize: 15,
-  },
-  moodEmojiOnly: {
-    fontSize: 28,
-    color: '#fff',
-  },
-  moodLabel: {
-    fontSize: 15,
-    color: '#ccc',
-  },
-  iconsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  editIcon: {
-    marginRight: 15,
-  },
-  deleteIcon: {
-    marginLeft: 10,
-  },
-  editedLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 6,
-    textAlign: 'right',
-  },
-});
-
 
 export default History;

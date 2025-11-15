@@ -1,3 +1,4 @@
+// Signup.tsx
 import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -5,11 +6,12 @@ import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth, db } from '../../utils/firebaseConfig.js';
-import styles from './authstyles';
 
-const TABS_HOME = '/(tabs)'; 
-// If you DON'T have app/(tabs)/index.tsx, use a concrete tab path, e.g.:
-// const TABS_HOME = '/(tabs)/home';
+// theme
+import { useSettings } from '../utilis/Settings';
+import { getAuthStyles } from './authstyles';
+
+const TABS_HOME = '/(tabs)';
 
 export default function Signup() {
   const router = useRouter();
@@ -18,6 +20,9 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const { isDark } = useSettings();
+  const styles = getAuthStyles(isDark);
 
   const onSignupPress = async () => {
     if (!username || !email || !password || !confirmPassword) {
@@ -34,10 +39,8 @@ export default function Signup() {
 
       const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
 
-      // Optional: set displayName in Firebase Auth profile
       await updateProfile(user, { displayName: username });
 
-      // Create user doc in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         username,
@@ -45,7 +48,6 @@ export default function Signup() {
         createdAt: serverTimestamp(),
       });
 
-      // ✅ Show success popup → navigate AFTER OK
       Alert.alert(
         'Success',
         'Signup completed!',
@@ -71,45 +73,45 @@ export default function Signup() {
       <Animatable.View animation="fadeInUp" delay={200} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Username"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="words"
-          placeholderTextColor="#555"
         />
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={400} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Email"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholderTextColor="#555"
         />
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={600} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Password"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          placeholderTextColor="#555"
         />
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={800} duration={1000} style={{ width: '100%' }}>
         <TextInput
           placeholder="Confirm Password"
-          style={[styles.input, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
+          style={styles.input}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholderTextColor="#555"
         />
       </Animatable.View>
 

@@ -1,5 +1,6 @@
+// app/moodtrends/history.tsx
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,9 +11,9 @@ import {
   query,
 } from 'firebase/firestore';
 import { auth, db } from 'utils/firebaseConfig';
-import styles from './history_styles';
+import { useSettings } from '../../utilis/Settings';
+import { getHistoryStyles } from './history_styles';
 
-/** Types */
 type JournalEntry = {
   id: string;
   text: string;
@@ -30,7 +31,6 @@ type MoodEntry = {
   createdAt?: any;
 };
 
-/** Utils */
 const tsToDate = (ts: any): Date => {
   if (!ts) return new Date(NaN);
   if (typeof ts === 'object' && typeof ts.toDate === 'function') return ts.toDate();
@@ -47,6 +47,10 @@ const userColl = (sub: 'journalEntries' | 'MoodHistory') =>
   collection(db, 'users', requireUid(), sub);
 
 const History: React.FC = () => {
+  const router = useRouter();
+  const { isDark } = useSettings();
+  const styles = getHistoryStyles(isDark);
+
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [filterDate] = useState<Date | null>(null);
@@ -61,6 +65,7 @@ const History: React.FC = () => {
       await Promise.all([fetchJournalEntries(), fetchMoodEntries()]);
     });
     return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchJournalEntries = async () => {
@@ -112,18 +117,20 @@ const History: React.FC = () => {
     }
   };
 
+  const GRADIENT = isDark ? (['#07070aff', '#0f0f16ff'] as const) : (['#ffffffff', '#ffffff'] as const);
+
   return (
-    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+    <LinearGradient colors={GRADIENT} style={styles.gradient}>
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.topWrap}>
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)/mood_trends")}
             style={styles.backButton}
-            accessibilityLabel="Go to Home">
-            <Text style={styles.backIcon}>←</Text>
+            accessibilityLabel="Go to Mood Trends">
+            <Text style={[styles.backIcon, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.header}>Mood History</Text>
+          <Text style={[styles.header, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>Mood History</Text>
 
           <View style={styles.toggleButtonsContainer}>
             <TouchableOpacity
@@ -144,14 +151,14 @@ const History: React.FC = () => {
         {/* Sections */}
         {activeSection === 'history' && (
           <View style={styles.section}>
-            <Text style={styles.subHeader}>History Mood Journal</Text>
-            {filteredEntries.length === 0 && <Text style={styles.emptyText}>No journal entries yet.</Text>}
+            <Text style={[styles.subHeader, { color: isDark ? '#cfcfcf' : '#3434e1ff' }]}>History Mood Journal</Text>
+            {filteredEntries.length === 0 && <Text style={[styles.emptyText, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>No journal entries yet.</Text>}
             {filteredEntries.map((entry) => (
-              <View key={entry.id} style={styles.entryCard}>
-                <Text style={styles.entryTime}>{entry.time}</Text>
-                <Text style={styles.entryMood}>{entry.mood}</Text>
-                <Text style={styles.entryText}>{entry.text}</Text>
-                {entry.edited ? <Text style={styles.editedLabel}>edited</Text> : null}
+              <View key={entry.id} style={[styles.entryCard, { backgroundColor: isDark ? '#0f1016' : '#ffffff', borderColor: isDark ? '#2e2b4a' : '#0509eeff' }]}>
+                <Text style={[styles.entryTime, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>{entry.time}</Text>
+                <Text style={[styles.entryMood, { color: isDark ? '#9aa3ff' : '#2a1faa' }]}>{entry.mood}</Text>
+                <Text style={[styles.entryText, { color: isDark ? '#e6e6e6' : '#222' }]}>{entry.text}</Text>
+                {entry.edited ? <Text style={[styles.editedLabel, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>edited</Text> : null}
               </View>
             ))}
           </View>
@@ -159,21 +166,21 @@ const History: React.FC = () => {
 
         {activeSection === 'moods' && (
           <View style={styles.section}>
-            <Text style={styles.subHeader}>Mood Entries</Text>
-            {moodEntries.length === 0 && <Text style={styles.emptyText}>No mood entries yet.</Text>}
+            <Text style={[styles.subHeader, { color: isDark ? '#cfcfcf' : '#3434e1ff' }]}>Mood Entries</Text>
+            {moodEntries.length === 0 && <Text style={[styles.emptyText, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>No mood entries yet.</Text>}
             {moodEntries.map((entry) => {
               const when = entry.createdAt ?? entry.timestamp;
               return (
-                <View key={entry.id} style={styles.entryCard}>
-                  <Text style={styles.entryTime}>{tsToDate(when).toLocaleString()}</Text>
+                <View key={entry.id} style={[styles.entryCard, { backgroundColor: isDark ? '#0f1016' : '#ffffff', borderColor: isDark ? '#2e2b4a' : '#0509eeff' }]}>
+                  <Text style={[styles.entryTime, { color: isDark ? '#b9b9ff' : '#3434e1ff' }]}>{tsToDate(when).toLocaleString()}</Text>
 
                   <View style={{ alignItems: 'flex-start', marginBottom: 8 }}>
-                    <Text style={styles.moodEmojiOnly}>{getMoodEmoji(entry.mood)}</Text>
-                    <Text style={styles.moodLabel}>{entry.mood}</Text>
+                    <Text style={[styles.moodEmojiOnly, { color: isDark ? '#e6e6e6' : '#222' }]}>{getMoodEmoji(entry.mood)}</Text>
+                    <Text style={[styles.moodLabel, { color: isDark ? '#bdbdbd' : '#3434e1ff' }]}>{entry.mood}</Text>
                   </View>
 
                   {typeof entry.confidence !== 'undefined' && (
-                    <Text style={styles.entryText}>Confidence: {entry.confidence}</Text>
+                    <Text style={[styles.entryText, { color: isDark ? '#e6e6e6' : '#222' }]}>Confidence: {entry.confidence}</Text>
                   )}
                 </View>
               );

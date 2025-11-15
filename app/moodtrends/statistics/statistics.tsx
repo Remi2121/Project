@@ -1,6 +1,14 @@
+// Statistics.tsx
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  Timestamp,
+  where,
+} from 'firebase/firestore';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,10 +20,17 @@ import {
   View,
 } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
-import { auth, db } from 'utils/firebaseConfig';
-import styles from './statistics_styles';
 
-/** ===== Types & config (kept as before) ===== */
+import { auth, db } from 'utils/firebaseConfig';
+import { useSettings } from '../../utilis/Settings';
+
+// ⭐ FIXED: correct import (default factory)
+import { getStatisticsStyles } from './statistics_styles';
+
+
+/* ============================================================
+    TYPES + HELPERS (unchanged)
+============================================================ */
 type MoodKey = string;
 type MoodInfo = { key: string; name: string; emoji: string; value: number };
 
@@ -23,7 +38,7 @@ interface MoodEntry {
   id: string;
   mood: MoodKey;
   text?: string;
-  time: Date; // normalized Date
+  time: Date;
 }
 
 interface WeekBucket {
@@ -39,34 +54,39 @@ type BarDatum = { value: number; label?: string; frontColor?: string };
 const WEEKS_COUNT = 5;
 
 const MOOD_SCALE: MoodInfo[] = [
-  { key: 'angry',    name: 'Angry',    emoji: '😡', value: 1 },
-  { key: 'sad',      name: 'Sad',      emoji: '😢', value: 2 },
+  { key: 'angry', name: 'Angry', emoji: '😡', value: 1 },
+  { key: 'sad', name: 'Sad', emoji: '😢', value: 2 },
   { key: 'confused', name: 'Confused', emoji: '😕', value: 3 },
-  { key: 'neutral',  name: 'Neutral',  emoji: '😐', value: 3.5 },
-  { key: 'calm',     name: 'Calm',     emoji: '🙂', value: 4 },
-  { key: 'happy',    name: 'Happy',    emoji: '😄', value: 5 },
+  { key: 'neutral', name: 'Neutral', emoji: '😐', value: 3.5 },
+  { key: 'calm', name: 'Calm', emoji: '🙂', value: 4 },
+  { key: 'happy', name: 'Happy', emoji: '😄', value: 5 },
 ];
-const MOOD_BY_KEY   = new Map(MOOD_SCALE.map(m => [m.key.toLowerCase(), m]));
+
+const MOOD_BY_KEY = new Map(MOOD_SCALE.map(m => [m.key.toLowerCase(), m]));
 const MOOD_BY_EMOJI = new Map(MOOD_SCALE.map(m => [m.emoji, m]));
+
 const FALLBACK_MOOD: MoodInfo = { key: 'neutral', name: 'Neutral', emoji: '😐', value: 3.5 };
 
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function startOfWeekSun(d: Date) { const x = startOfDay(d); x.setDate(x.getDate() - x.getDay()); return x; }
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
 function fmtLocalDate(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
 function getLastMonthRangeLocal(ref = new Date()) {
   const year = ref.getFullYear();
   const month = ref.getMonth();
   return {
     start: new Date(year, month - 1, 1, 0, 0, 0, 0),
-    end:   new Date(year, month, 0, 23, 59, 59, 999),
+    end: new Date(year, month, 0, 23, 59, 59, 999),
   };
 }
+
 function toDate(tsLike: any): Date {
   if (!tsLike) return new Date(NaN);
   if (tsLike instanceof Date) return tsLike;
@@ -81,67 +101,73 @@ function toDate(tsLike: any): Date {
   const d = new Date(tsLike);
   return isNaN(d.getTime()) ? new Date(NaN) : d;
 }
-function normalizeMood(m?: string): MoodInfo {
-  if (!m) return FALLBACK_MOOD;
-  const s = String(m).trim();
-  return MOOD_BY_EMOJI.get(s)
-      || MOOD_BY_KEY.get(s.toLowerCase())
-      || { ...FALLBACK_MOOD, key: s.toLowerCase(), name: s };
+
+function normalizeMood(mood?: string): MoodInfo {
+  if (!mood) return FALLBACK_MOOD;
+  const s = String(mood).trim();
+  return MOOD_BY_EMOJI.get(s) || MOOD_BY_KEY.get(s.toLowerCase()) || FALLBACK_MOOD;
 }
 
-/** ===== Screen (MoodHistory ONLY) ===== */
+
+/* ============================================================
+    MAIN SCREEN
+============================================================ */
 const Statistics: React.FC = () => {
+
+  const { isDark } = useSettings();
+  const styles = getStatisticsStyles(isDark);  // ⭐ FIXED: Now styles exists everywhere
+
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [empty, setEmpty] = useState(false);
   const [tab, setTab] = useState<'freq' | 'date' | 'avg'>('freq');
 
+
+  /* ============================================================
+        LOAD DATA
+  ============================================================ */
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(async (u) => {
       if (!u) {
         router.replace('/authpages/Login-page');
         return;
       }
-
       setLoading(true);
       setError(null);
       setEmpty(false);
 
       try {
         const now = new Date();
-        const earliestWeekStart = addDays(startOfWeekSun(now), -(WEEKS_COUNT - 1) * 7);
+        const earliest = addDays(startOfWeekSun(now), -(WEEKS_COUNT - 1) * 7);
 
-        const uid = u.uid;
-        const moodHistoryColl = collection(db, 'users', uid, 'MoodHistory');
+        const col = collection(db, 'users', u.uid, 'MoodHistory');
 
-        let rows: MoodEntry[] = [];
+        let docs: MoodEntry[] = [];
+
         try {
-          const qy = query(
-            moodHistoryColl,
-            where('createdAt', '>=', Timestamp.fromDate(earliestWeekStart)),
-            orderBy('createdAt', 'asc')
-          );
+          const qy = query(col, where('createdAt', '>=', Timestamp.fromDate(earliest)), orderBy('createdAt', 'asc'));
           const snap = await getDocs(qy);
-          rows = snap.docs.map(d => {
+          docs = snap.docs.map(d => {
             const x: any = d.data();
-            const when = x.createdAt ?? x.timestamp ?? { date: x.date, time: x.time };
-            return { id: d.id, mood: x.mood as MoodKey, text: x.text ?? '', time: toDate(when) };
+            const time = toDate(x.createdAt ?? x.timestamp ?? { date: x.date, time: x.time });
+            return { id: d.id, mood: x.mood, text: x.text ?? '', time };
           });
         } catch {
-          const snapAll = await getDocs(moodHistoryColl);
-          rows = snapAll.docs
+          const snapAll = await getDocs(col);
+          docs = snapAll.docs
             .map(d => {
               const x: any = d.data();
-              const when = x.createdAt ?? x.timestamp ?? { date: x.date, time: x.time };
-              return { id: d.id, mood: x.mood as MoodKey, text: x.text ?? '', time: toDate(when) };
+              const time = toDate(x.createdAt ?? x.timestamp ?? { date: x.date, time: x.time });
+              return { id: d.id, mood: x.mood, text: x.text ?? '', time };
             })
-            .filter(r => !isNaN(r.time.getTime()) && r.time >= earliestWeekStart)
-            .sort((a,b) => a.time.getTime() - b.time.getTime());
+            .filter(r => !isNaN(r.time.getTime()) && r.time >= earliest)
+            .sort((a, b) => a.time.getTime() - b.time.getTime());
         }
 
-        setEntries(rows);
-        setEmpty(rows.length === 0);
+        setEntries(docs);
+        setEmpty(docs.length === 0);
+
       } catch (e: any) {
         setError(e?.message ?? 'Failed to load data');
       } finally {
@@ -152,66 +178,10 @@ const Statistics: React.FC = () => {
     return unsub;
   }, []);
 
-  const weeks = useMemo(() => {
-    const now = new Date();
-    const current = startOfWeekSun(now);
-    const starts: Date[] = [];
-    for (let i = WEEKS_COUNT - 1; i >= 0; i--) starts.push(addDays(current, -i * 7));
 
-    const bucketMap = new Map<string, WeekBucket>();
-    starts.forEach((s) => {
-      bucketMap.set(String(s.getTime()), {
-        start: s,
-        dayMood: Array(7).fill(null),
-        dominantMood: null,
-        dominantCount: 0,
-        percentage: 0,
-      });
-    });
-
-    const chooseDayMood = (items: MoodEntry[]): MoodKey | null => {
-      if (!items.length) return null;
-      const counts = new Map<string, number>();
-      items.forEach((it) => {
-        const n = normalizeMood(it.mood);
-        const k = n.emoji || n.name;
-        counts.set(k, (counts.get(k) ?? 0) + 1);
-      });
-      let best: string | null = null, bestC = -1;
-      counts.forEach((c, k) => { if (c > bestC) { bestC = c; best = k; } });
-      return best;
-    };
-
-    for (const e of entries) {
-      const wStart = startOfWeekSun(e.time);
-      const key = String(wStart.getTime());
-      if (!bucketMap.has(key)) continue;
-      const wk = bucketMap.get(key)!;
-      (wk as any)._raw = (wk as any)._raw ?? new Map<number, MoodEntry[]>();
-      const dayIdx = e.time.getDay();
-      const arr = (wk as any)._raw.get(dayIdx) ?? [];
-      arr.push(e);
-      (wk as any)._raw.set(dayIdx, arr);
-    }
-
-    bucketMap.forEach((wk) => {
-      const raw: Map<number, MoodEntry[]> = (wk as any)._raw ?? new Map();
-      for (let d = 0; d < 7; d++) wk.dayMood[d] = chooseDayMood(raw.get(d) ?? []);
-      const counts = new Map<string, number>();
-      wk.dayMood.forEach((mk) => { if (mk) counts.set(mk, (counts.get(mk) ?? 0) + 1); });
-      if (counts.size) {
-        let best: string | null = null, bestC = -1;
-        counts.forEach((c, k) => { if (c > bestC) { bestC = c; best = k; } });
-        wk.dominantMood = best;
-        wk.dominantCount = bestC;
-        wk.percentage = Math.round((bestC / 7) * 100);
-      }
-      delete (wk as any)._raw;
-    });
-
-    return starts.map((s) => bucketMap.get(String(s.getTime()))!);
-  }, [entries]);
-
+  /* ============================================================
+        CALCULATIONS
+  ============================================================ */
   const entriesInLastNDays = (n: number) => {
     const end = startOfDay(new Date());
     const start = addDays(end, -(n - 1));
@@ -224,68 +194,78 @@ const Statistics: React.FC = () => {
   const dateWiseCommonLast30 = useMemo(() => {
     const last30 = entriesInLastNDays(30);
     const grouped = new Map<string, MoodEntry[]>();
+
     last30.forEach((e) => {
-      const k = fmtLocalDate(startOfDay(e.time));
-      grouped.set(k, [...(grouped.get(k) ?? []), e]);
+      const dateKey = fmtLocalDate(startOfDay(e.time));
+      grouped.set(dateKey, [...(grouped.get(dateKey) ?? []), e]);
     });
 
-    const byDate = new Map<string, string>();
-    grouped.forEach((list, day) => {
-      const counts = new Map<string, number>();
-      list.forEach((it) => {
-        const n = normalizeMood(it.mood);
-        const k = n.emoji || n.name;
-        counts.set(k, (counts.get(k) ?? 0) + 1);
-      });
-      let best: string | null = null; let bestC = -1;
-      counts.forEach((c, k) => { if (c > bestC) { bestC = c; best = k; } });
-      if (best) byDate.set(day, best);
-    });
+    const results: { day: string; mood: string | null }[] = [];
+    const today0 = startOfDay(new Date());
 
-    const res: { day: string; mood: string | null }[] = [];
-    const end = startOfDay(new Date());
     for (let i = 29; i >= 0; i--) {
-      const day = fmtLocalDate(addDays(end, -i));
-      res.push({ day, mood: byDate.get(day) ?? null });
+      const day = fmtLocalDate(addDays(today0, -i));
+      const list = grouped.get(day);
+      if (!list) {
+        results.push({ day, mood: null });
+      } else {
+        const counts = new Map<string, number>();
+        list.forEach(it => {
+          const m = normalizeMood(it.mood);
+          const key = m.emoji || m.name;
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        });
+
+        let best: string | null = null;
+        let bestCount = -1;
+        counts.forEach((c, k) => { if (c > bestCount) { bestCount = c; best = k; } });
+
+        results.push({ day, mood: best });
+      }
     }
-    return res;
+
+    return results;
   }, [entries]);
 
   const avgMoodLastMonth = useMemo(() => {
-    const { start, end } = getLastMonthRangeLocal(new Date());
-    const inLastMonth = entries.filter(e => e.time >= start && e.time <= end);
-    if (!inLastMonth.length) {
-      return { label: '—', emoji: '▫️' as string };
-    }
-    const values = inLastMonth.map(e => normalizeMood(e.mood).value);
+    const { start, end } = getLastMonthRangeLocal();
+    const monthEntries = entries.filter(e => e.time >= start && e.time <= end);
+
+    if (!monthEntries.length) return { label: '—', emoji: '▫️' };
+
+    const values = monthEntries.map(e => normalizeMood(e.mood).value);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
+
     let closest = MOOD_SCALE[0];
     let diff = Infinity;
-    MOOD_SCALE.forEach(m => {
-      const d = Math.abs(m.value - avg);
-      if (d < diff) { diff = d; closest = m; }
+
+    MOOD_SCALE.forEach(info => {
+      const d = Math.abs(info.value - avg);
+      if (d < diff) { diff = d; closest = info; }
     });
+
     return { label: closest.name, emoji: closest.emoji };
   }, [entries]);
 
   const moodFreq5Weeks = useMemo(() => {
     const counts = new Map<string, number>();
     const earliest = addDays(startOfWeekSun(new Date()), -(WEEKS_COUNT - 1) * 7);
-    entries
-      .filter(e => e.time >= earliest)
-      .forEach(e => {
-        const n = normalizeMood(e.mood);
-        const k = n.emoji || n.name;
-        counts.set(k, (counts.get(k) ?? 0) + 1);
-      });
+
+    entries.filter(e => e.time >= earliest).forEach(e => {
+      const n = normalizeMood(e.mood);
+      const key = n.emoji || n.name;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
     const bars: BarDatum[] = MOOD_SCALE.map(m => ({
       label: m.emoji,
       value: counts.get(m.emoji) ?? 0,
     }));
-    return { bars, counts };
+
+    return { bars };
   }, [entries]);
 
-  /** ===== UI ===== */
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -304,31 +284,45 @@ const Statistics: React.FC = () => {
   if (empty) {
     return (
       <View style={styles.center}>
-        <Text style={styles.muted}>No mood entries yet. Add some moods to see stats.</Text>
+        <Text style={styles.muted}>No mood entries added yet.</Text>
       </View>
     );
   }
 
+
+  
+
+
+
   return (
-    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.container}>
+    <LinearGradient
+  colors={isDark ? (['#07070a', '#0f0f16'] as [string, string]) : (['#ffffff', '#ffffff'] as [string, string])}
+  style={styles.container}
+>
       <View style={styles.innerWrap}>
+
+        {/* Back Btn */}
         <TouchableOpacity
           onPress={() => router.replace('/(tabs)/mood_trends')}
-          style={styles.backButton}
-          accessibilityLabel="Go to Home">
+          style={styles.backButton}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
 
+        {/* Tabs */}
         <View style={styles.tabs}>
-          <TabButton label="Mood Frequency" active={tab === 'freq'} onPress={() => setTab('freq')} />
-          <TabButton label="Date-wise (30d)" active={tab === 'date'} onPress={() => setTab('date')} />
-          <TabButton label="Avg Last Month" active={tab === 'avg'} onPress={() => setTab('avg')} />
+          <TabButton label="Mood Frequency" active={tab === 'freq'} onPress={() => setTab('freq')} styles={styles} />
+          <TabButton label="Date-wise (30d)" active={tab === 'date'} onPress={() => setTab('date')} styles={styles} />
+          <TabButton label="Avg Last Month" active={tab === 'avg'} onPress={() => setTab('avg')} styles={styles} />
         </View>
 
+
         <ScrollView contentContainerStyle={{ padding: 16 }}>
+
+          {/* TAB 1 : Frequency */}
           {tab === 'freq' && (
             <View style={styles.card}>
               <Text style={styles.h2}> Mood frequency — last 5 weeks</Text>
+
               <BarChart
                 data={moodFreq5Weeks.bars}
                 barWidth={28}
@@ -336,15 +330,14 @@ const Statistics: React.FC = () => {
                 xAxisLabelTextStyle={styles.axis}
                 noOfSections={4}
                 barBorderRadius={10}
-                frontColor="#1372e7ff"
+                frontColor={isDark ? '#7f8bff' : '#1372e7ff'}
                 spacing={14}
                 isAnimated
-                showFractionalValues
                 height={Dimensions.get('window').height * 0.45}
               />
-              <View style={{ height: 8 }} />
+
               <View style={styles.legendRow}>
-                {MOOD_SCALE.map((m) => (
+                {MOOD_SCALE.map(m => (
                   <Text key={m.key} style={styles.legendItem}>
                     {m.emoji} {m.name}
                   </Text>
@@ -353,24 +346,26 @@ const Statistics: React.FC = () => {
             </View>
           )}
 
+          {/* TAB 2 : Date wise */}
           {tab === 'date' && (
             <View style={styles.card}>
-              <Text style={styles.h2}>📅 Most common mood — date-wise (last 30 days)</Text>
+              <Text style={styles.h2}>📅 Most common mood — last 30 days</Text>
+
               <FlatList
                 data={dateWiseCommonLast30}
-                keyExtractor={(it) => it.day}
+                keyExtractor={it => it.day}
                 renderItem={({ item }) => (
                   <View style={styles.dateRow}>
                     <Text style={styles.dateTxt}>{item.day}</Text>
                     <Text style={styles.dateMood}>{item.mood ?? '—'}</Text>
                   </View>
                 )}
-                ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 scrollEnabled={false}
               />
             </View>
           )}
 
+          {/* TAB 3 : Avg month */}
           {tab === 'avg' && (
             <View style={styles.card}>
               <Text style={styles.h2}> Average mood — last month</Text>
@@ -380,7 +375,7 @@ const Statistics: React.FC = () => {
             </View>
           )}
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: 40 }} />
         </ScrollView>
       </View>
     </LinearGradient>
@@ -389,10 +384,25 @@ const Statistics: React.FC = () => {
 
 export default Statistics;
 
-const TabButton: React.FC<{ label: string; active?: boolean; onPress: () => void }> = ({
-  label, active, onPress,
+
+
+/* ============================================================
+    FIXED TAB BUTTON (styles passed as props)
+============================================================ */
+const TabButton = ({
+  label,
+  active,
+  onPress,
+  styles,
+}: {
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+  styles: any;
 }) => (
-  <TouchableOpacity onPress={onPress} style={[styles.tabBtn, active && styles.tabBtnActive]}>
+  <TouchableOpacity
+    onPress={onPress}
+    style={[styles.tabBtn, active && styles.tabBtnActive]}>
     <Text style={[styles.tabTxt, active && styles.tabTxtActive]}>{label}</Text>
   </TouchableOpacity>
 );

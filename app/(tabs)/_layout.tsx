@@ -1,8 +1,10 @@
+// app/_layout.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSettings } from '../utilis/Settings'; // adjust path if needed
 
 // Icon and label mappings
 const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -21,71 +23,77 @@ const labelMap: Record<string, string> = {
   explore: 'Explore',
 };
 
-// Custom tab icon with highlight background
+// Custom tab icon with optional highlight background
 type TabIconProps = {
   focused: boolean;
   icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  size?: number;
 };
 
-const TabIcon = ({ focused, icon }: TabIconProps) => {
+const TabIcon: React.FC<TabIconProps> = ({ focused, icon, color, size = 24 }) => {
   if (focused) {
     return (
-
-        <Ionicons
-          name={icon}
-          size={30}
-          color="#007BFF"
-          style={{ paddingBottom: 0 }}
-        />
-     
+      <View style={styles.focusedIconWrap}>
+        <Ionicons name={icon} size={30} color={color} style={{ paddingBottom: 0 }} />
+      </View>
     );
   }
-
   return (
-      <View style={styles.tabIconDefault}>
-        <Ionicons name={icon} size={24} color="#052278ff" style={{ paddingBottom: 2 }}  />
-      </View>
-
-    );
+    <View style={styles.tabIconDefault}>
+      <Ionicons name={icon} size={size} color={color} style={{ paddingBottom: 2 }} />
+    </View>
+  );
 };
 
 export default function Layout() {
+  const { isDark } = useSettings();
+
+  // Theme-aware values
+  const ACTIVE = isDark ? '#9aa3ff' : '#1e46bdff';
+  const INACTIVE = isDark ? '#9aa3ff66' : '#052278ff';
+  const TAB_BAR_BG = isDark ? 'rgba(18,16,28,0.7)' : 'transparent';
+  const LABEL_COLOR = isDark ? '#e6e6e6' : '#052278ff';
+
+  // <-- important: use readonly tuple (as const) so LinearGradient typings are satisfied
+  const TAB_BG_GRADIENT = isDark
+    ? (['#0b0b10ff', '#121018ff'] as const)
+    : (['#ffffffff', '#f9f9f9ff'] as const);
+
   return (
     <Tabs
       screenOptions={({ route }: { route: { name: string } }) => ({
-        tabBarActiveTintColor: '#1e46bdff',
-        tabBarInactiveTintColor: '#052278ff',
-        tabBarLabelStyle: { fontSize: 12 },
+        tabBarActiveTintColor: ACTIVE,
+        tabBarInactiveTintColor: INACTIVE,
+        tabBarLabelStyle: { fontSize: 12, color: LABEL_COLOR },
         tabBarStyle: {
           position: 'absolute',
-          top:760,     
-          left: 16,                 
+          top: 760, // keep your layout — consider making responsive later
+          left: 16,
           right: 16,
-          bottom: 16,               
+          bottom: 16,
           height: 100,
           paddingBottom: 6,
           paddingTop: 8,
-          borderRadius: 20,          
-          overflow: 'hidden',       
-          backgroundColor: 'transparent',
-          // shadow (iOS)
+          borderRadius: 20,
+          overflow: 'hidden',
+          backgroundColor: TAB_BAR_BG,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.12,
           shadowRadius: 12,
-          // elevation (Android)
           elevation: 8,
         },
         headerShown: false,
         tabBarBackground: () => (
-          <LinearGradient
-            colors={['#ffffffff', '#f9f9f9ff']}
-            style={StyleSheet.absoluteFill}
-          />
+          // colors prop now receives a readonly tuple -> no TS error
+          <LinearGradient colors={TAB_BG_GRADIENT} style={StyleSheet.absoluteFill} />
         ),
-        tabBarIcon: ({ focused }:{focused:boolean}) => (
-          <TabIcon focused={focused} icon={iconMap[route.name] ?? 'apps'} />
-        ),
+        tabBarIcon: ({ focused }: { focused: boolean }) => {
+          const iconName = iconMap[route.name] ?? 'apps';
+          const resolvedColor = focused ? ACTIVE : INACTIVE;
+          return <TabIcon focused={focused} icon={iconName} color={resolvedColor} />;
+        },
         tabBarLabel: labelMap[route.name] ?? route.name,
       })}
     >
@@ -113,17 +121,12 @@ export default function Layout() {
 }
 
 const styles = StyleSheet.create({
-  tabIconContainer: {
-    flexDirection: 'row',
-    width: '100%',
-    flex: 1,
-    minWidth: 100,
-    minHeight: 80,
-    marginTop: 20,
+  focusedIconWrap: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 100,
-    overflow: 'hidden',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   tabIconDefault: {
     justifyContent: 'center',

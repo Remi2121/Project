@@ -1,3 +1,4 @@
+// app/moodtrends/index.tsx
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
@@ -13,7 +14,8 @@ import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'rea
 import { LineChart as RNLineChart } from 'react-native-gifted-charts';
 
 import { auth, db } from 'utils/firebaseConfig';
-import styles from './mood_trends_styles';
+import { useSettings } from '../../utilis/Settings';
+import { getMoodTrendsStyles } from './mood_trends_styles';
 
 // TS quirk workaround:
 const LineChartAny = RNLineChart as unknown as React.ComponentType<any>;
@@ -59,7 +61,6 @@ const normalizeMood = (m: any): { name: string; emoji: string } => {
   return { name, emoji };
 };
 
-const moodName  = (m: MoodKey | null): string => (m ? normalizeMood(m).name : '—');
 const moodEmoji = (m: MoodKey | null): string => (m ? normalizeMood(m).emoji : '');
 
 const startOfWeekSun = (d: Date) => {
@@ -79,14 +80,6 @@ const toDate = (val: any): Date => {
   const d = new Date(val);
   return isNaN(d.getTime()) ? new Date(0) : d;
 };
-const fmtRangeShort = (start: Date) => {
-  const end = addDays(start, 6);
-  const s = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const e = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  return `${s}–${e}`;
-};
-const fmtDayLong = (d: Date) =>
-  d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
 async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<MoodEntry[]> {
   const earliestWeekStart = addDays(startOfWeekSun(new Date()), -(weeksCount - 1) * 7);
@@ -100,20 +93,19 @@ async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<
     );
     const snap = await getDocs(qMH);
     if (!snap.empty) {
-      return snap.docs.map(doc => {
-        const d: any = doc.data();
-        const when = d.createdAt ?? d.timestamp ?? { date: d.date, time: d.time };
-        return { id: doc.id, mood: d.mood as MoodKey, text: d.text ?? '', time: toDate(when) };
+      return snap.docs.map(d => {
+        const docData: any = d.data();
+        const when = docData.createdAt ?? docData.timestamp ?? { date: docData.date, time: docData.time };
+        return { id: d.id, mood: docData.mood as MoodKey, text: docData.text ?? '', time: toDate(when) };
       }).filter(r => !isNaN(r.time.getTime()));
     }
   } catch {/* ignore */}
-
   const snapAll = await getDocs(coll);
   return snapAll.docs
-    .map(doc => {
-      const d: any = doc.data();
-      const when = d.createdAt ?? d.timestamp ?? { date: d.date, time: d.time };
-      return { id: doc.id, mood: d.mood as MoodKey, text: d.text ?? '', time: toDate(when) };
+    .map(d => {
+      const docData: any = d.data();
+      const when = docData.createdAt ?? docData.timestamp ?? { date: docData.date, time: docData.time };
+      return { id: d.id, mood: docData.mood as MoodKey, text: docData.text ?? '', time: toDate(when) };
     })
     .filter(r => !isNaN(r.time.getTime()) && r.time >= earliestWeekStart)
     .sort((a, b) => a.time.getTime() - b.time.getTime());
@@ -121,6 +113,9 @@ async function loadLastNWeeksMoodOnly(uid: string, weeksCount: number): Promise<
 
 export default function MoodTrendsComponent() {
   const router = useRouter();
+  const { isDark } = useSettings();
+  const styles = getMoodTrendsStyles(isDark);
+
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +140,7 @@ export default function MoodTrendsComponent() {
     return unsub;
   }, [router]);
 
-  const weeks: WeekBucket[] = useMemo(() => {
+  const weeks = useMemo(() => {
     const current = startOfWeekSun(new Date());
     const starts: Date[] = [];
     for (let i = WEEKS_COUNT - 1; i >= 0; i--) starts.push(addDays(current, -i * 7));
@@ -220,12 +215,12 @@ export default function MoodTrendsComponent() {
         label: `Week ${idx + 1}`,
         customDataPoint: (_i: number, p: any) => (
           <View style={{ position: 'absolute', top: p.y - 35, left: p.x - 10, alignItems: 'center' }}>
-            <Text style={{ fontSize: 16 }}>{e}</Text>
+            <Text style={{ fontSize: 16, color: isDark ? '#e6e6e6' : '#2a1faa' }}>{e}</Text>
           </View>
         ),
       };
     });
-  }, [weeks]);
+  }, [weeks, isDark]);
 
   const buttons = [
     { label: 'Add Entry', icon: '✏️', onPress: () => router.push({ pathname: '/(tabs)/journal' }) },
@@ -234,12 +229,15 @@ export default function MoodTrendsComponent() {
     { label: 'Predict', icon: '🔍', onPress: () => router.push({ pathname: '/moodtrends/predition/PredictorFR' }) },
   ];
 
+  // readonly tuples for LinearGradient typing
+  const GRADIENT = isDark ? (['#07070aff', '#0f0f16ff'] as const) : (['#ffffffff', '#ffffff'] as const);
+
   if (loading) {
     return (
-      <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+      <LinearGradient colors={GRADIENT} style={styles.gradient}>
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color="#00e0ff" />
-          <Text style={{ color: '#2a1faa', marginTop: 10 }}>Loading mood trends…</Text>
+          <ActivityIndicator size="large" color={isDark ? '#9aa3ff' : '#00e0ff'} />
+          <Text style={[styles.heading, { marginTop: 10, color: isDark ? '#e6e6e6' : '#2a1faa' }]}>Loading mood trends…</Text>
         </View>
       </LinearGradient>
     );
@@ -247,38 +245,38 @@ export default function MoodTrendsComponent() {
 
   if (error) {
     return (
-      <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+      <LinearGradient colors={GRADIENT} style={styles.gradient}>
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{ color: '#2a1faa' }}>Error: {error}</Text>
+          <Text style={{ color: isDark ? '#e6e6e6' : '#2a1faa' }}>Error: {error}</Text>
         </View>
       </LinearGradient>
     );
   }
 
   return (
-    <LinearGradient colors={['#ffffff', '#ffffff']} style={styles.gradient}>
+    <LinearGradient colors={GRADIENT} style={styles.gradient}>
       <ScrollView contentContainerStyle={[styles.scrollContainer, { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
             style={styles.backButton}
             accessibilityLabel="Go to Home">
-            <Text style={styles.backIcon}>←</Text>
+            <Text style={[styles.backIcon, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>←</Text>
           </TouchableOpacity>
 
-          <Text style={styles.heading}>Mood Trends</Text>
+          <Text style={[styles.heading, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>Mood Trends</Text>
 
           <View style={styles.chartContainer}>
             <LineChartAny
               data={chartData}
               thickness={3}
-              color="#00e0ff"
+              color={isDark ? '#9aa3ff' : '#00e0ff'}
               curved
               hideRules
               hideAxesAndRules
               yAxisTextStyle={{ color: 'transparent' }}
-              xAxisLabelTextStyle={{ color: '#2a1faa', fontSize: 12 }}
-              dataPointsColor="#00e0ff"
+              xAxisLabelTextStyle={{ color: isDark ? '#e6e6e6' : '#2a1faa', fontSize: 12 }}
+              dataPointsColor={isDark ? '#9aa3ff' : '#00e0ff'}
               dataPointsRadius={4}
               spacing={60}
               maxValue={100}
@@ -286,15 +284,22 @@ export default function MoodTrendsComponent() {
           </View>
 
           <View style={styles.moodTextContainer}>
-            <Text style={styles.moodText}>View your mood trends and insights</Text>
+            <Text style={[styles.moodText, { color: isDark ? '#cfcfcf' : '#2a1faa' }]}>View your mood trends and insights</Text>
           </View>
 
           <View style={styles.buttonRow}>
             {buttons.map((btn, index) => (
-              <TouchableOpacity key={index} style={styles.button} onPress={btn.onPress}>
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.button,
+                  { backgroundColor: isDark ? '#151523' : '#ffffff', borderColor: isDark ? '#6f6cff' : '#2a1faa' }
+                ]}
+                onPress={btn.onPress}
+              >
                 <View style={styles.buttonContent}>
-                  <Text style={styles.emojiText}>{btn.icon}</Text>
-                  <Text style={styles.buttonText}>{btn.label}</Text>
+                  <Text style={[styles.emojiText, { color: isDark ? '#e6e6e6' : '#000' }]}>{btn.icon}</Text>
+                  <Text style={[styles.buttonText, { color: isDark ? '#e6e6e6' : '#2a1faa' }]}>{btn.label}</Text>
                 </View>
               </TouchableOpacity>
             ))}
