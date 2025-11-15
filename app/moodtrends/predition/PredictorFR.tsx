@@ -1,4 +1,4 @@
-// AutoPredictor.tsx  — updated to full white background + readable styles
+
 import RingProgress from '@/components/RingProgress';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -13,15 +13,14 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from 'utils/firebaseConfig';
+import { useSettings } from '../../utilis/Settings'; // <- theme hook
 
 const TZ = 'Asia/Colombo';
-
 
 type RealMood = 'happy' | 'sad' | 'angry' | 'tired' | 'sick' | 'neutral' | 'calm' | 'excited' | 'anxious';
 type Rule = { pred: string; pct: number; reason: string };
 type RuleMap = Record<string, Rule>;
 type DayRow = { key: string; date: Date; mood: RealMood };
-
 
 const RULES: RuleMap = require('../../../tools/data/mood_rules.json');
 
@@ -37,7 +36,6 @@ const MOODN_TO_REAL: Record<string, RealMood> = {
   'Mood 1': 'happy', 'Mood 2': 'sad', 'Mood 3': 'angry', 'Mood 4': 'tired', 'Mood 5': 'sick',
 };
 
-
 function toDayKeyTZ(d: Date, tz = TZ) {
   const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
   return fmt.format(d); // YYYY-MM-DD
@@ -48,7 +46,6 @@ function startOfDayTZ(d: Date, tz = TZ) {
   return new Date(Date.UTC(+parts.year, +parts.month - 1, +parts.day, 0, 0, 0));
 }
 function addDaysUTC(d: Date, n: number) { const x = new Date(d.getTime()); x.setUTCDate(x.getUTCDate() + n); return x; }
-
 
 const norm = (s: any) => String(s || '').trim();
 const lower = (s: any) => norm(s).toLowerCase();
@@ -75,7 +72,6 @@ function toMoodN(input: string) {
   return REAL_TO_MOODN[lower(input)] || 'Mood 2';
 }
 const key5 = (a: string[]) => a.join('|');
-
 
 function findPctFromExcelReason(reason: string, predMoodN?: string): number | null {
   const entries = Object.values(RULES);
@@ -128,14 +124,12 @@ function predictFromRules(last5Real: RealMood[]) {
   return { moodReal: (MOODN_TO_REAL[last5N[4]] || 'neutral'), pct: 0.6, reason: 'No matching rule in Excel (add this sequence in your sheet).' };
 }
 
-
 function toDateFlexible(v: any): Date {
   if (!v) return new Date(NaN);
   if (v?.toDate?.()) return v.toDate();
   if (v instanceof Date) return v;
   return new Date(v);
 }
-
 
 async function loadLast5DailyMoodsForUser(uid: string): Promise<DayRow[]> {
   const today0 = startOfDayTZ(new Date());
@@ -204,7 +198,6 @@ function collapseRowsToDaily(rows: { when: any; mood: any }[]): DayRow[] {
   });
 }
 
-
 function moodEmoji(m: RealMood) {
   const map: Record<RealMood, string> = {
     happy: '😊', sad: '😢', angry: '😡', tired: '🥱', sick: '🤒',
@@ -226,12 +219,12 @@ function moodColor(m: RealMood) {
 function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function fmtDayNice(d: Date) { return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
 
-
 export default function AutoPredictor() {
   const router = useRouter();
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [days, setDays] = useState<DayRow[]>([]);
+  const { isDark } = useSettings(); // <-- use theme
 
   const prediction = useMemo(() => {
     if (days.length !== 5) return null;
@@ -264,15 +257,16 @@ export default function AutoPredictor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // PRIMARY colors for white background
-  const PRIMARY = '#2a1faa';
-  const FG = '#07203a'; // dark text on white
-  const SUB = '#5a73a4ff';
+  // theme-aware colors
+  const PRIMARY = isDark ? '#7f8bff' : '#2a1faa';
+  const FG = isDark ? '#e6e6e6' : '#07203a';
+  const SUB = isDark ? '#9aa3ff' : '#5a73a4ff';
+  const CARD_BG = isDark ? '#0e0f16' : '#f0fbff';
+  const PAGE_BG = isDark ? (['#07070a', '#0f0f16'] as const) : (['#ffffff', '#ffffff'] as const);
 
   return (
-    // single plain white background (LinearGradient left intentionally white-to-white)
-    <LinearGradient colors={['#ffffff', '#ffffff']} style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 140, backgroundColor: '#ffffff' }}>
+    <LinearGradient colors={PAGE_BG} style={{ flex: 1, backgroundColor: isDark ? '#07070a' : '#ffffff' }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 140, backgroundColor: isDark ? '#07070a' : '#ffffff' }}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/mood_trends')} style={{ paddingVertical: 8 }}>
           <Text style={{ color: PRIMARY, fontSize: 30, paddingTop: 5, paddingRight: 5 }}>←</Text>
         </TouchableOpacity>
@@ -301,12 +295,12 @@ export default function AutoPredictor() {
         <View style={{ height: 16 }} />
         <View style={{ gap: 10 }}>
           {busy ? (
-            <View style={{ padding: 16, backgroundColor: '#89c8edff', borderRadius: 10 }}>
+            <View style={{ padding: 16, backgroundColor: isDark ? '#151524' : '#89c8edff', borderRadius: 10 }}>
               <ActivityIndicator color={PRIMARY} />
             </View>
           ) : err ? (
-            <View style={{ padding: 16, backgroundColor: '#fff1f1', borderRadius: 10, borderWidth: 1, borderColor: '#ffd3d3' }}>
-              <Text style={{ color: '#b03a3a' }}>{err}</Text>
+            <View style={{ padding: 16, backgroundColor: isDark ? '#2b0f0f' : '#fff1f1', borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#5a1a1a' : '#ffd3d3' }}>
+              <Text style={{ color: isDark ? '#ffb4b4' : '#b03a3a' }}>{err}</Text>
             </View>
           ) : (
             <>
@@ -316,9 +310,10 @@ export default function AutoPredictor() {
                   style={{
                     padding: 14,
                     borderRadius: 12,
-                    backgroundColor: '#f0fbff',
-                    borderWidth: 3,
-                    borderColor: '#001affff'
+                    backgroundColor: CARD_BG,
+                    borderWidth: 1,
+                    borderColor: isDark ? '#2a2a3a' : '#001affff',
+                    marginBottom: 8
                   }}>
                   <Text style={{ color: PRIMARY, fontWeight: '700' }}>
                     Day {idx + 1} • {fmtDayNice(d.date)}
@@ -338,9 +333,9 @@ export default function AutoPredictor() {
           style={{
             padding: 16,
             borderRadius: 12,
-            backgroundColor: '#f0fbff',
-            borderWidth: 3,
-            borderColor: '#001affff'
+            backgroundColor: CARD_BG,
+            borderWidth: 1,
+            borderColor: isDark ? '#2a2a3a' : '#001affff'
           }}>
           {busy ? (
             <Text style={{ color: SUB }}>Predicting…</Text>
@@ -352,13 +347,13 @@ export default function AutoPredictor() {
                   strokeWidth={20}
                   progress={prediction.pct}
                   color={moodColor(prediction.moodReal)}
-                  backgroundColor="#96d6fbff"
+                  backgroundColor={isDark ? '#2a2a3a' : '#96d6fbff'}
                   center={<Text style={{ fontSize: 48 }}>{moodEmoji(prediction.moodReal)}</Text>}
                 />
                 <Text style={{ color: FG, fontSize: 18, fontWeight: '800', marginTop: 8 }}>
                   {cap(prediction.moodReal)} • {(prediction.pct * 100).toFixed(0)}%
                 </Text>
-                <Text style={{ color: SUB, marginTop: 6 }}>
+                <Text style={{ color: SUB, marginTop: 6, textAlign: 'center' }}>
                   {prediction.reason}
                 </Text>
               </View>

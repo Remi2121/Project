@@ -1,3 +1,4 @@
+// app/journal/index.tsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -14,13 +15,21 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db } from 'utils/firebaseConfig';
+
+// theme
+import { useSettings } from '../../utilis/Settings';
+import { getJournalStyles } from './moodjornelstyles.';
 
 const moods = ['😄', '😀', '😊', '😍', '😔', '😢', '😭', '😠', '😤', '😡', '😱', '😨', '😳', '😐', '🤔', '🥱', '😴', '🥳'];
 
 export default function JournalScreen() {
   const router = useRouter();
+
+  // theme hook (must be inside component)
+  const { isDark } = useSettings();
+  const styles = getJournalStyles(isDark);
 
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [text, setText] = useState<string>('');
@@ -35,12 +44,12 @@ export default function JournalScreen() {
 
   // ====== Highlight helper (unchanged) ======
   const highlightText = (textVal: string, queryText: string) => {
-    if (!queryText) return <Text style={{ color: '#fff' }}>{textVal}</Text>;
+    if (!queryText) return <Text style={{ color: isDark ? '#e6e6e6' : '#2a1faa' }}>{textVal}</Text>;
     try {
       const regex = new RegExp(`(${queryText})`, 'gi');
       const parts = textVal.split(regex);
       return (
-        <Text style={{ color: '#fff' }}>
+        <Text style={{ color: isDark ? '#e6e6e6' : '#000' }}>
           {parts.map((part, index) => {
             if (part.toLowerCase() === queryText.toLowerCase()) {
               return (
@@ -63,7 +72,7 @@ export default function JournalScreen() {
         </Text>
       );
     } catch {
-      return <Text style={{ color: '#fff' }}>{textVal}</Text>;
+      return <Text style={{ color: isDark ? '#e6e6e6' : '#000' }}>{textVal}</Text>;
     }
   };
 
@@ -120,6 +129,7 @@ export default function JournalScreen() {
   useEffect(() => {
     const unsub = auth.onAuthStateChanged(user => {
       if (!user) {
+        // Not logged in → go to login
         router.replace('/authpages/Login-page');
       } else {
         loadEntries();
@@ -156,7 +166,7 @@ export default function JournalScreen() {
       time: String(formattedTime),
       mood: String(selectedMood),
       text: String(text),
-      date: timestamp,      // could also use serverTimestamp()
+      date: timestamp,      // you can also use serverTimestamp() if preferred
       edited: isEditing ? true : false,
     };
 
@@ -211,19 +221,22 @@ export default function JournalScreen() {
   });
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
+    <LinearGradient colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#ffffffff']} style={styles.container}>
       <TouchableOpacity
-              onPress={() => router.replace("/(tabs)/profile")}
-              style={styles.backButton}
-              accessibilityLabel="Go to Home">
-              <Text style={styles.backIcon}>←</Text>
-            </TouchableOpacity>
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+      onPress={() => router.replace("/(tabs)/profile")}
+      style={styles.backButton}
+    >
+      <Ionicons name="arrow-back" size={30} color={isDark ? '#e6e6e6' : '#2a1faa'} />
+    </TouchableOpacity>
+      <ScrollView contentContainerStyle={[ { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
+        
+        
         {/*Header*/}
         <View style={styles.headerBar}>
+
           <Text style={styles.header}>📝 Mood Journal</Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar-outline" size={24} color="#fff" />
+            <Ionicons name="calendar-outline" size={24} color={isDark ? '#0015ffff' : '#fff'} />
           </TouchableOpacity>
         </View>
 
@@ -248,10 +261,10 @@ export default function JournalScreen() {
         <TextInput
           style={[
             styles.input,
-            isEntryFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+            isEntryFocused && { borderColor: isDark ? '#6f6cff' : '#0712e9ff', borderWidth: 1 }
           ]}
           placeholder="What's on your mind?"
-          placeholderTextColor="#aaa"
+          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
           multiline
           numberOfLines={4}
           value={text}
@@ -266,7 +279,7 @@ export default function JournalScreen() {
           disabled={!text.trim() || !selectedMood}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="save-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <Ionicons name="save-outline" size={18} color={isDark ? '#000' : '#000000ff'} style={{ marginRight: 6 }} />
             <Text style={styles.saveText}> Save Entry</Text>
           </View>
         </TouchableOpacity>
@@ -314,16 +327,16 @@ export default function JournalScreen() {
 
         {journalEntries.length > 0 && (
           <>
-            <Text style={styles.subHeader}>────────── Past Journals ──────────</Text>
+            <Text style={styles.subHeader}>─────── Past Journals ─────── </Text>
 
             <TextInput
               style={[
                 styles.input,
                 { marginBottom: 18 },
-                isSearchFocused && { borderColor: '#3f34c0', borderWidth: 1 }
+                isSearchFocused && { borderColor: isDark ? '#8f7fff' : '#3f34c0', borderWidth: 1 }
               ]}
               placeholder="Search your past entries..."
-              placeholderTextColor="#aaa"
+              placeholderTextColor={isDark ? '#9a9a9a' : '#162ceeff'}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onFocus={() => setIsSearchFocused(true)}
@@ -335,14 +348,14 @@ export default function JournalScreen() {
                 <View style={styles.entryHeader}>
                   <View style={{ marginBottom: 4 }}>
                     <Text style={styles.entryTime}>
-                      <Ionicons name="calendar-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleDateString('en-US', {
+                      <Ionicons name="calendar-outline" size={14} color={isDark ? '#b9b9ff' : '#061efcff'} style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
                     </Text>
                     <Text style={styles.entryTime}>
-                      <Ionicons name="time-outline" size={14} color="#ccc" style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleTimeString('en-US', {
+                      <Ionicons name="time-outline" size={14} color={isDark ? '#b9b9ff' : '#061efcff'} style={{ marginRight: 4 }} /> {new Date(entry.date).toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true,
@@ -352,7 +365,7 @@ export default function JournalScreen() {
 
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity
-                      style={{ marginRight: 16 }}
+                      style={{ marginRight: 16  }}
                       onPress={() => {
                         setIsEditing(true);
                         setEditingId(entry.id);
@@ -360,7 +373,7 @@ export default function JournalScreen() {
                         setSelectedMood(entry.mood);
                       }}
                     >
-                      <Ionicons name="pencil-outline" size={20} color="#aaa" />
+                      <Ionicons name="pencil-outline" size={20} color={isDark ? '#dcdcdc' : '#061efcff'} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -374,7 +387,7 @@ export default function JournalScreen() {
                           ]
                         )
                       }>
-                      <Ionicons name="trash-outline" size={20} color="#aaa" />
+                      <Ionicons name="trash-outline" size={20} color={isDark ? '#dcdcdc' : '#061efcff'} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -392,43 +405,3 @@ export default function JournalScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
-  headerBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  header: { color: '#fff', fontSize: 26, textAlign: 'center', marginBottom: 8 },
-  greeting: { color: '#fff', fontSize: 16, marginBottom: 20 },
-
-  moodScroll: { flexDirection: 'row', marginBottom: 16 },
-  moodOption: { backgroundColor: '#1f1b5a', padding: 12, borderRadius: 20, marginRight: 10 },
-  selectedMood: { backgroundColor: '#3f34c0' },
-  moodEmoji: { fontSize: 26 },
-
-  input: { backgroundColor: '#1f1b5a', color: '#fff', borderRadius: 10, padding: 16, textAlignVertical: 'top' },
-  saveButton: { backgroundColor: '#5d4dfc', padding: 14, marginTop: 16, borderRadius: 10, alignItems: 'center' },
-  saveText: { color: '#fff', fontSize: 16 },
-
-  subHeader: { color: '#ccc', textAlign: 'center', marginVertical: 20 },
-
-  entryCard: { backgroundColor: '#2a2566', padding: 14, borderRadius: 12, marginBottom: 14 },
-  entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  entryTime: { color: '#aaa', marginBottom: 4, fontSize: 12 },
-  entryMood: { fontSize: 20, marginBottom: 4 },
-  editedLabel: { color: '#aaa', fontSize: 12, marginTop: 6, textAlign: 'right' },
-  backButton: {
-  position: 'absolute',
-  justifyContent: 'center',
-  top: 50,   
-  left: 15,
-  zIndex: 10,
-  borderRadius: 800,
-  paddingVertical: 6,
-  paddingHorizontal: 10,
-},
-backIcon: {
-  color: 'white',
-  fontSize: 30,
-  fontWeight: '700',
-
-},
-});

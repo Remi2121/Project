@@ -2,7 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import React, { useLayoutEffect, useState } from 'react';
 import {
   Alert,
@@ -15,6 +15,9 @@ import {
   View,
 } from 'react-native';
 import { useSettings } from '../../utilis/Settings';
+
+
+
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
@@ -48,6 +51,8 @@ export default function SettingsScreen() {
 
   const [showTimePicker, setShowTimePicker] = useState(false);
   const styles = getStyles(isDark);
+  const router = useRouter();
+
 
   const confirmLogout = () => {
     Alert.alert(
@@ -64,9 +69,9 @@ export default function SettingsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack('../ProfileSideBar/ProfileSidebar.tsx')}>
-          <Ionicons name="arrow-back" size={26} color={isDark ? 'white' : 'black'} />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('../../(tabs)/profile')}>
+  <Ionicons name="arrow-back" size={26} color={isDark ? 'white' : 'black'} />
+</TouchableOpacity>
         <Text style={styles.headerText}>{t.settings}</Text>
       </View>
 
