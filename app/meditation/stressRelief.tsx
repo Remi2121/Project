@@ -1,3 +1,4 @@
+// MeditationListScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -24,6 +25,9 @@ import {
 import * as FileSystem from "expo-file-system";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../utils/firebaseConfig";
+
+// theme hook
+import { useSettings } from "../utilis/Settings";
 
 // --- Stress audio imports ---
 import birds_singing from "../../assets/audio/stress/birds_singing.mp3";
@@ -337,6 +341,23 @@ const usePlaylists = (): PlaylistsHook => {
   return { playlists, isLoaded, createPlaylist, addToPlaylist, removeFromPlaylist };
 };
 
+// ====== Palette helper ======
+const getPalette = (dark: boolean) => ({
+  backgroundStart: dark ? "#07070a" : "#ffffff",
+  backgroundEnd: dark ? "#121018" : "#ffffff",
+  pageBg: dark ? "#07070a" : "#ffffff",
+  headerText: dark ? "#e6e6e6" : "#0d0b2f",
+  helperText: dark ? "#cfcfe8" : "#0d0b2f",
+  accent: dark ? "#6f6cff" : "#0d9488",
+  cardBg: dark ? "#0f1016" : "#ffffff",
+  cardBorder: dark ? "rgba(111,108,255,0.12)" : "#e6e6e6",
+  playIconBg: dark ? "#89f0ff22" : "#9ff1ff",
+  primaryButtonBg: dark ? "#6f6cff" : "#0d9488",
+  success: "#4CAF50",
+  danger: "#ff4444",
+  muted: dark ? "#9a9ab3" : "#6b7280",
+});
+
 // ====== Stress UI ======
 function StressUI({
   subcategories,
@@ -351,6 +372,9 @@ function StressUI({
   const { addToPlaylist, playlists, createPlaylist } = playlistsData;
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   const handleFavorite = (track: Track) => {
     const u = uid();
@@ -374,30 +398,32 @@ function StressUI({
 
   return (
     <>
-      <Text style={styles.helper}>Play Music And Relieve Stress</Text>
+      <Text style={[styles.helper, { color: palette.helperText }]}>Play Music And Relieve Stress</Text>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
         {subcategories.map((subcategory) => (
-          <View key={subcategory.title} style={stressStyles.subcategorySection}>
-            <Text style={stressStyles.subcategoryTitle}>{subcategory.title}</Text>
+          <View key={subcategory.title} style={[stressStyles.subcategorySection]}>
+            <Text style={[stressStyles.subcategoryTitle, { color: palette.headerText }]}>{subcategory.title}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={stressStyles.horizontalScrollContent}>
               {subcategory.tracks.map((track) => (
-                <View key={track.title} style={stressStyles.trackCard}>
+                <View key={track.title} style={[stressStyles.trackCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
                   <TouchableOpacity
                     style={stressStyles.cardContent}
                     onPress={() => router.push({ pathname: "/meditation/Player", params: { title: track.title, url: track.file, image: track.image } })}
                   >
                     <Image source={track.image} style={stressStyles.trackCardImage} resizeMode="cover" />
-                    <Text style={stressStyles.trackCardTitle}>{track.title}</Text>
-                    <View style={stressStyles.playButton}><Ionicons name="play" size={16} color="#0d0b2f" /></View>
+                    <Text style={[stressStyles.trackCardTitle, { color: palette.headerText }]}>{track.title}</Text>
+                    <View style={[stressStyles.playButton, { backgroundColor: palette.playIconBg }]}>
+                      <Ionicons name="play" size={16} color={isDark ? "#07070a" : "#0d0b2f"} />
+                    </View>
                   </TouchableOpacity>
 
                   <View style={stressStyles.actionButtons}>
                     <TouchableOpacity style={stressStyles.favoriteButton} onPress={() => handleFavorite(track)}>
-                      <Ionicons name={isFavorite(track.title) ? "heart" : "heart-outline"} size={20} color={isFavorite(track.title) ? "#ff6b6b" : "#fff"} />
+                      <Ionicons name={isFavorite(track.title) ? "heart" : "heart-outline"} size={20} color={isFavorite(track.title) ? "#e63946" : palette.muted} />
                     </TouchableOpacity>
 
                     <TouchableOpacity style={stressStyles.playlistButton} onPress={() => openPlaylistModal(track)}>
-                      <Ionicons name="add-circle-outline" size={20} color="#9ff1ff" />
+                      <Ionicons name="add-circle-outline" size={20} color={palette.accent} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -409,15 +435,15 @@ function StressUI({
 
       {/* Playlist Modal */}
       <Modal visible={showPlaylistModal} transparent animationType="slide" onRequestClose={() => setShowPlaylistModal(false)}>
-        <View style={stressStyles.modalContainer}>
-          <View style={stressStyles.modalContent}>
-            <Text style={stressStyles.modalTitle}>Add to Playlist</Text>
-            <Text style={stressStyles.modalSubtitle}>{selectedTrack?.title}</Text>
+        <View style={[stressStyles.modalContainer]}>
+          <View style={[stressStyles.modalContent, { backgroundColor: palette.cardBg }]}>
+            <Text style={[stressStyles.modalTitle, { color: palette.headerText }]}>Add to Playlist</Text>
+            <Text style={[stressStyles.modalSubtitle, { color: palette.muted }]}>{selectedTrack?.title}</Text>
 
             {playlists.map((playlist) => (
               <TouchableOpacity
                 key={playlist.id}
-                style={stressStyles.playlistItem}
+                style={[stressStyles.playlistItem, { backgroundColor: isDark ? "#0b0b10" : "#f7fafc" }]}
                 onPress={async () => {
                   if (selectedTrack) {
                     await addToPlaylist(playlist.id, selectedTrack);
@@ -426,13 +452,13 @@ function StressUI({
                   }
                 }}
               >
-                <Text style={stressStyles.playlistName}>{playlist.name}</Text>
-                <Text style={stressStyles.playlistCount}>{playlist.tracks.length} tracks</Text>
+                <Text style={[stressStyles.playlistName, { color: palette.headerText }]}>{playlist.name}</Text>
+                <Text style={[stressStyles.playlistCount, { color: palette.accent }]}>{playlist.tracks.length} tracks</Text>
               </TouchableOpacity>
             ))}
 
             <TouchableOpacity
-              style={stressStyles.newPlaylistButton}
+              style={[stressStyles.newPlaylistButton, { backgroundColor: palette.accent }]}
               onPress={async () => {
                 const newPlaylist = await createPlaylist(`My Playlist ${playlists.length + 1}`);
                 if (selectedTrack && newPlaylist?.id) {
@@ -442,12 +468,12 @@ function StressUI({
                 setShowPlaylistModal(false);
               }}
             >
-              <Ionicons name="add" size={24} color="#0d0b2f" />
-              <Text style={stressStyles.newPlaylistText}>Create New Playlist</Text>
+              <Ionicons name="add" size={24} color={isDark ? "#fff" : "#0d0b2f"} />
+              <Text style={[stressStyles.newPlaylistText, { color: isDark ? "#fff" : "#ffffff" }]}>Create New Playlist</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={stressStyles.cancelButton} onPress={() => setShowPlaylistModal(false)}>
-              <Text style={stressStyles.cancelText}>Cancel</Text>
+              <Text style={[stressStyles.cancelText, { color: palette.headerText }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -459,33 +485,35 @@ function StressUI({
 // ====== Favorites UI ======
 function FavoritesUI({ favoritesData }: { favoritesData: ReturnType<typeof useFavorites> }) {
   const { favorites, removeFavorite } = favoritesData;
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   if (favorites.length === 0) {
     return (
       <View style={favoritesStyles.emptyContainer}>
-        <Ionicons name="heart-outline" size={64} color="#9ff1ff" />
-        <Text style={favoritesStyles.emptyTitle}>No Favorites Yet</Text>
-        <Text style={favoritesStyles.emptyText}>Start adding your favorite tracks and stories!</Text>
+        <Ionicons name="heart-outline" size={64} color={palette.accent} />
+        <Text style={[favoritesStyles.emptyTitle, { color: palette.headerText }]}>No Favorites Yet</Text>
+        <Text style={[favoritesStyles.emptyText, { color: palette.muted }]}>Start adding your favorite tracks and stories!</Text>
       </View>
     );
   }
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16 }}>
-      <Text style={favoritesStyles.title}>Your Favorites</Text>
+      <Text style={[favoritesStyles.title, { color: palette.headerText }]}>Your Favorites</Text>
       {favorites.map((favorite) => (
-        <View key={favorite.id} style={favoritesStyles.favoriteItem}>
+        <View key={favorite.id} style={[favoritesStyles.favoriteItem, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
           <Image
             source={typeof favorite.image === "string" ? { uri: favorite.image } : favorite.image}
             style={favoritesStyles.favoriteImage}
             resizeMode="cover"
           />
           <View style={favoritesStyles.favoriteInfo}>
-            <Text style={favoritesStyles.favoriteTitle}>{favorite.title}</Text>
+            <Text style={[favoritesStyles.favoriteTitle, { color: palette.headerText }]}>{favorite.title}</Text>
             {favorite.author && favorite.author !== "Unknown Author" && (
-              <Text style={favoritesStyles.favoriteAuthor}>By: {favorite.author}</Text>
+              <Text style={[favoritesStyles.favoriteAuthor, { color: palette.muted }]}>By: {favorite.author}</Text>
             )}
-            <Text style={favoritesStyles.favoriteType}>{favorite.type === "music" ? "🎵 Music" : "📖 Sleep Story"}</Text>
+            <Text style={[favoritesStyles.favoriteType, { color: palette.accent }]}>{favorite.type === "music" ? "🎵 Music" : "📖 Sleep Story"}</Text>
           </View>
 
           <TouchableOpacity
@@ -501,11 +529,11 @@ function FavoritesUI({ favoritesData }: { favoritesData: ReturnType<typeof useFa
               }
             }}
           >
-            <Ionicons name="play" size={20} color="#0d0b2f" />
+            <Ionicons name="play" size={20} color={isDark ? "#07070a" : "#0d0b2f"} />
           </TouchableOpacity>
 
           <TouchableOpacity style={favoritesStyles.removeButton} onPress={() => removeFavorite(favorite.id)}>
-            <Ionicons name="heart" size={20} color="#ff6b6b" />
+            <Ionicons name="heart" size={20} color="#e63946" />
           </TouchableOpacity>
         </View>
       ))}
@@ -518,50 +546,52 @@ function PlaylistsUI({ playlistsData }: { playlistsData: PlaylistsHook }) {
   const { playlists, createPlaylist } = playlistsData;
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16 }}>
-      <TouchableOpacity style={playlistsStyles.createButton} onPress={() => setShowCreateModal(true)}>
-        <Ionicons name="add-circle" size={24} color="#0d0b2f" />
-        <Text style={playlistsStyles.createButtonText}>Create New Playlist</Text>
+      <TouchableOpacity style={[playlistsStyles.createButton, { backgroundColor: palette.accent }]} onPress={() => setShowCreateModal(true)}>
+        <Ionicons name="add-circle" size={24} color={isDark ? "#fff" : "#0d0b2f"} />
+        <Text style={[playlistsStyles.createButtonText, { color: isDark ? "#fff" : "#ffffff" }]}>Create New Playlist</Text>
       </TouchableOpacity>
 
       {playlists.length === 0 ? (
         <View style={playlistsStyles.emptyContainer}>
-          <Ionicons name="list-outline" size={64} color="#9ff1ff" />
-          <Text style={playlistsStyles.emptyTitle}>No Playlists Yet</Text>
-          <Text style={playlistsStyles.emptyText}>Create your first playlist to organize your favorite content!</Text>
+          <Ionicons name="list-outline" size={64} color={palette.accent} />
+          <Text style={[playlistsStyles.emptyTitle, { color: palette.headerText }]}>No Playlists Yet</Text>
+          <Text style={[playlistsStyles.emptyText, { color: palette.muted }]}>Create your first playlist to organize your favorite content!</Text>
         </View>
       ) : (
         playlists.map((playlist) => (
           <TouchableOpacity
             key={playlist.id}
-            style={playlistsStyles.playlistItem}
+            style={[playlistsStyles.playlistItem, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}
             onPress={() => router.push({ pathname: "/meditation/playlistDetails", params: { playlistId: playlist.id } })}
           >
-            <View style={playlistsStyles.playlistImage}><Ionicons name="musical-notes" size={32} color="#0d0b2f" /></View>
+            <View style={[playlistsStyles.playlistImage, { backgroundColor: palette.accent }]}><Ionicons name="musical-notes" size={32} color={isDark ? "#fff" : "#0d0b2f"} /></View>
             <View style={playlistsStyles.playlistInfo}>
-              <Text style={playlistsStyles.playlistName}>{playlist.name}</Text>
-              <Text style={playlistsStyles.playlistCount}>{playlist.tracks.length} {playlist.tracks.length === 1 ? "track" : "tracks"}</Text>
+              <Text style={[playlistsStyles.playlistName, { color: palette.headerText }]}>{playlist.name}</Text>
+              <Text style={[playlistsStyles.playlistCount, { color: palette.muted }]}>{playlist.tracks.length} {playlist.tracks.length === 1 ? "track" : "tracks"}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#cfd3ff" />
+            <Ionicons name="chevron-forward" size={20} color={palette.muted} />
           </TouchableOpacity>
         ))
       )}
 
       <Modal visible={showCreateModal} transparent animationType="slide" onRequestClose={() => setShowCreateModal(false)}>
         <View style={playlistsStyles.modalContainer}>
-          <View style={playlistsStyles.modalContent}>
-            <Text style={playlistsStyles.modalTitle}>Create New Playlist</Text>
+          <View style={[playlistsStyles.modalContent, { backgroundColor: palette.cardBg }]}>
+            <Text style={[playlistsStyles.modalTitle, { color: palette.headerText }]}>Create New Playlist</Text>
             <TextInput
-              style={playlistsStyles.nameInput}
+              style={[playlistsStyles.nameInput, { backgroundColor: isDark ? "#0b0b10" : "#f3f4f6", color: palette.headerText }]}
               placeholder="Playlist name"
-              placeholderTextColor="#ccc"
+              placeholderTextColor={isDark ? "#888" : "#888"}
               value={newPlaylistName}
               onChangeText={setNewPlaylistName}
             />
             <TouchableOpacity
-              style={[playlistsStyles.createConfirmButton, !newPlaylistName && playlistsStyles.createConfirmButtonDisabled]}
+              style={[playlistsStyles.createConfirmButton, !newPlaylistName && playlistsStyles.createConfirmButtonDisabled, { backgroundColor: palette.accent }]}
               onPress={async () => {
                 if (!newPlaylistName) return;
                 await createPlaylist(newPlaylistName);
@@ -570,10 +600,10 @@ function PlaylistsUI({ playlistsData }: { playlistsData: PlaylistsHook }) {
               }}
               disabled={!newPlaylistName}
             >
-              <Text style={playlistsStyles.createConfirmText}>Create</Text>
+              <Text style={[playlistsStyles.createConfirmText, { color: "#fff" }]}>Create</Text>
             </TouchableOpacity>
             <TouchableOpacity style={playlistsStyles.cancelButton} onPress={() => setShowCreateModal(false)}>
-              <Text style={playlistsStyles.cancelText}>Cancel</Text>
+              <Text style={[playlistsStyles.cancelText, { color: palette.headerText }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -596,6 +626,8 @@ function SleepUI({
   const { playlists, createPlaylist, addToPlaylist } = playlistsData;
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [selectedStory, setSelectedStory] = useState<SleepStory | null>(null);
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   const sleepSubcategories = useMemo(() => {
     if (!stories.length) return [];
@@ -686,42 +718,42 @@ function SleepUI({
   if (loading) {
     return (
       <View style={sleepStyles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6A5ACD" />
-        <Text style={sleepStyles.loadingText}>Loading bedtime stories...</Text>
+        <ActivityIndicator size="large" color={palette.accent} />
+        <Text style={[sleepStyles.loadingText, { color: palette.muted }]}>Loading bedtime stories...</Text>
       </View>
     );
   }
 
   return (
     <>
-      <Text style={sleepStyles.helper}>Wind Down With Bedtime Tales 🌙</Text>
+      <Text style={[sleepStyles.helper, { color: palette.headerText }]}>Wind Down With Bedtime Tales 🌙</Text>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
         {sleepSubcategories.map((subcategory) => (
           <View key={subcategory.title} style={sleepStyles.subcategorySection}>
-            <Text style={sleepStyles.subcategoryTitle}>{subcategory.title}</Text>
+            <Text style={[sleepStyles.subcategoryTitle, { color: palette.headerText }]}>{subcategory.title}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={sleepStyles.horizontalScrollContent}>
               {subcategory.tracks.map((story) => (
-                <View key={story.identifier} style={sleepStyles.storyCard}>
+                <View key={story.identifier} style={[sleepStyles.storyCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
                   <TouchableOpacity style={sleepStyles.cardContent} onPress={() => navigateToPlayer(story)}>
                     <Image
                       source={{ uri: `https://archive.org/services/img/${story.identifier}` }}
                       style={sleepStyles.storyCardImage}
                       defaultSource={require("../../assets/images/Sleep-PNG-Clipart.png")}
                     />
-                    <Text style={sleepStyles.storyCardTitle} numberOfLines={2}>{story.title || "Untitled Story"}</Text>
-                    <Text style={sleepStyles.storyCardAuthor} numberOfLines={1}>By: {story.creator || "Unknown Author"}</Text>
+                    <Text style={[sleepStyles.storyCardTitle, { color: palette.headerText }]} numberOfLines={2}>{story.title || "Untitled Story"}</Text>
+                    <Text style={[sleepStyles.storyCardAuthor, { color: palette.muted }]} numberOfLines={1}>By: {story.creator || "Unknown Author"}</Text>
                     <View style={sleepStyles.playButtonContainer}>
-                      <View style={sleepStyles.playButton}><Ionicons name="play" size={16} color="#0d0b2f" /></View>
-                      <Text style={sleepStyles.playButtonText}>Play Story</Text>
+                      <View style={[sleepStyles.playButton, { backgroundColor: palette.playIconBg }]}><Ionicons name="play" size={16} color={isDark ? "#07070a" : "#0d0b2f"} /></View>
+                      <Text style={[sleepStyles.playButtonText, { color: palette.headerText }]}>Play Story</Text>
                     </View>
                   </TouchableOpacity>
 
                   <View style={sleepStyles.actionButtons}>
                     <TouchableOpacity style={sleepStyles.favoriteButton} onPress={() => handleFavorite(story)}>
-                      <Ionicons name={isFavorite(story.identifier) ? "heart" : "heart-outline"} size={20} color={isFavorite(story.identifier) ? "#ff6b6b" : "#fff"} />
+                      <Ionicons name={isFavorite(story.identifier) ? "heart" : "heart-outline"} size={20} color={isFavorite(story.identifier) ? "#e63946" : palette.muted} />
                     </TouchableOpacity>
                     <TouchableOpacity style={sleepStyles.playlistButton} onPress={() => openPlaylistModal(story)}>
-                      <Ionicons name="add-circle-outline" size={20} color="#9ff1ff" />
+                      <Ionicons name="add-circle-outline" size={20} color={palette.accent} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -733,14 +765,14 @@ function SleepUI({
 
       <Modal visible={showPlaylistModal} transparent animationType="slide" onRequestClose={() => setShowPlaylistModal(false)}>
         <View style={sleepStyles.modalContainer}>
-          <View style={sleepStyles.modalContent}>
-            <Text style={sleepStyles.modalTitle}>Add to Playlist</Text>
-            <Text style={sleepStyles.modalSubtitle}>{selectedStory?.title}</Text>
+          <View style={[sleepStyles.modalContent, { backgroundColor: palette.cardBg }]}>
+            <Text style={[sleepStyles.modalTitle, { color: palette.headerText }]}>Add to Playlist</Text>
+            <Text style={[sleepStyles.modalSubtitle, { color: palette.muted }]}>{selectedStory?.title}</Text>
 
             {playlists.map((playlist) => (
               <TouchableOpacity
                 key={playlist.id}
-                style={sleepStyles.playlistItem}
+                style={[sleepStyles.playlistItem, { backgroundColor: isDark ? "#0b0b10" : "#f7fafc" }]}
                 onPress={async () => {
                   if (selectedStory) {
                     await addToPlaylist(playlist.id, selectedStory);
@@ -749,13 +781,13 @@ function SleepUI({
                   }
                 }}
               >
-                <Text style={sleepStyles.playlistName}>{playlist.name}</Text>
-                <Text style={sleepStyles.playlistCount}>{playlist.tracks.length} tracks</Text>
+                <Text style={[sleepStyles.playlistName, { color: palette.headerText }]}>{playlist.name}</Text>
+                <Text style={[sleepStyles.playlistCount, { color: palette.accent }]}>{playlist.tracks.length} tracks</Text>
               </TouchableOpacity>
             ))}
 
             <TouchableOpacity
-              style={sleepStyles.newPlaylistButton}
+              style={[sleepStyles.newPlaylistButton, { backgroundColor: palette.accent }]}
               onPress={async () => {
                 const newPlaylist = await createPlaylist(`My Playlist ${playlists.length + 1}`);
                 if (selectedStory && newPlaylist?.id) {
@@ -765,12 +797,12 @@ function SleepUI({
                 setShowPlaylistModal(false);
               }}
             >
-              <Ionicons name="add" size={24} color="#0d0b2f" />
-              <Text style={sleepStyles.newPlaylistText}>Create New Playlist</Text>
+              <Ionicons name="add" size={24} color={isDark ? "#fff" : "#0d0b2f"} />
+              <Text style={[sleepStyles.newPlaylistText, { color: "#fff" }]}>Create New Playlist</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={sleepStyles.cancelButton} onPress={() => setShowPlaylistModal(false)}>
-              <Text style={sleepStyles.cancelText}>Cancel</Text>
+              <Text style={[sleepStyles.cancelText, { color: palette.headerText }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -789,6 +821,9 @@ function FocusUI() {
   const [customInput, setCustomInput] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const formatTime = (s: number) => `${Math.floor(s/60)}:${(s%60<10?"0":"")}${s%60}`;
+
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   useEffect(() => {
     if (isRunning) {
@@ -817,45 +852,45 @@ function FocusUI() {
 
   return (
     <>
-      <Text style={styles.helper}>Sync Your Heart To Your Breath</Text>
-      <View style={focusStyles.container}>
-        <Text style={focusStyles.timerText}>{formatTime(timeLeft)}</Text>
-        <TouchableOpacity style={focusStyles.playPauseBtn} onPress={() => setIsRunning((p) => !p)}>
-          <Ionicons name={isRunning ? "stop-circle-outline" : "hourglass-outline"} size={40} color="#0d0b2f" />
+      <Text style={[styles.helper, { color: palette.headerText }]}>Sync Your Heart To Your Breath</Text>
+      <View style={[focusStyles.container]}>
+        <Text style={[focusStyles.timerText, { color: palette.headerText }]}>{formatTime(timeLeft)}</Text>
+        <TouchableOpacity style={[focusStyles.playPauseBtn, { backgroundColor: palette.accent }]} onPress={() => setIsRunning((p) => !p)}>
+          <Ionicons name={isRunning ? "stop-circle-outline" : "hourglass-outline"} size={40} color={isDark ? "#fff" : "#0d0b2f"} />
         </TouchableOpacity>
         <View style={focusStyles.presetContainer}>
-          <TouchableOpacity style={focusStyles.presetBtn} onPress={() => { setDuration(60); setTimeLeft(60); setIsRunning(false); }}><Text style={focusStyles.presetText}>1m</Text></TouchableOpacity>
-          <TouchableOpacity style={focusStyles.presetBtn} onPress={() => { setDuration(300); setTimeLeft(300); setIsRunning(false); }}><Text style={focusStyles.presetText}>5m</Text></TouchableOpacity>
-          <TouchableOpacity style={focusStyles.presetBtn} onPress={() => { setDuration(600); setTimeLeft(600); setIsRunning(false); }}><Text style={focusStyles.presetText}>10m</Text></TouchableOpacity>
-          <TouchableOpacity style={focusStyles.presetBtn} onPress={() => setCustomModalVisible(true)}><Text style={focusStyles.presetText}>Custom</Text></TouchableOpacity>
+          <TouchableOpacity style={[focusStyles.presetBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(13,11,47,0.06)" }]} onPress={() => { setDuration(60); setTimeLeft(60); setIsRunning(false); }}><Text style={[focusStyles.presetText, { color: palette.headerText }]}>1m</Text></TouchableOpacity>
+          <TouchableOpacity style={[focusStyles.presetBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(13,11,47,0.06)" }]} onPress={() => { setDuration(300); setTimeLeft(300); setIsRunning(false); }}><Text style={[focusStyles.presetText, { color: palette.headerText }]}>5m</Text></TouchableOpacity>
+          <TouchableOpacity style={[focusStyles.presetBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(13,11,47,0.06)" }]} onPress={() => { setDuration(600); setTimeLeft(600); setIsRunning(false); }}><Text style={[focusStyles.presetText, { color: palette.headerText }]}>10m</Text></TouchableOpacity>
+          <TouchableOpacity style={[focusStyles.presetBtn, { backgroundColor: isDark ? "rgba(255,255,255,0.02)" : "rgba(13,11,47,0.06)" }]} onPress={() => setCustomModalVisible(true)}><Text style={[focusStyles.presetText, { color: palette.headerText }]}>Custom</Text></TouchableOpacity>
           <Modal visible={customModalVisible} transparent animationType="fade" onRequestClose={() => setCustomModalVisible(false)}>
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-              <View style={{ backgroundColor: "#090227ff", padding: 24, borderRadius: 20, width: 320, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 }}>
-                <Text style={{ color: "#fff", fontSize: 18, marginBottom: 12 }}>Enter duration</Text>
+              <View style={{ backgroundColor: palette.cardBg, padding: 24, borderRadius: 20, width: 320, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 }}>
+                <Text style={{ color: palette.headerText, fontSize: 18, marginBottom: 12 }}>Enter duration</Text>
                 <TextInput
                   value={customInput}
                   onChangeText={setCustomInput}
                   keyboardType="numeric"
                   placeholder="Minutes"
-                  placeholderTextColor="#ccc"
-                  style={{ padding: 10, color: "#fff", textAlign: "center", marginBottom: 20, borderBottomWidth: 1, borderBottomColor: "#fff" }}
+                  placeholderTextColor={palette.muted}
+                  style={{ padding: 10, color: palette.headerText, textAlign: "center", marginBottom: 20, borderBottomWidth: 1, borderBottomColor: palette.cardBorder, width: '100%' }}
                 />
                 <TouchableOpacity
-                  style={{ backgroundColor: "#f7f7f7ff", paddingVertical: 10, paddingHorizontal: 40, borderRadius: 14, marginBottom: 8, alignItems: "center" }}
+                  style={{ backgroundColor: palette.accent, paddingVertical: 10, paddingHorizontal: 40, borderRadius: 14, marginBottom: 8, alignItems: "center" }}
                   onPress={() => {
                     const seconds = parseInt(customInput) * 60;
                     if (!isNaN(seconds) && seconds > 0) { setDuration(seconds); setTimeLeft(seconds); setIsRunning(false); setCustomModalVisible(false); setCustomInput(""); }
                     else alert("Please enter a valid number!");
                   }}
                 >
-                  <Text style={{ color: "#0d0b2f", fontWeight: "700", fontSize: 16 }}>Set</Text>
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>Set</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ padding: 8 }} onPress={() => setCustomModalVisible(false)}><Text style={{ color: "#fff", fontSize: 16 }}>Cancel</Text></TouchableOpacity>
+                <TouchableOpacity style={{ padding: 8 }} onPress={() => setCustomModalVisible(false)}><Text style={{ color: palette.headerText, fontSize: 16 }}>Cancel</Text></TouchableOpacity>
               </View>
             </View>
           </Modal>
         </View>
-        <Animated.View style={[focusStyles.breathCircle, { transform: [{ scale: scaleAnim }] }]}><Text style={focusStyles.breathText}>{breathText}</Text></Animated.View>
+        <Animated.View style={[focusStyles.breathCircle, { transform: [{ scale: useRef(new Animated.Value(1)).current }], backgroundColor: isDark ? "rgba(111,108,255,0.06)" : "rgba(13,11,47,0.06)" }]}><Text style={[focusStyles.breathText, { color: palette.headerText }]}>{breathText}</Text></Animated.View>
       </View>
     </>
   );
@@ -867,6 +902,8 @@ export default function MeditationListScreen() {
   const subcategories = useMemo(() => CATEGORIES.find((c) => c.key === active)?.subcategories ?? [], [active]);
   const favoritesData = useFavorites();
   const playlistsData = usePlaylists();
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
 
   // Force login on first entry if no user
   useEffect(() => {
@@ -877,34 +914,34 @@ export default function MeditationListScreen() {
   }, []);
 
   return (
-    <LinearGradient colors={["#0d0b2f", "#2a1faa"]} style={styles.container}>
-      <View style={styles.headerBar}><Text style={styles.header}> Meditation </Text></View>
+    <LinearGradient colors={isDark ? ["#07070a", "#121018"] : ["#ffffff", "#ffffff"]} style={[styles.container, { backgroundColor: palette.pageBg }]}>
+      <View style={styles.headerBar}><Text style={[styles.header, { color: palette.headerText }]}>Meditation</Text></View>
       <View style={styles.tabsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScrollContent}>
-          <TouchableOpacity style={[styles.lottieTabItem, active === "stress" && styles.lottieTabItemActive]} onPress={() => setActive("stress")}>
+          <TouchableOpacity style={[styles.lottieTabItem, active === "stress" && styles.lottieTabItemActive, { borderColor: palette.accent }]} onPress={() => setActive("stress")}>
             <LottieView source={require("../../assets/animation/Guitarist.json")} autoPlay={active === "stress"} loop={active === "stress"} style={{ width: 60, height: 60 }} />
-            <Text style={[styles.tabText, active === "stress" && styles.tabTextActive]}>Music</Text>
+            <Text style={[styles.tabText, active === "stress" && styles.tabTextActive, { color: active === "stress" ? palette.accent : palette.headerText }]}>Music</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.lottieTabItem, active === "sleep" && styles.lottieTabItemActive]} onPress={() => setActive("sleep")}>
+          <TouchableOpacity style={[styles.lottieTabItem, active === "sleep" && styles.lottieTabItemActive, { borderColor: palette.accent }]} onPress={() => setActive("sleep")}>
             <LottieView source={require("../../assets/animation/Book.json")} autoPlay={active === "sleep"} loop={active === "sleep"} style={{ width: 60, height: 60 }} />
-            <Text style={[styles.tabText, active === "sleep" && styles.tabTextActive]}>SleepTales</Text>
+            <Text style={[styles.tabText, active === "sleep" && styles.tabTextActive, { color: active === "sleep" ? palette.accent : palette.headerText }]}>SleepTales</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.lottieTabItem, active === "focus" && styles.lottieTabItemActive]} onPress={() => setActive("focus")}>
+          <TouchableOpacity style={[styles.lottieTabItem, active === "focus" && styles.lottieTabItemActive, { borderColor: palette.accent }]} onPress={() => setActive("focus")}>
             <LottieView source={require("../../assets/animation/Sloth meditate.json")} autoPlay={active === "focus"} loop={active === "focus"} style={{ width: 60, height: 60 }} />
-            <Text style={[styles.tabText, active === "focus" && styles.tabTextActive]}>Breath</Text>
+            <Text style={[styles.tabText, active === "focus" && styles.tabTextActive, { color: active === "focus" ? palette.accent : palette.headerText }]}>Breath</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.lottieTabItem, active === "playlist" && styles.lottieTabItemActive]} onPress={() => setActive("playlist")}>
+          <TouchableOpacity style={[styles.lottieTabItem, active === "playlist" && styles.lottieTabItemActive, { borderColor: palette.accent }]} onPress={() => setActive("playlist")}>
             <LottieView source={require("../../assets/animation/Playlist.json")} autoPlay={active === "playlist"} loop={active === "playlist"} style={{ width: 60, height: 60 }} />
-            <Text style={[styles.tabText, active === "playlist" && styles.tabTextActive]}>Playlist</Text>
+            <Text style={[styles.tabText, active === "playlist" && styles.tabTextActive, { color: active === "playlist" ? palette.accent : palette.headerText }]}>Playlist</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.lottieTabItem, active === "favorites" && styles.lottieTabItemActive]} onPress={() => setActive("favorites")}>
+          <TouchableOpacity style={[styles.lottieTabItem, active === "favorites" && styles.lottieTabItemActive, { borderColor: palette.accent }]} onPress={() => setActive("favorites")}>
             <LottieView source={require("../../assets/animation/Favourite Animation.json")} autoPlay={active === "favorites"} loop={active === "favorites"} style={{ width: 60, height: 60 }} />
-            <Text style={[styles.tabText, active === "favorites" && styles.tabTextActive]}>Favourites</Text>
+            <Text style={[styles.tabText, active === "favorites" && styles.tabTextActive, { color: active === "favorites" ? palette.accent : palette.headerText }]}>Favourites</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
 
-      <View style={styles.tracksContainer}>
+      <View style={[styles.tracksContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
         {active === "stress" && (
           <StressUI
             subcategories={subcategories}
@@ -921,132 +958,198 @@ export default function MeditationListScreen() {
   );
 }
 
-// ====== Styles (same as before) ======
+// ====== Styles (theme-neutral layout) ======
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    paddingTop: 60
-   },
-  headerBar: { 
-    paddingHorizontal: 16, 
-    paddingBottom: 8, 
-    flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "space-between" 
+  container: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  headerBar: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   header: {
-    color: "#fff",
     fontSize: 28,
     fontWeight: "700",
     marginLeft: 6,
   },
-  tabsContainer: { 
-    height: 120
+  tabsContainer: {
+    height: 120,
   },
-  tabsScrollContent: { 
-    paddingHorizontal: 16, 
-    alignItems: 'center'
+  tabsScrollContent: {
+    paddingHorizontal: 16,
+    alignItems: "center",
   },
-  lottieTabItem: { alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 8, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.06)" },
-  lottieTabItemActive: { backgroundColor: "rgba(255,255,255,0.18)" },
-  tabText: { color: "#cfd3ff", fontSize: 14, marginTop: 4 },
-  tabTextActive: { color: "#fff", fontWeight: "600" },
-  helper: { color: "#E6E8FF", opacity: 0.8, paddingHorizontal: 16, marginBottom: 8, marginTop: 16, textAlign: "center", fontSize: 20 },
-  tracksContainer: { flex: 1, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 16, marginHorizontal: 16, paddingHorizontal: 16, paddingVertical: 4, marginTop: 20, marginBottom: 40 },
+  lottieTabItem: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: "transparent",
+    borderWidth: 2,
+  },
+  lottieTabItemActive: {
+    backgroundColor: "transparent",
+  },
+  tabText: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  tabTextActive: {
+    fontWeight: "600",
+  },
+  helper: {
+    opacity: 0.9,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    marginTop: 16,
+    textAlign: "center",
+    fontSize: 20,
+  },
+  tracksContainer: {
+    flex: 1,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginTop: 20,
+    marginBottom: 40,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
 });
 
+// ====== Sub-style sheets (kept layout-only, colors applied inline) ======
 const stressStyles = StyleSheet.create({
   subcategorySection: { marginBottom: 24 },
-  subcategoryTitle: { color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 12, marginLeft: 8 },
+  subcategoryTitle: { fontSize: 16, fontWeight: "700", marginBottom: 12, marginLeft: 8 },
   horizontalScrollContent: { paddingHorizontal: 8 },
-  trackCard: { width: 150, marginRight: 12, backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 12, padding: 12, alignItems: "center", position: "relative" },
+  trackCard: {
+    width: 150,
+    marginRight: 12,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    position: "relative",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    borderWidth: 2,
+  },
   cardContent: { alignItems: "center", width: "100%" },
   trackCardImage: { width: 120, height: 120, borderRadius: 8, marginBottom: 8 },
-  trackCardTitle: { color: "#fff", fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 8, flexShrink: 1 },
-  playButton: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#9ff1ff", alignItems: "center", justifyContent: "center", shadowColor: "#9ff1ff", shadowOpacity: 0.5, shadowRadius: 6, elevation: 5 },
+  trackCardTitle: { fontSize: 14, fontWeight: "600", textAlign: "center", marginBottom: 8, flexShrink: 1 },
+  playButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   actionButtons: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 8, paddingHorizontal: 4 },
   favoriteButton: { padding: 4 },
   playlistButton: { padding: 4 },
-  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalContent: { backgroundColor: "#0d0b2f", borderRadius: 20, padding: 24, width: "90%", maxWidth: 400 },
-  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 8 },
-  modalSubtitle: { color: "#cfd3ff", fontSize: 16, textAlign: "center", marginBottom: 20 },
-  playlistItem: { flexDirection: "row", alignItems: "center", padding: 12, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 10, marginBottom: 8 },
-  playlistName: { color: "#fff", fontSize: 16, fontWeight: "600", flex: 1 },
-  playlistCount: { color: "#9ff1ff", fontSize: 12 },
-  newPlaylistButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#9ff1ff", padding: 12, borderRadius: 10, marginTop: 12, marginBottom: 8 },
-  newPlaylistText: { color: "#0d0b2f", fontSize: 16, fontWeight: "600", marginLeft: 8 },
+  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalContent: { borderRadius: 20, padding: 24, width: "90%", maxWidth: 400, alignItems: "center" },
+  modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  modalSubtitle: { fontSize: 16, textAlign: "center", marginBottom: 20 },
+  playlistItem: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 10, marginBottom: 8, width: "100%" },
+  playlistName: { fontSize: 16, fontWeight: "600", flex: 1 },
+  playlistCount: { fontSize: 12 },
+  newPlaylistButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 12, borderRadius: 10, marginTop: 12, marginBottom: 8 },
+  newPlaylistText: { fontSize: 16, fontWeight: "600", marginLeft: 8 },
   cancelButton: { padding: 12, alignItems: "center" },
-  cancelText: { color: "#fff", fontSize: 16 },
+  cancelText: { fontSize: 16 },
 });
 
 const favoritesStyles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
-  emptyTitle: { color: "#fff", fontSize: 20, fontWeight: "700", marginTop: 16, marginBottom: 8 },
-  emptyText: { color: "#cfd3ff", fontSize: 16, textAlign: "center", lineHeight: 22 },
-  title: { color: "#fff", fontSize: 24, fontWeight: "700", textAlign: "center", marginBottom: 20, marginTop: 10 },
-  favoriteItem: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 12, padding: 12, marginBottom: 12, marginHorizontal: 8 },
+  emptyTitle: { fontSize: 20, fontWeight: "700", marginTop: 16, marginBottom: 8 },
+  emptyText: { fontSize: 16, textAlign: "center", lineHeight: 22 },
+  title: { fontSize: 24, fontWeight: "700", textAlign: "center", marginBottom: 20, marginTop: 10 },
+  favoriteItem: { flexDirection: "row", alignItems: "center", borderRadius: 12, padding: 12, marginBottom: 12, marginHorizontal: 8, borderWidth: 1 },
   favoriteImage: { width: 60, height: 60, borderRadius: 8, marginRight: 12 },
   favoriteInfo: { flex: 1 },
-  favoriteTitle: { color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 4 },
-  favoriteAuthor: { color: "#cfd3ff", fontSize: 12, marginBottom: 4 },
-  favoriteType: { color: "#9ff1ff", fontSize: 12, fontWeight: "500" },
-  playButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#9ff1ff", alignItems: "center", justifyContent: "center", marginHorizontal: 8 },
-  removeButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,107,107,0.2)", alignItems: "center", justifyContent: "center", marginLeft: 4 },
+  favoriteTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
+  favoriteAuthor: { fontSize: 12, marginBottom: 4 },
+  favoriteType: { fontSize: 12, fontWeight: "500" },
+  playButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginHorizontal: 8 },
+  removeButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginLeft: 4, borderWidth:1 },
 });
 
 const playlistsStyles = StyleSheet.create({
-  createButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#9ff1ff", padding: 16, borderRadius: 12, marginHorizontal: 8, marginBottom: 20 },
-  createButtonText: { color: "#0d0b2f", fontSize: 18, fontWeight: "700", marginLeft: 8 },
+  createButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 16, borderRadius: 12, marginHorizontal: 8, marginBottom: 20 },
+  createButtonText: { fontSize: 18, fontWeight: "700", marginLeft: 8 },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40, marginTop: 40 },
-  emptyTitle: { color: "#fff", fontSize: 20, fontWeight: "700", marginTop: 16, marginBottom: 8 },
-  emptyText: { color: "#cfd3ff", fontSize: 16, textAlign: "center", lineHeight: 22 },
-  playlistItem: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 12, padding: 16, marginBottom: 12, marginHorizontal: 8 },
-  playlistImage: { width: 60, height: 60, borderRadius: 30, backgroundColor: "#9ff1ff", alignItems: "center", justifyContent: "center", marginRight: 12 },
+  emptyTitle: { fontSize: 20, fontWeight: "700", marginTop: 16, marginBottom: 8 },
+  emptyText: { fontSize: 16, textAlign: "center", lineHeight: 22 },
+  playlistItem: { flexDirection: "row", alignItems: "center", borderRadius: 12, padding: 16, marginBottom: 12, marginHorizontal: 8, borderWidth: 1 },
+  playlistImage: { width: 60, height: 60, borderRadius: 30, alignItems: "center", justifyContent: "center", marginRight: 12 },
   playlistInfo: { flex: 1 },
-  playlistName: { color: "#fff", fontSize: 18, fontWeight: "600", marginBottom: 4 },
-  playlistCount: { color: "#cfd3ff", fontSize: 14 },
-  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalContent: { backgroundColor: "#0d0b2f", borderRadius: 20, padding: 24, width: "90%", maxWidth: 400 },
-  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 20 },
-  nameInput: { backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 10, padding: 12, color: "#fff", fontSize: 16, marginBottom: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" },
-  createConfirmButton: { backgroundColor: "#9ff1ff", padding: 16, borderRadius: 10, alignItems: "center", marginBottom: 12 },
-  createConfirmButtonDisabled: { opacity: 0.5 },
-  createConfirmText: { color: "#0d0b2f", fontSize: 16, fontWeight: "700" },
+  playlistName: { fontSize: 18, fontWeight: "600", marginBottom: 4 },
+  playlistCount: { fontSize: 14 },
+  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalContent: { borderRadius: 20, padding: 24, width: "90%", maxWidth: 400, alignItems: "center" },
+  modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 20 },
+  nameInput: { borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 20, borderWidth: 1, width: "100%" },
+  createConfirmButton: { padding: 16, borderRadius: 10, alignItems: "center", marginBottom: 12, width: "100%" },
+  createConfirmButtonDisabled: { opacity: 0.6 },
+  createConfirmText: { fontSize: 16, fontWeight: "700" },
   cancelButton: { padding: 12, alignItems: "center" },
-  cancelText: { color: "#fff", fontSize: 16 },
+  cancelText: { fontSize: 16 },
 });
 
 const sleepStyles = StyleSheet.create({
-  helper: { color: "#E6E8FF", opacity: 0.8, paddingHorizontal: 16, marginBottom: 8, marginTop: 16, textAlign: "center", fontSize: 20 },
+  helper: { paddingHorizontal: 16, marginBottom: 8, marginTop: 16, textAlign: "center", fontSize: 20 },
   subcategorySection: { marginBottom: 24 },
-  subcategoryTitle: { color: "#fff", fontSize: 14, fontWeight: "700", marginBottom: 12, marginLeft: 8 },
+  subcategoryTitle: { fontSize: 14, fontWeight: "700", marginBottom: 12, marginLeft: 8 },
   horizontalScrollContent: { paddingHorizontal: 8 },
-  storyCard: { width: 150, marginRight: 12, backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 12, padding: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  storyCard: { width: 150, marginRight: 12, borderRadius: 12, padding: 12, alignItems: "center", shadowOpacity: 0.04, shadowRadius: 4, elevation: 2, borderWidth: 3 },
   cardContent: { alignItems: "center", width: "100%" },
   storyCardImage: { width: 110, height: 100, borderRadius: 8, marginBottom: 8 },
-  storyCardTitle: { color: "#fdfdfeff", fontSize: 12, fontWeight: "600", textAlign: "center", marginBottom: 4, flexShrink: 1 },
-  storyCardAuthor: { color: "#a49e9eff", fontSize: 10, textAlign: "center", marginBottom: 8, flexShrink: 1 },
+  storyCardTitle: { fontSize: 12, fontWeight: "600", textAlign: "center", marginBottom: 4, flexShrink: 1 },
+  storyCardAuthor: { fontSize: 10, textAlign: "center", marginBottom: 8, flexShrink: 1 },
   playButtonContainer: { alignItems: "center" },
-  playButton: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#9ff1ff", alignItems: "center", justifyContent: "center", shadowColor: "#9ff1ff", shadowOpacity: 0.5, shadowRadius: 6, elevation: 5, marginBottom: 4 },
-  playButtonText: { color: "#f7f7faff", fontSize: 10, fontWeight: "600" },
+  playButton: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", shadowOpacity: 0.2, shadowRadius: 6, elevation: 3, marginBottom: 4 },
+  playButtonText: { fontSize: 10, fontWeight: "600" },
   actionButtons: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 8, paddingHorizontal: 4 },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  loadingText: { marginTop: 12, color: "#0d0b2f", fontSize: 16 },
+  loadingText: { marginTop: 12, fontSize: 16 },
   favoriteButton: { padding: 4 },
   playlistButton: { padding: 4 },
-  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalContent: { backgroundColor: "#0d0b2f", borderRadius: 20, padding: 24, width: "90%", maxWidth: 400 },
-  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 8 },
-  modalSubtitle: { color: "#cfd3ff", fontSize: 16, textAlign: "center", marginBottom: 20 },
-  playlistItem: { flexDirection: "row", alignItems: "center", padding: 12, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 10, marginBottom: 8 },
-  playlistName: { color: "#fff", fontSize: 16, fontWeight: "600", flex: 1 },
-  playlistCount: { color: "#9ff1ff", fontSize: 12 },
-  newPlaylistButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#9ff1ff", padding: 12, borderRadius: 10, marginTop: 12, marginBottom: 8 },
-  newPlaylistText: { color: "#0d0b2f", fontSize: 16, fontWeight: "600", marginLeft: 8 },
+  modalContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalContent: { borderRadius: 20, padding: 24, width: "90%", maxWidth: 400, alignItems: "center" },
+  modalTitle: { fontSize: 20, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  modalSubtitle: { fontSize: 16, textAlign: "center", marginBottom: 20 },
+  playlistItem: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 10, marginBottom: 8, width: "100%" },
+  playlistName: { fontSize: 16, fontWeight: "600", flex: 1 },
+  playlistCount: { fontSize: 12 },
+  newPlaylistButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 12, borderRadius: 10, marginTop: 12, marginBottom: 8 },
+  newPlaylistText: { fontSize: 16, fontWeight: "600", marginLeft: 8 },
   cancelButton: { padding: 12, alignItems: "center" },
-  cancelText: { color: "#fff", fontSize: 16 },
+  cancelText: { fontSize: 16 },
 });
 
+const focusStyles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "flex-start", alignItems: "center", paddingTop: 60, paddingHorizontal: 20 },
+  timerText: { fontSize: 30, fontWeight: "700", marginBottom: 10, marginTop: -40 },
+  playPauseBtn: { width: 80, height: 80, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 30, marginTop: 20 },
+  presetContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 50, width: "100%", paddingHorizontal: 40, marginTop: 12 },
+  presetBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, marginHorizontal: 5, alignItems: "center", justifyContent: "center" },
+  presetText: { fontSize: 16, fontWeight: "600" },
+  breathCircle: { width: 120, height: 120, borderRadius: 60, alignItems: "center", justifyContent: "center", marginBottom: 40, marginTop: 20 },
+  breathText: { fontSize: 18, fontWeight: "600" },
+});
 
-const focusStyles = StyleSheet.create({ container: { flex: 1, justifyContent: "flex-start", alignItems: "center", paddingTop: 60, paddingHorizontal: 20, }, timerText: { color: "#fff", fontSize: 30, fontWeight: "700", marginBottom: 10, marginTop: -40, }, playPauseBtn: { width: 80, height: 80, borderRadius: 20, backgroundColor: "#9ff1ff", alignItems: "center", justifyContent: "center", marginBottom: 30, marginTop: 20, }, presetContainer: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 50, width: "100%", paddingHorizontal: 40, marginTop: 12, }, presetBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.15)", marginHorizontal: 5, alignItems: "center", justifyContent: "center", }, presetText: { color: "#fff", fontSize: 16, fontWeight: "600", }, breathCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 40, marginTop: 20, }, breathText: { color: "#fff", fontSize: 18, fontWeight: "600", }, });

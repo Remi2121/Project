@@ -1,3 +1,4 @@
+// Player.tsx
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { Audio } from "expo-av";
@@ -6,11 +7,13 @@ import { goBack } from "expo-router/build/global-state/routing";
 import React, { useEffect, useState } from "react";
 import { Alert, Image, Platform, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 
-
 // ===== Filesystem + Auth (for persistent favorites) =====
 import * as FileSystem from "expo-file-system";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../utils/firebaseConfig";
+
+// theme hook
+import { useSettings } from "../utilis/Settings";
 
 // ========= Types =========
 type Favorite = {
@@ -143,12 +146,37 @@ function useFavoritesFS() {
   return { ready, favorites, addFavorite, removeFavorite, isFavorite };
 }
 
+// ====== Palette helper for dark/light ======
+const getPalette = (dark: boolean) => ({
+  background: dark ? "#07070a" : "#ffffff",
+  headerIcon: dark ? "#e6e6e6" : "#fff",
+  headerIconSecondary: dark ? "#cfcfe8" : "#fff",
+  title: dark ? "#e6e6e6" : "#0d0b2f",
+  subtitle: dark ? "#b9b9ff" : "#55607a",
+  accent: dark ? "#6f6cff" : "#2a1faa",
+  playBtnBg: dark ? "#6f6cff" : "#2a1faa",
+  playIcon: dark ? "#0b0b0f" : "#0d0b2f",
+  artworkBg: dark ? "#0f0f16" : "#f8fafc",
+  artworkBorder: dark ? "rgba(255,255,255,0.04)" : "#e6e9ef",
+  timeText: dark ? "#e6e6e6" : "#111827",
+  favoriteOn: "#ff6b6b",
+  sliderTrack: dark ? "#2a2a36" : "#d1d5db",
+  sliderThumb: dark ? "#6f6cff" : "#2a1faa",
+  errorBg: dark ? "#4b1f1f" : "#ffe6e6",
+  errorBorder: dark ? "#6b1f1f" : "#ffd1d1",
+  errorText: dark ? "#ffdede" : "#7a1f1f",
+});
+
 // ========= Player Screen =========
 export default function Player() {
   // Expecting params passed as JSON strings: JSON.stringify(track.file), JSON.stringify(track.image)
   const { title, url, image } = useLocalSearchParams();
   const parsedUrl = url ? JSON.parse(url as string) : null;      // can be require-id number or { uri: ... }
   const parsedImage = image ? JSON.parse(image as string) : null; // can be number (require) or { uri: ... }
+
+  const { isDark } = useSettings();
+  const palette = getPalette(Boolean(isDark));
+  const styles = getStyles(palette);
 
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -218,28 +246,34 @@ export default function Player() {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-    };
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
+          <Ionicons name="chevron-back" size={24} color={palette.headerIcon} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.favoriteButton} onPress={handleFavorite}>
           <Ionicons
             name={isFavorite(trackId) ? "heart" : "heart-outline"}
             size={28}
-            color={isFavorite(trackId) ? "#ff6b6b" : "#fff"}
+            color={isFavorite(trackId) ? palette.favoriteOn : palette.headerIcon}
           />
         </TouchableOpacity>
       </View>
 
       {/* Artwork + Title */}
-      {parsedImage && <Image source={parsedImage} style={styles.artwork} />}
-      <Text style={styles.title}>{title}</Text>
+      {parsedImage && (
+        <Image
+          source={parsedImage}
+          style={[styles.artwork, { backgroundColor: palette.artworkBg, borderColor: palette.artworkBorder }]}
+        />
+      )}
+
+      <Text style={[styles.title, { color: palette.title }]}>{title}</Text>
 
       {/* Progress */}
       <Slider
@@ -248,80 +282,84 @@ export default function Player() {
         maximumValue={duration}
         value={position}
         onSlidingComplete={handleSeek}
-        minimumTrackTintColor="#9ff1ff"
-        maximumTrackTintColor="#aaa"
-        thumbTintColor="#9ff1ff"
+        minimumTrackTintColor={palette.accent}   // accent for progress
+        maximumTrackTintColor={palette.sliderTrack}
+        thumbTintColor={palette.sliderThumb}
       />
       <View style={styles.timeRow}>
-        <Text style={styles.timeText}>{formatTime(position)}</Text>
-        <Text style={styles.timeText}>{formatTime(duration)}</Text>
+        <Text style={[styles.timeText, { color: palette.timeText }]}>{formatTime(position)}</Text>
+        <Text style={[styles.timeText, { color: palette.timeText }]}>{formatTime(duration)}</Text>
       </View>
 
       {/* Play/Pause */}
-      <TouchableOpacity style={styles.playBtn} onPress={togglePlay}>
-        <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="#0d0b2f" />
+      <TouchableOpacity style={[styles.playBtn, { backgroundColor: palette.playBtnBg }]} onPress={togglePlay}>
+        <Ionicons name={isPlaying ? "pause" : "play"} size={40} color={palette.playIcon} />
       </TouchableOpacity>
     </View>
   );
 }
 
-// ========= Styles =========
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0d0b2f",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  header: {
-    position: "absolute",
-    top: 50,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    zIndex: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  favoriteButton: {
-    padding: 8,
-  },
-  artwork: {
-    width: 300,
-    height: 300,
-    borderRadius: 20,
-    marginBottom: 30,
-    marginTop: 40, // room for header
-  },
-  title: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  playBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#9ff1ff",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  timeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
-    marginTop: 10,
-  },
-  timeText: {
-    color: "#fff",
-    fontSize: 14,
-  },
-});
+const getStyles = (p: ReturnType<typeof getPalette>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    header: {
+      position: "absolute",
+      top: 50,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      zIndex: 10,
+    },
+    backButton: {
+      padding: 8,
+    },
+    favoriteButton: {
+      padding: 8,
+    },
+    artwork: {
+      width: 300,
+      height: 300,
+      borderRadius: 20,
+      marginBottom: 30,
+      marginTop: 40, // room for header
+      borderWidth: 1,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: "700",
+      marginBottom: 30,
+      textAlign: "center",
+    },
+    playBtn: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 20,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    timeRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "80%",
+      marginTop: 10,
+    },
+    timeText: {
+      fontSize: 14,
+    },
+  });
+
+export { };
+

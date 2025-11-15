@@ -1,10 +1,11 @@
 // camera.tsx
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState, useRef } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSettings } from '../utilis/Settings';
 
 export default function Camera() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -14,29 +15,42 @@ export default function Camera() {
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const router = useRouter();
 
-  const themeColor = '#2a1faa'; // theme color
-  const GC_API_KEY = 'AIzaSyBv6KZSIw8fmWblJ2IbotzwGP0atovp70c'; 
+  // theme
+  const { isDark } = useSettings();
+  const styles = getCameraStyles(isDark);
+  const palette = getPalette(isDark);
+
+  // NOTE: keep your key where it is (or move to secure storage). Leaving as-is.
+  const GC_API_KEY = 'AIzaSyBv6KZSIw8fmWblJ2IbotzwGP0atovp70c';
   const GC_ENDPOINT = `https://vision.googleapis.com/v1/images:annotate?key=${GC_API_KEY}`;
 
   const takePhoto = async () => {
     if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync({ base64: true });
-      setPreviewUri(photo.uri);
-      setBase64Image(photo.base64 || null);
+      try {
+        const photo = await cameraRef.current.takePictureAsync({ base64: true });
+        setPreviewUri(photo.uri);
+        setBase64Image(photo.base64 || null);
+      } catch (err) {
+        console.warn('takePhoto error', err);
+      }
     }
   };
 
   const pickImageFromGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      base64: true,
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        base64: true,
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets.length > 0) {
-      const picked = result.assets[0];
-      setPreviewUri(picked.uri);
-      setBase64Image(picked.base64 || null);
+      if (!result.canceled && result.assets.length > 0) {
+        const picked = result.assets[0];
+        setPreviewUri(picked.uri);
+        setBase64Image((picked as any).base64 || null);
+      }
+    } catch (err) {
+      console.warn('pickImageFromGallery error', err);
     }
   };
 
@@ -88,6 +102,7 @@ export default function Camera() {
         },
       });
     } catch (error) {
+      console.warn('handleUsePhoto error', error);
       alert('Something went wrong. Please try again.');
     }
   };
@@ -112,53 +127,62 @@ export default function Camera() {
     return dominant[1] === 0 ? 'Neutral' : dominant[0];
   };
 
-  if (!permission) return <View />;
+  if (!permission) return <View style={[styles.container, { backgroundColor: palette.background }]} />;
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={[styles.message, { color: themeColor }]}>
+      <View style={[styles.container, { backgroundColor: palette.background }]}>
+        <Text style={[styles.message, { color: palette.accent }]}>
           We need your permission to show the camera
         </Text>
-        <Button onPress={requestPermission} title="Grant Permission" color={themeColor} />
+        <Button onPress={requestPermission} title="Grant Permission" color={palette.accent} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#ffffff' }]}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       {previewUri ? (
-        <View style={styles.previewContainer}>
+        <View style={[styles.previewContainer, { backgroundColor: palette.surface }]}>
           <Image source={{ uri: previewUri }} style={styles.previewImage} />
           <View style={styles.previewButtons}>
-            <TouchableOpacity style={styles.button} onPress={handleRetake}>
-              <Ionicons name="refresh-circle-outline" size={48} color={themeColor} />
-              <Text style={[styles.iconLabel, { color: themeColor }]}>Retake</Text>
+            <TouchableOpacity style={styles.previewButton} onPress={handleRetake}>
+              <Ionicons name="refresh-circle-outline" size={48} color={palette.accent} />
+              <Text style={[styles.iconLabel, { color: palette.accent }]}>Retake</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={handleUsePhoto}>
-              <Ionicons name="checkmark-circle-outline" size={48} color={themeColor} />
-              <Text style={[styles.iconLabel, { color: themeColor }]}>Use Photo</Text>
+            <TouchableOpacity style={styles.previewButton} onPress={handleUsePhoto}>
+              <Ionicons name="checkmark-circle-outline" size={48} color={palette.accent} />
+              <Text style={[styles.iconLabel, { color: palette.accent }]}>Use Photo</Text>
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        <View style={styles.cameraContainer}>
+        <View style={[styles.cameraContainer, { backgroundColor: palette.surface }]}>
           <CameraView ref={cameraRef} style={styles.camera} facing={facing}>
             <View style={styles.bottomControls}>
-              <TouchableOpacity style={styles.iconButton} onPress={pickImageFromGallery}>
-                <Ionicons name="image-outline" size={32} color={themeColor} />
-              </TouchableOpacity>
+              <View style={styles.control}>
+                <Text style={[styles.controlLabel, { color: palette.text }]}>Gallery</Text>
+                <TouchableOpacity style={styles.iconButton} onPress={pickImageFromGallery}>
+                  <Ionicons name="image-outline" size={32} color={palette.accent} />
+                </TouchableOpacity>
+              </View>
 
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setFacing(prev => (prev === 'back' ? 'front' : 'back'))}
-              >
-                <Ionicons name="camera-reverse-outline" size={35} color={themeColor} />
-              </TouchableOpacity>
+              <View style={styles.control}>
+                <Text style={[styles.controlLabel, { color: palette.text }]}>Flip</Text>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setFacing(prev => (prev === 'back' ? 'front' : 'back'))}
+                >
+                  <Ionicons name="camera-reverse-outline" size={35} color={palette.accent} />
+                </TouchableOpacity>
+              </View>
 
-              <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
-                <Ionicons name="camera-outline" size={35} color={themeColor} />
-              </TouchableOpacity>
+              <View style={styles.control}>
+                <Text style={[styles.controlLabel, { color: palette.text }]}>Capture</Text>
+                <TouchableOpacity style={styles.iconButton} onPress={takePhoto}>
+                  <Ionicons name="camera-outline" size={35} color={palette.accent} />
+                </TouchableOpacity>
+              </View>
             </View>
           </CameraView>
         </View>
@@ -167,59 +191,94 @@ export default function Camera() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
-    fontSize: 16,
-  },
-  camera: {
-    flex: 1,
-  },
-  bottomControls: {
-    position: 'absolute',
-    bottom: 40,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-  },
-  button: {
-    flex: 1,
-    alignSelf: 'flex-end',
-    alignItems: 'center',
-  },
-  iconButton: {
-    alignItems: 'center',
-  },
-  previewImage: {
-    width: '100%',
-    height: '80%',
-    resizeMode: 'contain',
-  },
-  previewButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    paddingVertical: 20,
-  },
-  previewContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  iconLabel: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  cameraContainer: {
-    flex: 1,
-    position: 'relative',
-    backgroundColor: '#ffffff',
-  },
+/**
+ * Palette helper — centralizes colors for dark and light
+ */
+const getPalette = (dark: boolean) => ({
+  background: dark ? '#07070a' : '#ffffff',
+  surface: dark ? '#0f1016' : '#ffffff',
+  accent: dark ? '#6f6cff' : '#2a1faa',
+  text: dark ? '#e6e6e6' : '#000000',
+  muted: dark ? '#b9b9ff' : '#555555',
 });
+
+/**
+ * Static layout styles (theme values set at runtime)
+ */
+const getCameraStyles = (dark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    message: {
+      textAlign: 'center',
+      paddingBottom: 10,
+      fontSize: 16,
+    },
+    cameraContainer: {
+      flex: 1,
+      position: 'relative',
+    },
+    camera: {
+      flex: 1,
+    },
+    bottomControls: {
+      position: 'absolute',
+      bottom: 80,
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      alignItems: 'flex-end',
+      paddingHorizontal: 20,
+    },
+    control: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 80,
+    },
+    controlLabel: {
+      fontSize: 14,
+      marginBottom: 6,
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    iconButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 8,
+      borderRadius: 40,
+    },
+    button: {
+      flex: 1,
+      alignSelf: 'flex-end',
+      alignItems: 'center',
+    },
+    iconLabel: {
+      fontSize: 14,
+      marginTop: 4,
+    },
+    previewImage: {
+      width: '100%',
+      height: '80%',
+      resizeMode: 'contain',
+    },
+    previewButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      width: '100%',
+      paddingVertical: 20,
+    },
+    previewContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    previewButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
+
+export { getCameraStyles };
+

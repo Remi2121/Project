@@ -1,10 +1,11 @@
 // audio.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSettings } from '../utilis/Settings';
 
 // Use environment variables for API keys
 const ASSEMBLY_API_KEY: string = "48ef25c7c2204041a6fef84c3184bf80";
@@ -15,7 +16,7 @@ const detectEmotionFromText = (text: string): string => {
   
   const lowerText = text.toLowerCase();
   
-  const emotionKeywords = {
+  const emotionKeywords: Record<string, string[]> = {
     joy: ['happy', 'joy', 'excited', 'good', 'great', 'wonderful', 'amazing', 'love', 'excellent', 'fantastic', 'smile', 'cheerful', 'delighted', 'content', 'pleased', 'satisfied', 'joyful', 'ecstatic', 'thrilled'],
     sorrow: ['sad', 'unhappy', 'depressed', 'bad', 'terrible', 'awful', 'hate', 'cry', 'miserable', 'upset','lonely', 'heartbroken', 'down', 'gloomy', 'sorrow', 'grief', 'melancholy', 'despair'],
     anger: ['angry', 'mad', 'furious', 'annoyed', 'frustrated', 'hate', 'rage', 'irritated', 'pissed', 'bitter', 'resentful', 'jealous', 'hostile', 'aggressive', 'outraged', 'fuming', 'livid'],
@@ -123,6 +124,9 @@ const pollTranscription = async (transcriptId: string): Promise<any> => {
 
 export default function AudioScreen() {
   const router = useRouter();
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
+
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingURI, setRecordingURI] = useState<string | null>(null);
@@ -164,6 +168,7 @@ export default function AudioScreen() {
       }
       stopTimer();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startTimer = () => {
@@ -279,34 +284,39 @@ export default function AudioScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const styles = getAudioStyles(isDark);
+
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
-      <Text style={styles.title}>Voice Mood Detection</Text>
-      <Text style={styles.subtitle}>Record your thoughts to detect your mood</Text>
+    <LinearGradient
+      colors={isDark ? ['#07070a', '#121018'] : ['#0d0b2f', '#2a1faa']}
+      style={[styles.container]}
+    >
+      <Text style={[styles.title, { color: palette.title }]}>Voice Mood Detection</Text>
+      <Text style={[styles.subtitle, { color: palette.subtitle }]}>Record your thoughts to detect your mood</Text>
 
       {/* Recording Section */}
       {!recordingURI ? (
         <View style={styles.recordingSection}>
           <TouchableOpacity
             onPress={isRecording ? stopRecording : startRecording}
-            style={[styles.recordButton, isRecording && styles.recordingActive]}
+            style={[styles.recordButton, isRecording && styles.recordingActive, { borderColor: isRecording ? palette.recordingAccent : 'transparent' }]}
             disabled={isBusy}
           >
             <Ionicons
               name={isRecording ? 'stop' : 'mic'}
               size={80}
-              color={isRecording ? '#ff4444' : '#4CAF50'}
+              color={isRecording ? palette.recordingAccent : palette.mic}
             />
-            <Text style={styles.recordButtonText}>
+            <Text style={[styles.recordButtonText, { color: palette.recordButtonText }]}>
               {isRecording ? 'Stop Recording' : 'Start Recording'}
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.recordingCompleteSection}>
-          <Ionicons name="checkmark-circle" size={60} color="#4CAF50" />
-          <Text style={styles.recordingCompleteText}>Recording Complete!</Text>
-          <Text style={styles.recordingDuration}>
+          <Ionicons name="checkmark-circle" size={60} color={palette.success} />
+          <Text style={[styles.recordingCompleteText, { color: palette.title }]}>Recording Complete!</Text>
+          <Text style={[styles.recordingDuration, { color: palette.subtitle }]}>
             Duration: {formatTime(recordingDuration)}
           </Text>
         </View>
@@ -315,8 +325,8 @@ export default function AudioScreen() {
       {/* Recording Indicator */}
       {isRecording && (
         <View style={styles.recordingIndicator}>
-          <View style={styles.recordingDot} />
-          <Text style={styles.recordingTimer}>
+          <View style={[styles.recordingDot, { backgroundColor: palette.recordingAccent }]} />
+          <Text style={[styles.recordingTimer, { color: palette.title }]}>
             Recording: {formatTime(recordingDuration)}
           </Text>
         </View>
@@ -326,21 +336,21 @@ export default function AudioScreen() {
       {recordingURI && !isLoadingTranscript && (
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.analyzeButton}
+            style={[styles.analyzeButton, { backgroundColor: palette.success }]}
             onPress={sendForTranscription}
             disabled={isLoadingTranscript}
           >
-            <Text style={styles.analyzeButtonText}>Analyze Mood</Text>
+            <Text style={[styles.analyzeButtonText, { color: palette.analyzeButtonText }]}>Analyze Mood</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.retryButton}
+            style={[styles.retryButton, { borderColor: palette.success, backgroundColor: palette.retryBackground }]}
             onPress={() => {
               setRecordingURI(null);
               setIsRecording(false);
             }}
           >
-            <Text style={styles.retryButtonText}>Record Again</Text>
+            <Text style={[styles.retryButtonText, { color: palette.success }]}>Record Again</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -348,126 +358,130 @@ export default function AudioScreen() {
       {/* Loading Indicator */}
       {isLoadingTranscript && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.loadingText}>Analyzing your voice for mood detection...</Text>
+          <ActivityIndicator size="large" color={palette.success} />
+          <Text style={[styles.loadingText, { color: palette.subtitle }]}>Analyzing your voice for mood detection...</Text>
         </View>
       )}
     </LinearGradient>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    marginTop: 60,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  recordingSection: {
-    alignItems: 'center',
-    flex: 1, 
-    justifyContent: 'center',
-  },
-  recordButton: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  recordingActive: {
-    backgroundColor: 'rgba(255,68,68,0.1)',
-    borderRadius: 50,
-  },
-  recordButtonText: {
-    color: 'white',
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  recordingCompleteSection: {
-    alignItems: 'center',
-    marginTop: 50,
-  },
-  recordingCompleteText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 50,
-    marginBottom: 5,
-  },
-  recordingDuration: {
-    color: '#ccc',
-    fontSize: 16,
-    marginTop: 5,
-  },
-  recordingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 40,
-  },
-  recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ff4444',
-    marginRight: 8,
-   
-  },
-  recordingTimer: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    
-  },
-  buttonContainer: {
-    alignItems: 'center',
-    gap: 40,
-  },
-  analyzeButton: {
-    backgroundColor: '#4CAF50',
-    padding:20,
-    borderRadius: 10,
-    marginTop: 50,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  analyzeButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  retryButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: 20,
-    borderRadius: 10,
-    minWidth: 100,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-  },
-  retryButtonText: {
-    color: '#4CAF50',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: 'white',
-    marginTop: 15,
-    fontSize: 16,
-    textAlign: 'center',
-  },
+/* Palette + styles */
+const getPalette = (dark: boolean) => ({
+  backgroundStart: dark ? '#07070a' : '#0d0b2f',
+  backgroundEnd: dark ? '#121018' : '#2a1faa',
+  title: dark ? '#e6e6e6' : '#ffffff',
+  subtitle: dark ? 'rgba(230,230,230,0.85)' : 'rgba(255,255,255,0.9)',
+  mic: dark ? '#b9b9ff' : '#4CAF50',               // mic icon color (when idle)
+  recordingAccent: '#ff4444',                      // recording red (kept same)
+  recordButtonText: dark ? '#ffffff' : '#ffffff',
+  success: '#4CAF50',                              // analyze button / success color
+  analyzeButtonText: '#ffffff',
+  retryBackground: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.2)',
 });
+
+/* Styles factory */
+const getAudioStyles = (dark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginTop: 60,
+    },
+    subtitle: {
+      fontSize: 16,
+      textAlign: 'center',
+      marginTop: 10,
+    },
+    recordingSection: {
+      alignItems: 'center',
+      flex: 1, 
+      justifyContent: 'center',
+    },
+    recordButton: {
+      alignItems: 'center',
+      padding: 20,
+    },
+    recordingActive: {
+      backgroundColor: 'rgba(255,68,68,0.08)',
+      borderRadius: 50,
+    },
+    recordButtonText: {
+      marginTop: 10,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    recordingCompleteSection: {
+      alignItems: 'center',
+      marginTop: 50,
+    },
+    recordingCompleteText: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginTop: 50,
+      marginBottom: 5,
+    },
+    recordingDuration: {
+      fontSize: 16,
+      marginTop: 5,
+    },
+    recordingIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 40,
+    },
+    recordingDot: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      marginRight: 8,
+    },
+    recordingTimer: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    buttonContainer: {
+      alignItems: 'center',
+      gap: 20,
+      marginTop: 30,
+    },
+    analyzeButton: {
+      padding:20,
+      borderRadius: 10,
+      marginTop: 20,
+      minWidth: 160,
+      alignItems: 'center',
+    },
+    analyzeButtonText: {
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    retryButton: {
+      padding: 16,
+      borderRadius: 10,
+      minWidth: 160,
+      alignItems: 'center',
+      borderWidth: 1,
+      marginTop: 10,
+    },
+    retryButtonText: {
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    loadingText: {
+      marginTop: 15,
+      fontSize: 16,
+      textAlign: 'center',
+    },
+  });

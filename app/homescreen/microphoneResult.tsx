@@ -5,10 +5,14 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../utils/firebaseConfig';
+import { useSettings } from '../utilis/Settings';
 
 export default function MicrophoneResult() {
   const { mood, transcript } = useLocalSearchParams();
   const router = useRouter();
+  const { isDark } = useSettings();
+  const palette = getPalette(isDark);
+  const styles = getMicrophoneStyles(isDark);
 
   const moodStr = Array.isArray(mood) ? mood[0] : (mood ?? '');
   const transcriptStr = Array.isArray(transcript) ? transcript[0] : (transcript ?? '');
@@ -60,57 +64,82 @@ export default function MicrophoneResult() {
   };
 
   return (
-    <LinearGradient colors={['#0d0b2f', '#2a1faa']} style={styles.container}>
-      <Text style={styles.header}>VOICE MOOD DETECTION</Text>
+    <LinearGradient
+      colors={isDark ? ['#07070a', '#121018'] : ['#0d0b2f', '#2a1faa']}
+      style={[styles.container]}
+    >
+      <Text style={[styles.header, { color: palette.header }]}>VOICE MOOD DETECTION</Text>
 
-      {moodStr ? <Text style={styles.emoji}>{moodEmojis[moodStr] || '🤔'}</Text>
-               : <Text style={styles.errorText}>Mood not detected</Text>}
+      {moodStr ? (
+        <Text style={[styles.emoji]}>{moodEmojis[moodStr] || '🤔'}</Text>
+      ) : (
+        <Text style={[styles.errorText, { color: palette.error }]}>Mood not detected</Text>
+      )}
 
-      <Text style={styles.moodText}>
-        Detected Mood: <Text style={styles.boldText}>{moodStr || '—'}</Text>
+      <Text style={[styles.moodText, { color: palette.text }]}>
+        Detected Mood: <Text style={[styles.boldText, { color: palette.text }]}>{moodStr || '—'}</Text>
       </Text>
 
       {transcriptStr ? (
-        <View style={styles.transcriptContainer}>
-          <Text style={styles.transcriptLabel}>What you said:</Text>
-          <Text style={styles.transcriptText}>{transcriptStr}</Text>
+        <View style={[styles.transcriptContainer, { backgroundColor: palette.transcriptBg }]}>
+          <Text style={[styles.transcriptLabel, { color: palette.muted }]}>What you said:</Text>
+          <Text style={[styles.transcriptText, { color: palette.text }]}>{transcriptStr}</Text>
         </View>
       ) : null}
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={saveMoodToFirestore}>
-          <Text style={styles.buttonText}>Confirm</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: palette.accent }]} onPress={saveMoodToFirestore}>
+          <Text style={[styles.buttonText, { color: palette.buttonText }]}>Confirm</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, { backgroundColor: palette.secondary }]}
           onPress={() => router.replace({ pathname: '/homescreen/audio' as any })}
         >
-          <Text style={styles.buttonText}>Try Again</Text>
+          <Text style={[styles.buttonText, { color: palette.buttonText }]}>Try Again</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', padding: 20 },
-  header: { color: '#fff', fontSize: 26, marginTop: 60 },
-  emoji: { fontSize: 120, marginTop: 50 },
-  errorText: { color: 'red', fontSize: 18, marginBottom: 30 },
-  moodText: { color: '#fff', fontSize: 20, marginTop: 20 },
-  boldText: { fontWeight: 'bold' },
-  transcriptContainer: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 15,
-    borderRadius: 12,
-    marginVertical: 20,
-    width: '100%',
-    maxWidth: 350,
-  },
-  transcriptLabel: { color: '#ccc', fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  transcriptText: { color: '#fff', fontSize: 16, lineHeight: 22 },
-  buttonContainer: { flexDirection: 'column', alignItems: 'center', marginTop: 50, gap: 40 },
-  button: { backgroundColor: '#2a1faa', padding: 20, paddingHorizontal: 40, borderRadius: 10 },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
+/* Palette helper */
+const getPalette = (dark: boolean) => ({
+  header: dark ? '#e6e6e6' : '#ffffff',
+  text: dark ? '#e6e6e6' : '#ffffff',
+  muted: dark ? '#bdbddf' : 'rgba(255,255,255,0.85)',
+  accent: dark ? '#6f6cff' : '#2a1faa',
+  secondary: dark ? 'rgba(111,108,255,0.12)' : 'rgba(255,255,255,0.18)',
+  buttonText: '#ffffff',
+  transcriptBg: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.1)',
+  error: '#ff6b6b',
 });
+
+/* Styles */
+const getMicrophoneStyles = (dark: boolean) =>
+  StyleSheet.create({
+    container: { flex: 1, alignItems: 'center', padding: 20 },
+    header: { fontSize: 26, marginTop: 60, fontWeight: '700' },
+    emoji: { fontSize: 120, marginTop: 50 },
+    errorText: { fontSize: 18, marginBottom: 30 },
+    moodText: { fontSize: 20, marginTop: 20 },
+    boldText: { fontWeight: '700' },
+    transcriptContainer: {
+      padding: 15,
+      borderRadius: 12,
+      marginVertical: 20,
+      width: '100%',
+      maxWidth: 350,
+    },
+    transcriptLabel: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+    transcriptText: { fontSize: 16, lineHeight: 22 },
+    buttonContainer: { flexDirection: 'column', alignItems: 'center', marginTop: 50, gap: 20 },
+    button: {
+      padding: 16,
+      paddingHorizontal: 40,
+      borderRadius: 10,
+      minWidth: 180,
+      alignItems: 'center',
+    },
+    buttonText: { fontWeight: '700', fontSize: 18 },
+  });
