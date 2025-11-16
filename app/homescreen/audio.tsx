@@ -288,7 +288,7 @@ export default function AudioScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ['#07070a', '#121018'] : ['#0d0b2f', '#2a1faa']}
+      colors={isDark ? ['#07070a', '#121018'] : ['#ffffffff', '#ffffffff']}
       style={[styles.container]}
     >
       <Text style={[styles.title, { color: palette.title }]}>Voice Mood Detection</Text>
@@ -370,13 +370,13 @@ export default function AudioScreen() {
 const getPalette = (dark: boolean) => ({
   backgroundStart: dark ? '#07070a' : '#0d0b2f',
   backgroundEnd: dark ? '#121018' : '#2a1faa',
-  title: dark ? '#e6e6e6' : '#ffffff',
-  subtitle: dark ? 'rgba(230,230,230,0.85)' : 'rgba(255,255,255,0.9)',
+  title: dark ? '#e6e6e6' : '#2a1faa',
+  subtitle: dark ? 'rgba(230,230,230,0.85)' : 'rgba(4, 24, 249, 0.9)',
   mic: dark ? '#b9b9ff' : '#4CAF50',               // mic icon color (when idle)
   recordingAccent: '#ff4444',                      // recording red (kept same)
-  recordButtonText: dark ? '#ffffff' : '#ffffff',
-  success: '#4CAF50',                              // analyze button / success color
-  analyzeButtonText: '#ffffff',
+  recordButtonText: dark ? '#ffffff' : '#284fe9ff',
+  success: '#4c93afff',                              // analyze button / success color
+  analyzeButtonText: '#2a1faa',
   retryBackground: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.2)',
 });
 
