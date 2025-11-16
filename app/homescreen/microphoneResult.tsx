@@ -65,7 +65,7 @@ export default function MicrophoneResult() {
 
   return (
     <LinearGradient
-      colors={isDark ? ['#07070a', '#121018'] : ['#0d0b2f', '#2a1faa']}
+      colors={isDark ? ['#07070a', '#121018'] : ['#ffffffff', '#ffffffff']}
       style={[styles.container]}
     >
       <Text style={[styles.header, { color: palette.header }]}>VOICE MOOD DETECTION</Text>
@@ -105,13 +105,13 @@ export default function MicrophoneResult() {
 
 /* Palette helper */
 const getPalette = (dark: boolean) => ({
-  header: dark ? '#e6e6e6' : '#ffffff',
-  text: dark ? '#e6e6e6' : '#ffffff',
-  muted: dark ? '#bdbddf' : 'rgba(255,255,255,0.85)',
+  header: dark ? '#e6e6e6' : '#2a1faa',
+  text: dark ? '#e6e6e6' : '#2b1faae6',
+  muted: dark ? '#bdbddf' : 'rgba(23, 87, 235, 0.85)',
   accent: dark ? '#6f6cff' : '#2a1faa',
-  secondary: dark ? 'rgba(111,108,255,0.12)' : 'rgba(255,255,255,0.18)',
+  secondary: dark ? 'rgba(111,108,255,0.12)' : 'rgba(90, 97, 223, 0.89)',
   buttonText: '#ffffff',
-  transcriptBg: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.1)',
+  transcriptBg: dark ? 'rgba(255,255,255,0.04)' : 'rgba(135, 140, 235, 0.89)',
   error: '#ff6b6b',
 });
 
