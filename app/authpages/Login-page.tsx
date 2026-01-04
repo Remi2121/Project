@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
+import { Ionicons } from '@expo/vector-icons';
+
 
 // theme
 import { useSettings } from '../utilis/Settings';
@@ -170,6 +172,28 @@ export default function LoginPage() {
           </Text>
         </TouchableOpacity>
       </Animatable.View>
+
+
+      {/* OR CONTINUE WITH */}
+<View style={styles.orWrapper}>
+  <View style={styles.line} />
+  <Text style={styles.orText}>or continue with</Text>
+  <View style={styles.line} />
+</View>
+
+{/* SOCIAL LOGIN */}
+<View style={styles.socialWrapper}>
+  {/* GOOGLE */}
+  <TouchableOpacity style={styles.socialButton}>
+    <Ionicons name="logo-google" size={22} color="#000" />
+  </TouchableOpacity>
+
+  {/* APPLE */}
+  <TouchableOpacity style={styles.socialButton}>
+    <Ionicons name="logo-apple" size={24} color="#000" />
+  </TouchableOpacity>
+</View>
+
 
       {/* REGISTER */}
       <View style={styles.bottomTextWrapper}>

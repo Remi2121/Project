@@ -11,6 +11,47 @@ export const getAuthStyles = (isDark: boolean) =>
       alignItems: 'center',
     },
 
+    orWrapper: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginVertical: 22,
+  width: '100%',
+},
+
+line: {
+  flex: 1,
+  height: 1,
+  backgroundColor: '#d1d5db',
+},
+
+orText: {
+  marginHorizontal: 10,
+  color: '#6b7280',
+  fontSize: 13,
+},
+
+socialWrapper: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  gap: 18,
+  marginBottom: 10,
+},
+
+socialButton: {
+  width: 54,
+  height: 54,
+  borderRadius: 14,
+  backgroundColor: '#ffffff',
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: '#000',
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 5,
+},
+
+
     /* ================= HEADER ICON ================= */
     iconWrapper: {
       marginTop: 80,
