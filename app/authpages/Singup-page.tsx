@@ -1,11 +1,18 @@
-// Signup.tsx
 import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import * as Animatable from 'react-native-animatable';
-import { auth, db } from '../../utils/firebaseConfig.js';
+import { auth, db } from '../../utils/firebaseConfig';
 
 // theme
 import { useSettings } from '../utilis/Settings';
@@ -13,10 +20,11 @@ import { getAuthStyles } from './authstyles';
 
 const TABS_HOME = '/(tabs)';
 
-export default function Signup() {
+export default function SignupPage() {
   const router = useRouter();
+
   const [username, setUsername] = useState('');
-  const [email, setEmail]     = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -24,11 +32,13 @@ export default function Signup() {
   const { isDark } = useSettings();
   const styles = getAuthStyles(isDark);
 
+  // SIGNUP LOGIC (UNCHANGED)
   const onSignupPress = async () => {
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert('Please fill all fields');
       return;
     }
+
     if (password !== confirmPassword) {
       Alert.alert('Passwords do not match');
       return;
@@ -37,7 +47,11 @@ export default function Signup() {
     try {
       setSubmitting(true);
 
-      const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
 
       await updateProfile(user, { displayName: username });
 
@@ -50,7 +64,7 @@ export default function Signup() {
 
       Alert.alert(
         'Success',
-        'Signup completed!',
+        'Account created successfully!',
         [{ text: 'OK', onPress: () => router.replace(TABS_HOME) }],
         { cancelable: false }
       );
@@ -61,31 +75,41 @@ export default function Signup() {
     }
   };
 
+  // ================= SIGNUP UI =================
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Animatable.Text animation="fadeInDown" duration={1200} style={styles.title}>
-        Create Your Account
-      </Animatable.Text>
+      {/* TOP ICON */}
+      <Animatable.View animation="fadeInDown" style={styles.iconWrapper}>
+        <Text style={styles.lockIcon}>📝</Text>
+      </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={200} duration={1000} style={{ width: '100%' }}>
+      {/* TITLE */}
+      <Animatable.Text animation="fadeInDown" style={styles.title}>
+        Create Account
+      </Animatable.Text>
+      <Text style={styles.subtitle}>Start your journey with Moodify</Text>
+
+      {/* USERNAME */}
+      <Animatable.View animation="fadeInUp" delay={150} style={styles.inputWrapper}>
         <TextInput
           placeholder="Username"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="words"
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={400} duration={1000} style={{ width: '100%' }}>
+      {/* EMAIL */}
+      <Animatable.View animation="fadeInUp" delay={300} style={styles.inputWrapper}>
         <TextInput
           placeholder="Email"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -93,48 +117,50 @@ export default function Signup() {
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={600} duration={1000} style={{ width: '100%' }}>
+      {/* PASSWORD */}
+      <Animatable.View animation="fadeInUp" delay={450} style={styles.inputWrapper}>
         <TextInput
           placeholder="Password"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={800} duration={1000} style={{ width: '100%' }}>
+      {/* CONFIRM PASSWORD */}
+      <Animatable.View animation="fadeInUp" delay={600} style={styles.inputWrapper}>
         <TextInput
           placeholder="Confirm Password"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={1000} duration={1000} style={{ width: '100%' }}>
+      {/* SIGNUP BUTTON */}
+      <Animatable.View animation="fadeInUp" delay={750} style={{ width: '100%' }}>
         <TouchableOpacity
-          style={[styles.button, submitting && { opacity: 0.7 }]}
+          style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
           onPress={onSignupPress}
-          activeOpacity={0.8}
           disabled={submitting}
         >
-          <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.buttonText}>
+          <Text style={styles.primaryButtonText}>
             {submitting ? 'Creating…' : 'Sign Up'}
-          </Animatable.Text>
-        </TouchableOpacity>
-      </Animatable.View>
-
-      <Animatable.View animation="fadeInUp" delay={1200} duration={1000}>
-        <TouchableOpacity onPress={() => router.replace('/authpages/Login-page')}>
-          <Text style={[styles.linkText, { marginTop: 15 }]}>
-            Already have an account? Login
           </Text>
         </TouchableOpacity>
       </Animatable.View>
+
+      {/* LOGIN LINK */}
+      <View style={styles.bottomTextWrapper}>
+        <Text style={styles.bottomText}>Already have an account? </Text>
+        <TouchableOpacity onPress={() => router.replace('/authpages/Login-page')}>
+          <Text style={styles.registerText}>Login</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }

@@ -1,8 +1,20 @@
-// Login.tsx
 import { useRouter } from 'expo-router';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  User,
+} from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
 
@@ -10,19 +22,18 @@ import { auth } from '../../utils/firebaseConfig';
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
 
-export default function Login() {
+export default function LoginPage() {
   const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // theme
   const { isDark } = useSettings();
   const styles = getAuthStyles(isDark);
 
-  // Track auth state but DON'T auto-redirect;
+  // Track auth state (NO auto redirect)
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -30,6 +41,7 @@ export default function Login() {
     return unsub;
   }, []);
 
+  // LOGIN
   const onLoginPress = async () => {
     if (!email || !password) {
       Alert.alert('Please fill all fields');
@@ -39,6 +51,7 @@ export default function Login() {
     try {
       setSubmitting(true);
       await signInWithEmailAndPassword(auth, email.trim(), password);
+
       Alert.alert(
         'Success',
         'Logged in successfully!',
@@ -52,124 +65,119 @@ export default function Login() {
     }
   };
 
+  // SIGN OUT (if already logged in)
   const onUseDifferentAccount = async () => {
     try {
       await signOut(auth);
       setEmail('');
       setPassword('');
       setCurrentUser(null);
-      Alert.alert('Signed out', 'You can now log in with a different account.');
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Could not sign out');
     }
   };
 
+  // ================= ALREADY LOGGED IN =================
   if (currentUser) {
     return (
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Animatable.Text animation="fadeInDown" duration={1000} style={styles.title}>
+        <Animatable.Text animation="fadeInDown" style={styles.title}>
           You’re already signed in
         </Animatable.Text>
 
-        <Animatable.View animation="fadeInUp" delay={200} duration={800} style={{ width: '100%', alignItems: 'center' }}>
-          <Text style={[styles.linkText, { marginBottom: 10, textAlign: 'center' }]}>
-            {currentUser.displayName ? `${currentUser.displayName}\n` : ''}
-            {currentUser.email}
-          </Text>
-        </Animatable.View>
+        <Text style={styles.subtitle}>
+          {currentUser.displayName ?? ''}
+          {'\n'}
+          {currentUser.email}
+        </Text>
 
-        <Animatable.View animation="fadeInUp" delay={400} duration={800} style={{ width: '100%' }}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.replace('/(tabs)')}
-            activeOpacity={0.8}
-          >
-            <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.buttonText}>
-              Continue to app
-            </Animatable.Text>
-          </TouchableOpacity>
-        </Animatable.View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.replace('/(tabs)')}
+        >
+          <Text style={styles.primaryButtonText}>Continue to app</Text>
+        </TouchableOpacity>
 
-        <Animatable.View animation="fadeInUp" delay={600} duration={800} style={{ width: '100%' }}>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: isDark ? '#333' : '#555' }]}
-            onPress={onUseDifferentAccount}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Use a different account</Text>
-          </TouchableOpacity>
-        </Animatable.View>
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: '#555', marginTop: 15 }]}
+          onPress={onUseDifferentAccount}
+        >
+          <Text style={styles.primaryButtonText}>Use different account</Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     );
   }
 
+  // ================= LOGIN UI =================
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Back Button */}
-      <TouchableOpacity
-        onPress={() => router.push('/(tabs)')}
-        style={{
-          position: 'absolute',
-          top: 60,
-          left: 20,
-          zIndex: 10,
-        }}
-      >
-        <Text style={styles.backArrow}>←</Text>
-      </TouchableOpacity>
+      {/* TOP ICON */}
+      <Animatable.View animation="fadeInDown" style={styles.iconWrapper}>
+        <Text style={styles.lockIcon}>🔒</Text>
+      </Animatable.View>
 
-      <Animatable.Text animation="fadeInDown" duration={1200} style={styles.title}>
-        Welcome Back!
+      {/* TITLE */}
+      <Animatable.Text animation="fadeInDown" style={styles.title}>
+        Welcome back
       </Animatable.Text>
+      <Text style={styles.subtitle}>You've been missed!</Text>
 
-      <Animatable.View animation="fadeInUp" delay={200} duration={1000} style={{ width: '100%' }}>
+      {/* EMAIL */}
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.inputWrapper}>
         <TextInput
           placeholder="Email"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          autoCorrect={false}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={400} duration={1000} style={{ width: '100%' }}>
+      {/* PASSWORD */}
+      <Animatable.View animation="fadeInUp" delay={350} style={styles.inputWrapper}>
         <TextInput
           placeholder="Password"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={600} duration={1000} style={{ width: '100%' }}>
+      {/* FORGOT */}
+      <TouchableOpacity style={styles.forgotWrapper}>
+        <Text style={styles.forgotText}>Forgot Password?</Text>
+      </TouchableOpacity>
+
+      {/* LOGIN BUTTON */}
+      <Animatable.View animation="fadeInUp" delay={500} style={{ width: '100%' }}>
         <TouchableOpacity
-          style={[styles.button, submitting && { opacity: 0.7 }]}
+          style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
           onPress={onLoginPress}
-          activeOpacity={0.8}
           disabled={submitting}
         >
-          <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.buttonText}>
-            {submitting ? 'Logging in…' : 'Login'}
-          </Animatable.Text>
+          <Text style={styles.primaryButtonText}>
+            {submitting ? 'Signing in…' : 'Sign In'}
+          </Text>
         </TouchableOpacity>
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={800} duration={1000}>
+      {/* REGISTER */}
+      <View style={styles.bottomTextWrapper}>
+        <Text style={styles.bottomText}>Not a member? </Text>
         <TouchableOpacity onPress={() => router.push('/authpages/Singup-page')}>
-          <Text style={[styles.linkText, { marginTop: 15 }]}>Create Account? Click here</Text>
+          <Text style={styles.registerText}>Register now</Text>
         </TouchableOpacity>
-      </Animatable.View>
+      </View>
     </KeyboardAvoidingView>
   );
 }
