@@ -1,14 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
 import { useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
-  User,
+  User
 } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
@@ -22,35 +21,50 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
+
+
+
+// theme moodify-90d4d.firebaseapp.com  1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
 
 WebBrowser.maybeCompleteAuthSession();
 
+
 export default function LoginPage() {
   const router = useRouter();
-  const { isDark } = useSettings();
-  const styles = getAuthStyles(isDark);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // ✅ GOOGLE AUTH (Expo Go – CORRECT SETUP)
+  const { isDark } = useSettings();
+  const styles = getAuthStyles(isDark);
 const [request, response, promptAsync] = Google.useAuthRequest({
-  clientId:
+  webClientId:
     '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
 
   iosClientId:
     '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
 
-  webClientId:
-    '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+  
+    androidClientId:
+      '1020654886415-og0tb3ins8k0lh9o845lsh96futpgpnb.apps.googleusercontent.com',
+
+  redirectUri: AuthSession.makeRedirectUri({
+    scheme: 'exp',
+  }),
 });
 
 
-  // 🔁 Track auth state
+
+
+
+
+  // Track auth state (NO auto redirect) 1020654886415-og0tb3ins8k0lh9o845lsh96futpgpnb.apps.googleusercontent.com
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -58,29 +72,30 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     return unsub;
   }, []);
 
-  // 🔐 Handle Google login response
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
+useEffect(() => {
+  if (response?.type === 'success') {
+    const { id_token } = response.params;
 
-      if (!id_token) {
-        Alert.alert('Google login failed', 'No ID token received');
-        return;
-      }
-
-      const credential = GoogleAuthProvider.credential(id_token);
-
-      signInWithCredential(auth, credential)
-        .then(() => {
-          router.replace('/(tabs)');
-        })
-        .catch((err) => {
-          Alert.alert('Google login failed', err.message);
-        });
+    if (!id_token) {
+      Alert.alert('Google login failed', 'No ID token received');
+      return;
     }
-  }, [response, router]);
 
-  // 📧 Email / Password login
+    const credential = GoogleAuthProvider.credential(id_token);
+
+    signInWithCredential(auth, credential)
+      .then(() => {
+        router.replace('/(tabs)');
+      })
+      .catch((err) => {
+        Alert.alert('Google login failed', err.message);
+      });
+  }
+}, [response, router]);
+
+
+
+  // LOGIN
   const onLoginPress = async () => {
     if (!email || !password) {
       Alert.alert('Please fill all fields');
@@ -90,7 +105,13 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     try {
       setSubmitting(true);
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace('/(tabs)');
+
+      Alert.alert(
+        'Success',
+        'Logged in successfully!',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }],
+        { cancelable: false }
+      );
     } catch (error: any) {
       Alert.alert('Login failed', error?.message ?? 'Unknown error');
     } finally {
@@ -98,12 +119,16 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     }
   };
 
-  // 🚪 Sign out
+  // SIGN OUT (if already logged in)
   const onUseDifferentAccount = async () => {
-    await signOut(auth);
-    setEmail('');
-    setPassword('');
-    setCurrentUser(null);
+    try {
+      await signOut(auth);
+      setEmail('');
+      setPassword('');
+      setCurrentUser(null);
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'Could not sign out');
+    }
   };
 
   // ================= ALREADY LOGGED IN =================
@@ -146,10 +171,18 @@ const [request, response, promptAsync] = Google.useAuthRequest({
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* TOP ICON */}
+      <Animatable.View animation="fadeInDown" style={styles.iconWrapper}>
+        <Text style={styles.lockIcon}>🔒</Text>
+      </Animatable.View>
+
+      {/* TITLE */}
       <Animatable.Text animation="fadeInDown" style={styles.title}>
         Welcome back
       </Animatable.Text>
+      <Text style={styles.subtitle}>You&apos;ve been missed!</Text>
 
+      {/* EMAIL */}
       <Animatable.View animation="fadeInUp" delay={200} style={styles.inputWrapper}>
         <TextInput
           placeholder="Email"
@@ -162,6 +195,7 @@ const [request, response, promptAsync] = Google.useAuthRequest({
         />
       </Animatable.View>
 
+      {/* PASSWORD */}
       <Animatable.View animation="fadeInUp" delay={350} style={styles.inputWrapper}>
         <TextInput
           placeholder="Password"
@@ -173,32 +207,53 @@ const [request, response, promptAsync] = Google.useAuthRequest({
         />
       </Animatable.View>
 
-      <TouchableOpacity
-        style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
-        onPress={onLoginPress}
-        disabled={submitting}
-      >
-        <Text style={styles.primaryButtonText}>
-          {submitting ? 'Signing in…' : 'Sign In'}
-        </Text>
+      {/* FORGOT */}
+      <TouchableOpacity style={styles.forgotWrapper}>
+        <Text style={styles.forgotText}>Forgot Password?</Text>
       </TouchableOpacity>
 
-      <View style={styles.orWrapper}>
-        <View style={styles.line} />
-        <Text style={styles.orText}>or continue with</Text>
-        <View style={styles.line} />
-      </View>
-
-      <View style={styles.socialWrapper}>
+      {/* LOGIN BUTTON */}
+      <Animatable.View animation="fadeInUp" delay={500} style={{ width: '100%' }}>
         <TouchableOpacity
-          style={styles.socialButton}
-          onPress={() => promptAsync()}
-          disabled={!request}
+          style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
+          onPress={onLoginPress}
+          disabled={submitting}
         >
-          <Ionicons name="logo-google" size={22} color="#000" />
+          <Text style={styles.primaryButtonText}>
+            {submitting ? 'Signing in…' : 'Sign In'}
+          </Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
 
+
+      {/* OR CONTINUE WITH */}
+<View style={styles.orWrapper}>
+  <View style={styles.line} />
+  <Text style={styles.orText}>or continue with</Text>
+  <View style={styles.line} />
+</View>
+
+{/* SOCIAL LOGIN */}
+<View style={styles.socialWrapper}>
+  {/* GOOGLE */}
+<TouchableOpacity
+  style={styles.socialButton}
+  onPress={() => promptAsync()}
+  disabled={!request}
+>
+  <Ionicons name="logo-google" size={22} color="#000" />
+</TouchableOpacity>
+
+
+
+  {/* APPLE */}
+  <TouchableOpacity style={styles.socialButton}>
+    <Ionicons name="logo-apple" size={24} color="#000" />
+  </TouchableOpacity>
+</View>
+
+
+      {/* REGISTER */}
       <View style={styles.bottomTextWrapper}>
         <Text style={styles.bottomText}>Not a member? </Text>
         <TouchableOpacity onPress={() => router.push('/authpages/Singup-page')}>
