@@ -48,6 +48,10 @@ const [request, response, promptAsync] = Google.useAuthRequest({
   iosClientId:
     '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
 
+  
+    androidClientId:
+      '1020654886415-og0tb3ins8k0lh9o845lsh96futpgpnb.apps.googleusercontent.com',
+
   redirectUri: AuthSession.makeRedirectUri({
     scheme: 'exp',
   }),
@@ -58,7 +62,7 @@ const [request, response, promptAsync] = Google.useAuthRequest({
 
 
 
-  // Track auth state (NO auto redirect)
+  // Track auth state (NO auto redirect) 1020654886415-og0tb3ins8k0lh9o845lsh96futpgpnb.apps.googleusercontent.com
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
