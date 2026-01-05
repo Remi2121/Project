@@ -1,7 +1,16 @@
+// Signup.tsx
+import { Ionicons } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,10 +27,14 @@ import { auth, db } from '../../utils/firebaseConfig';
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const TABS_HOME = '/(tabs)';
 
-export default function SignupPage() {
+export default function Signup() {
   const router = useRouter();
+  const { isDark } = useSettings();
+  const styles = getAuthStyles(isDark);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -29,16 +42,58 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const { isDark } = useSettings();
-  const styles = getAuthStyles(isDark);
+  // ✅ Google Auth (same config as Login page)
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId:
+      '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+    iosClientId:
+      '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
+    webClientId:
+      '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+  });
 
-  // SIGNUP LOGIC (UNCHANGED)
+  // 🔁 Handle Google signup / login
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+
+      if (!id_token) {
+        Alert.alert('Google signup failed');
+        return;
+      }
+
+      const credential = GoogleAuthProvider.credential(id_token);
+
+      signInWithCredential(auth, credential)
+        .then(async ({ user }) => {
+          const ref = doc(db, 'users', user.uid);
+          const snap = await getDoc(ref);
+
+          // 🆕 Create Firestore doc only if first time
+          if (!snap.exists()) {
+            await setDoc(ref, {
+              uid: user.uid,
+              username: user.displayName ?? 'Google User',
+              email: user.email,
+              createdAt: serverTimestamp(),
+              provider: 'google',
+            });
+          }
+
+          router.replace(TABS_HOME);
+        })
+        .catch((err) => {
+          Alert.alert('Google signup failed', err.message);
+        });
+    }
+  }, [response, router]);
+
+  // 📧 Email / Password signup
   const onSignupPress = async () => {
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert('Please fill all fields');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Passwords do not match');
       return;
@@ -60,14 +115,10 @@ export default function SignupPage() {
         username,
         email: user.email,
         createdAt: serverTimestamp(),
+        provider: 'password',
       });
 
-      Alert.alert(
-        'Success',
-        'Account created successfully!',
-        [{ text: 'OK', onPress: () => router.replace(TABS_HOME) }],
-        { cancelable: false }
-      );
+      router.replace(TABS_HOME);
     } catch (error: any) {
       Alert.alert('Signup failed', error?.message ?? 'Unknown error');
     } finally {
@@ -75,25 +126,17 @@ export default function SignupPage() {
     }
   };
 
-  // ================= SIGNUP UI =================
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* TOP ICON */}
-      <Animatable.View animation="fadeInDown" style={styles.iconWrapper}>
-        <Text style={styles.lockIcon}>📝</Text>
-      </Animatable.View>
-
-      {/* TITLE */}
       <Animatable.Text animation="fadeInDown" style={styles.title}>
-        Create Account
+        Create Your Account
       </Animatable.Text>
-      <Text style={styles.subtitle}>Start your journey with Moodify</Text>
 
       {/* USERNAME */}
-      <Animatable.View animation="fadeInUp" delay={150} style={styles.inputWrapper}>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.inputWrapper}>
         <TextInput
           placeholder="Username"
           placeholderTextColor="#aaa"
@@ -105,7 +148,7 @@ export default function SignupPage() {
       </Animatable.View>
 
       {/* EMAIL */}
-      <Animatable.View animation="fadeInUp" delay={300} style={styles.inputWrapper}>
+      <Animatable.View animation="fadeInUp" delay={350} style={styles.inputWrapper}>
         <TextInput
           placeholder="Email"
           placeholderTextColor="#aaa"
@@ -118,7 +161,7 @@ export default function SignupPage() {
       </Animatable.View>
 
       {/* PASSWORD */}
-      <Animatable.View animation="fadeInUp" delay={450} style={styles.inputWrapper}>
+      <Animatable.View animation="fadeInUp" delay={500} style={styles.inputWrapper}>
         <TextInput
           placeholder="Password"
           placeholderTextColor="#aaa"
@@ -130,7 +173,7 @@ export default function SignupPage() {
       </Animatable.View>
 
       {/* CONFIRM PASSWORD */}
-      <Animatable.View animation="fadeInUp" delay={600} style={styles.inputWrapper}>
+      <Animatable.View animation="fadeInUp" delay={650} style={styles.inputWrapper}>
         <TextInput
           placeholder="Confirm Password"
           placeholderTextColor="#aaa"
@@ -141,8 +184,8 @@ export default function SignupPage() {
         />
       </Animatable.View>
 
-      {/* SIGNUP BUTTON */}
-      <Animatable.View animation="fadeInUp" delay={750} style={{ width: '100%' }}>
+      {/* SIGN UP BUTTON */}
+      <Animatable.View animation="fadeInUp" delay={800} style={{ width: '100%' }}>
         <TouchableOpacity
           style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
           onPress={onSignupPress}
@@ -153,6 +196,24 @@ export default function SignupPage() {
           </Text>
         </TouchableOpacity>
       </Animatable.View>
+
+      {/* OR */}
+      <View style={styles.orWrapper}>
+        <View style={styles.line} />
+        <Text style={styles.orText}>or sign up with</Text>
+        <View style={styles.line} />
+      </View>
+
+      {/* GOOGLE SIGNUP */}
+      <View style={styles.socialWrapper}>
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={() => promptAsync()}
+          disabled={!request}
+        >
+          <Ionicons name="logo-google" size={22} color="#000" />
+        </TouchableOpacity>
+      </View>
 
       {/* LOGIN LINK */}
       <View style={styles.bottomTextWrapper}>
