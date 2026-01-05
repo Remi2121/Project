@@ -1,28 +1,56 @@
-// Login.tsx
+import { Ionicons } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import * as WebBrowser from 'expo-web-browser';
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  signOut,
+  User,
+} from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
-
-// theme
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
 
-export default function Login() {
+WebBrowser.maybeCompleteAuthSession();
+
+export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  // theme
   const { isDark } = useSettings();
   const styles = getAuthStyles(isDark);
 
-  // Track auth state but DON'T auto-redirect;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // ✅ GOOGLE AUTH (Expo Go – CORRECT SETUP)
+const [request, response, promptAsync] = Google.useAuthRequest({
+  clientId:
+    '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+
+  iosClientId:
+    '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
+
+  webClientId:
+    '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+});
+
+
+  // 🔁 Track auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -30,6 +58,29 @@ export default function Login() {
     return unsub;
   }, []);
 
+  // 🔐 Handle Google login response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+
+      if (!id_token) {
+        Alert.alert('Google login failed', 'No ID token received');
+        return;
+      }
+
+      const credential = GoogleAuthProvider.credential(id_token);
+
+      signInWithCredential(auth, credential)
+        .then(() => {
+          router.replace('/(tabs)');
+        })
+        .catch((err) => {
+          Alert.alert('Google login failed', err.message);
+        });
+    }
+  }, [response, router]);
+
+  // 📧 Email / Password login
   const onLoginPress = async () => {
     if (!email || !password) {
       Alert.alert('Please fill all fields');
@@ -39,12 +90,7 @@ export default function Login() {
     try {
       setSubmitting(true);
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      Alert.alert(
-        'Success',
-        'Logged in successfully!',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }],
-        { cancelable: false }
-      );
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Login failed', error?.message ?? 'Unknown error');
     } finally {
@@ -52,124 +98,113 @@ export default function Login() {
     }
   };
 
+  // 🚪 Sign out
   const onUseDifferentAccount = async () => {
-    try {
-      await signOut(auth);
-      setEmail('');
-      setPassword('');
-      setCurrentUser(null);
-      Alert.alert('Signed out', 'You can now log in with a different account.');
-    } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Could not sign out');
-    }
+    await signOut(auth);
+    setEmail('');
+    setPassword('');
+    setCurrentUser(null);
   };
 
+  // ================= ALREADY LOGGED IN =================
   if (currentUser) {
     return (
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Animatable.Text animation="fadeInDown" duration={1000} style={styles.title}>
+        <Animatable.Text animation="fadeInDown" style={styles.title}>
           You’re already signed in
         </Animatable.Text>
 
-        <Animatable.View animation="fadeInUp" delay={200} duration={800} style={{ width: '100%', alignItems: 'center' }}>
-          <Text style={[styles.linkText, { marginBottom: 10, textAlign: 'center' }]}>
-            {currentUser.displayName ? `${currentUser.displayName}\n` : ''}
-            {currentUser.email}
-          </Text>
-        </Animatable.View>
+        <Text style={styles.subtitle}>
+          {currentUser.displayName ?? ''}
+          {'\n'}
+          {currentUser.email}
+        </Text>
 
-        <Animatable.View animation="fadeInUp" delay={400} duration={800} style={{ width: '100%' }}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.replace('/(tabs)')}
-            activeOpacity={0.8}
-          >
-            <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.buttonText}>
-              Continue to app
-            </Animatable.Text>
-          </TouchableOpacity>
-        </Animatable.View>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => router.replace('/(tabs)')}
+        >
+          <Text style={styles.primaryButtonText}>Continue to app</Text>
+        </TouchableOpacity>
 
-        <Animatable.View animation="fadeInUp" delay={600} duration={800} style={{ width: '100%' }}>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: isDark ? '#333' : '#555' }]}
-            onPress={onUseDifferentAccount}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Use a different account</Text>
-          </TouchableOpacity>
-        </Animatable.View>
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: '#555', marginTop: 15 }]}
+          onPress={onUseDifferentAccount}
+        >
+          <Text style={styles.primaryButtonText}>Use different account</Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     );
   }
 
+  // ================= LOGIN UI =================
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Back Button */}
-      <TouchableOpacity
-        onPress={() => router.push('/(tabs)')}
-        style={{
-          position: 'absolute',
-          top: 60,
-          left: 20,
-          zIndex: 10,
-        }}
-      >
-        <Text style={styles.backArrow}>←</Text>
-      </TouchableOpacity>
-
-      <Animatable.Text animation="fadeInDown" duration={1200} style={styles.title}>
-        Welcome Back!
+      <Animatable.Text animation="fadeInDown" style={styles.title}>
+        Welcome back
       </Animatable.Text>
 
-      <Animatable.View animation="fadeInUp" delay={200} duration={1000} style={{ width: '100%' }}>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.inputWrapper}>
         <TextInput
           placeholder="Email"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          autoCorrect={false}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={400} duration={1000} style={{ width: '100%' }}>
+      <Animatable.View animation="fadeInUp" delay={350} style={styles.inputWrapper}>
         <TextInput
           placeholder="Password"
-          placeholderTextColor={isDark ? '#9a9a9a' : '#0026ffff'}
-          style={styles.input}
+          placeholderTextColor="#aaa"
+          style={styles.inputModern}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
         />
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={600} duration={1000} style={{ width: '100%' }}>
-        <TouchableOpacity
-          style={[styles.button, submitting && { opacity: 0.7 }]}
-          onPress={onLoginPress}
-          activeOpacity={0.8}
-          disabled={submitting}
-        >
-          <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.buttonText}>
-            {submitting ? 'Logging in…' : 'Login'}
-          </Animatable.Text>
-        </TouchableOpacity>
-      </Animatable.View>
+      <TouchableOpacity
+        style={[styles.primaryButton, submitting && { opacity: 0.7 }]}
+        onPress={onLoginPress}
+        disabled={submitting}
+      >
+        <Text style={styles.primaryButtonText}>
+          {submitting ? 'Signing in…' : 'Sign In'}
+        </Text>
+      </TouchableOpacity>
 
-      <Animatable.View animation="fadeInUp" delay={800} duration={1000}>
-        <TouchableOpacity onPress={() => router.push('/authpages/Singup-page')}>
-          <Text style={[styles.linkText, { marginTop: 15 }]}>Create Account? Click here</Text>
+      <View style={styles.orWrapper}>
+        <View style={styles.line} />
+        <Text style={styles.orText}>or continue with</Text>
+        <View style={styles.line} />
+      </View>
+
+      <View style={styles.socialWrapper}>
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={() => promptAsync()}
+          disabled={!request}
+        >
+          <Ionicons name="logo-google" size={22} color="#000" />
         </TouchableOpacity>
-      </Animatable.View>
+      </View>
+
+      <View style={styles.bottomTextWrapper}>
+        <Text style={styles.bottomText}>Not a member? </Text>
+        <TouchableOpacity onPress={() => router.push('/authpages/Singup-page')}>
+          <Text style={styles.registerText}>Register now</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }
