@@ -1,87 +1,184 @@
-// authstyles.ts
 import { StyleSheet } from 'react-native';
 
-export const getAuthStyles = (dark: boolean) =>
+export const getAuthStyles = (isDark: boolean) =>
   StyleSheet.create({
+    /* ================= CONTAINER ================= */
     container: {
       flex: 1,
-      backgroundColor: dark ? '#07070a' : '#FFFFFF',
+      paddingHorizontal: 24,
+      backgroundColor: isDark ? '#0b0b0b' : '#f6f7fb',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    orWrapper: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginVertical: 22,
+  width: '100%',
+},
+
+line: {
+  flex: 1,
+  height: 1,
+  backgroundColor: '#d1d5db',
+},
+
+orText: {
+  marginHorizontal: 10,
+  color: '#6b7280',
+  fontSize: 13,
+},
+
+socialWrapper: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  gap: 18,
+  marginBottom: 10,
+},
+
+socialButton: {
+  width: 54,
+  height: 54,
+  borderRadius: 14,
+  backgroundColor: '#ffffff',
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: '#000',
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 5,
+},
+
+
+    /* ================= HEADER ICON ================= */
+    iconWrapper: {
+      marginTop: 80,
+      marginBottom: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      padding: 20,
     },
 
+    lockIcon: {
+      fontSize: 34,
+      backgroundColor: isDark ? '#1e1e1e' : '#e9ecf3',
+      padding: 18,
+      borderRadius: 50,
+      overflow: 'hidden',
+    },
+
+    /* ================= TITLES ================= */
     title: {
-      fontSize: 32,
-      color: dark ? '#e6e6e6' : '#2a1faa',
-      fontWeight: 'bold',
+      fontSize: 26,
+      fontWeight: '700',
+      color: isDark ? '#ffffff' : '#0f172a',
+      marginBottom: 6,
+      textAlign: 'center',
+    },
+
+    subtitle: {
+      fontSize: 14,
+      color: isDark ? '#b5b5b5' : '#6b7280',
       marginBottom: 30,
+      textAlign: 'center',
     },
 
-    input: {
+    /* ================= INPUTS ================= */
+    inputWrapper: {
       width: '100%',
-      padding: 15,
-      borderRadius: 10,
-      marginVertical: 10,
-      fontSize: 16,
-      backgroundColor: dark ? '#0f0f16' : '#ffffff',
-      borderWidth: 2,
-      borderColor: dark ? '#33324a' : '#072cffff',
-      color: dark ? '#e6e6e6' : '#000',
+      marginBottom: 14,
     },
 
-    button: {
-      backgroundColor: dark ? '#6f6cff' : '#1515caff',
-      padding: 15,
-      borderRadius: 10,
-      marginTop: 50,
+    inputModern: {
+      backgroundColor: isDark ? '#1a1a1a' : '#eef1f7',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      fontSize: 16,
+      color: isDark ? '#ffffff' : '#111827',
+    },
+
+    /* ================= FORGOT PASSWORD ================= */
+    forgotWrapper: {
+      width: '100%',
+      alignItems: 'flex-end',
+      marginBottom: 24,
+    },
+
+    forgotText: {
+      fontSize: 13,
+      color: isDark ? '#9ca3af' : '#6b7280',
+    },
+
+    /* ================= PRIMARY BUTTON ================= */
+    primaryButton: {
+      width: '100%',
+      backgroundColor: '#0f172a',
+      paddingVertical: 16,
+      borderRadius: 18,
       alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 5,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.2,
-      shadowRadius: 5,
-      elevation: 5,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.15,
+      shadowRadius: 10,
+      elevation: 6,
+    },
+
+    primaryButtonText: {
+      color: '#ffffff',
+      fontSize: 16,
+      fontWeight: '600',
+      letterSpacing: 0.3,
+    },
+
+    /* ================= BOTTOM TEXT ================= */
+    bottomTextWrapper: {
+      flexDirection: 'row',
+      marginTop: 26,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    bottomText: {
+      fontSize: 14,
+      color: isDark ? '#9ca3af' : '#6b7280',
+    },
+
+    registerText: {
+      fontSize: 14,
+      color: '#2563eb',
+      fontWeight: '600',
+    },
+
+    /* ================= BACK ARROW (optional) ================= */
+    backArrow: {
+      fontSize: 22,
+      color: isDark ? '#ffffff' : '#0f172a',
+    },
+
+    /* ================= LEGACY SUPPORT (SAFE KEEP) ================= */
+    button: {
+      backgroundColor: '#0f172a',
+      paddingVertical: 15,
+      borderRadius: 16,
+      alignItems: 'center',
+      width: '100%',
+      marginTop: 10,
     },
 
     buttonText: {
-      color: '#fff',
-      fontSize: 18,
-      fontWeight: 'bold',
+      color: '#ffffff',
+      fontSize: 16,
+      fontWeight: '600',
     },
 
     linkText: {
-      color: dark ? '#9aa3ff' : '#2a1faa',
-      textDecorationLine: 'underline',
-      fontSize: 16,
+      color: '#2563eb',
+      fontSize: 14,
+      fontWeight: '500',
       textAlign: 'center',
-      fontWeight: 'bold',
     },
-
-    backArrow: {
-      fontSize: 30,
-      color: dark ? '#ffffff' : '#1f1f41',
-      fontWeight: 'bold',
-    },
-
-    googleBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginTop: 20,
-      backgroundColor: dark ? '#1a1a1a' : '#f5f5f5',
-      paddingVertical: 14,
-      paddingHorizontal: 20,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: dark ? '#333' : '#ddd',
-    },
-
-    googleTxt: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: dark ? '#e6e6e6' : '#333',
-    },
-  });  
-
-// default export (for legacy imports)
-export default getAuthStyles(false);
+  });
