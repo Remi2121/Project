@@ -18,11 +18,18 @@ import {
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
+import * as AuthSession from 'expo-auth-session';
 
 
-// theme
+
+// theme moodify-90d4d.firebaseapp.com  1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+WebBrowser.maybeCompleteAuthSession();
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +41,22 @@ export default function LoginPage() {
 
   const { isDark } = useSettings();
   const styles = getAuthStyles(isDark);
+const [request, response, promptAsync] = Google.useAuthRequest({
+  webClientId:
+    '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+
+  iosClientId:
+    '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
+
+  redirectUri: AuthSession.makeRedirectUri({
+    scheme: 'exp',
+  }),
+});
+
+
+
+
+
 
   // Track auth state (NO auto redirect)
   useEffect(() => {
@@ -42,6 +65,29 @@ export default function LoginPage() {
     });
     return unsub;
   }, []);
+
+useEffect(() => {
+  if (response?.type === 'success') {
+    const { id_token } = response.params;
+
+    if (!id_token) {
+      Alert.alert('Google login failed', 'No ID token received');
+      return;
+    }
+
+    const credential = GoogleAuthProvider.credential(id_token);
+
+    signInWithCredential(auth, credential)
+      .then(() => {
+        router.replace('/(tabs)');
+      })
+      .catch((err) => {
+        Alert.alert('Google login failed', err.message);
+      });
+  }
+}, [response]);
+
+
 
   // LOGIN
   const onLoginPress = async () => {
@@ -184,9 +230,15 @@ export default function LoginPage() {
 {/* SOCIAL LOGIN */}
 <View style={styles.socialWrapper}>
   {/* GOOGLE */}
-  <TouchableOpacity style={styles.socialButton}>
-    <Ionicons name="logo-google" size={22} color="#000" />
-  </TouchableOpacity>
+<TouchableOpacity
+  style={styles.socialButton}
+  onPress={() => promptAsync()}
+  disabled={!request}
+>
+  <Ionicons name="logo-google" size={22} color="#000" />
+</TouchableOpacity>
+
+
 
   {/* APPLE */}
   <TouchableOpacity style={styles.socialButton}>
