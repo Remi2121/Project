@@ -1,4 +1,5 @@
 // Signup.tsx
+
 import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
@@ -23,7 +24,7 @@ import {
 import * as Animatable from 'react-native-animatable';
 import { auth, db } from '../../utils/firebaseConfig';
 
-// theme
+// 🌙 Theme
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
 
@@ -42,14 +43,14 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // ✅ Google Auth (same config as Login page)
+  // ✅ Google Auth (same as Login page)
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId:
+    webClientId:
       '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
     iosClientId:
       '1020654886415-fg9nfodahpf65frdhf83vlk3f44ri9oc.apps.googleusercontent.com',
-    webClientId:
-      '1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com',
+    androidClientId:
+      '1020654886415-og0tb3ins8k0lh9o845lsh96futpgpnb.apps.googleusercontent.com',
   });
 
   // 🔁 Handle Google signup / login
@@ -69,7 +70,7 @@ export default function Signup() {
           const ref = doc(db, 'users', user.uid);
           const snap = await getDoc(ref);
 
-          // 🆕 Create Firestore doc only if first time
+          // 🆕 Create Firestore doc only first time
           if (!snap.exists()) {
             await setDoc(ref, {
               uid: user.uid,
@@ -131,6 +132,7 @@ export default function Signup() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* TITLE */}
       <Animatable.Text animation="fadeInDown" style={styles.title}>
         Create Your Account
       </Animatable.Text>
@@ -204,8 +206,9 @@ export default function Signup() {
         <View style={styles.line} />
       </View>
 
-      {/* GOOGLE SIGNUP */}
+      {/* SOCIAL SIGNUP (GOOGLE + APPLE) */}
       <View style={styles.socialWrapper}>
+        {/* GOOGLE */}
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => promptAsync()}
@@ -213,12 +216,27 @@ export default function Signup() {
         >
           <Ionicons name="logo-google" size={22} color="#000" />
         </TouchableOpacity>
+
+        {/* APPLE / iCLOUD */}
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={() =>
+            Alert.alert(
+              'Coming soon',
+              'Apple Sign-In will be available soon 🍎'
+            )
+          }
+        >
+          <Ionicons name="logo-apple" size={24} color="#000" />
+        </TouchableOpacity>
       </View>
 
       {/* LOGIN LINK */}
       <View style={styles.bottomTextWrapper}>
         <Text style={styles.bottomText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.replace('/authpages/Login-page')}>
+        <TouchableOpacity
+          onPress={() => router.replace('/authpages/Login-page')}
+        >
           <Text style={styles.registerText}>Login</Text>
         </TouchableOpacity>
       </View>

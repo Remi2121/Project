@@ -51,7 +51,7 @@ export default function ProfileSidebar() {
   const [tooltipText, setTooltipText] = useState('Share a note.....');
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [, setLoadingUser] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [savingPhoto, setSavingPhoto] = useState(false);

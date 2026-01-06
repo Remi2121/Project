@@ -43,7 +43,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const [question] = useState('How are you feeling today?');
   const [loading, setLoading] = useState(false);
 
-  const [recent, setRecent] = useState<
+  const [, setRecent] = useState<
     { id: string; mood: string; tag?: string; createdAt?: Date }[]
   >([]);
 
@@ -181,6 +181,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         getTips();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicParam]);
 
   /** ===== Auth listener ===== */
@@ -193,6 +194,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
       }
     });
     return unsub;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -221,7 +223,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
           <Text style={styles.header}>Your AI Meditation Doctor</Text>
 
           <Lottie
-            source={require('../../assets/animation/doctoranimation.json')}
+            source={require('../../assets/animation/livechatbot.json')}
             autoPlay
             loop
             style={{ height: 300 }}
