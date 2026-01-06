@@ -73,7 +73,7 @@ const useFavorites = () => {
 };
 
 export default function TalesPlayer() {
-    const { title, url, image, author, type } = useLocalSearchParams();
+    const { title, url, image, author } = useLocalSearchParams();
     
     const audioUrl = url as string;
     const imageUrl = image as string;
@@ -132,6 +132,7 @@ export default function TalesPlayer() {
                 console.log("Error stopping audio, forcing cleanup:", error);
                 try {
                     await sound.unloadAsync();
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (unloadError) {
                     console.log("Unload also failed, continuing...");
                 }
@@ -152,6 +153,7 @@ export default function TalesPlayer() {
             return () => {
                 stopAudio();
             };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [sound]) // Add sound as dependency
     );
 
@@ -161,6 +163,7 @@ export default function TalesPlayer() {
         return () => {
             stopAudio();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [decodedUrl]);
 
     const loadAudio = async () => {

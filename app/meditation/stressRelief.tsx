@@ -22,7 +22,7 @@ import {
 } from "react-native";
 
 // ====== Filesystem & Auth ======
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../utils/firebaseConfig";
 
