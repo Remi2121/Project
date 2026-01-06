@@ -8,7 +8,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, Image, Platform, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from "react-native";
 
 // ===== Filesystem + Auth (for persistent favorites) =====
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../utils/firebaseConfig";
 
