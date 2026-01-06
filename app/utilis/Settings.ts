@@ -1,11 +1,10 @@
 // app/utilis/Settings.ts
 import React, {
   createContext,
+  ReactNode,
   useContext,
   useState,
-  ReactNode,
 } from 'react';
-import { useColorScheme } from 'react-native';
 
 type Lang = 'en' | 'ta' | 'si';
 
@@ -111,7 +110,6 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(
 );
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const system = useColorScheme();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(false);
