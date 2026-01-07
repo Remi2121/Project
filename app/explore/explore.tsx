@@ -51,8 +51,8 @@ const coverByMood: Record<MainMood, { tamil: any; english: any; default: any }> 
   },
   surprise: {
     english: require('../../assets/covers/surprise.png'),
-    tamil:   require('../../assets/covers/surprise.png'),
-    default: require('../../assets/covers/surprise.png'),
+    tamil:   require('../../assets/covers/surprise1.png'),
+    default: require('../../assets/covers/surprise1.png'),
   },
 };
 

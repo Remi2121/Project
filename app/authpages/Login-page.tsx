@@ -1,14 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import * as AuthSession from 'expo-auth-session';
+// Login.tsx
 import { useRouter } from 'expo-router';
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithCredential,
-  signInWithEmailAndPassword,
-  signOut,
-  User
-} from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -21,19 +13,21 @@ import {
 } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth } from '../../utils/firebaseConfig';
+import { Ionicons } from '@expo/vector-icons';
+import * as AuthSession from 'expo-auth-session';
 
 
 
-// theme moodify-90d4d.firebaseapp.com  1020654886415-c95h2mv7ieth3ub37mrje959efqtcnro.apps.googleusercontent.com
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+// theme
 import { useSettings } from '../utilis/Settings';
 import { getAuthStyles } from './authstyles';
-
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 WebBrowser.maybeCompleteAuthSession();
 
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -72,30 +66,6 @@ const [request, response, promptAsync] = Google.useAuthRequest({
     return unsub;
   }, []);
 
-useEffect(() => {
-  if (response?.type === 'success') {
-    const { id_token } = response.params;
-
-    if (!id_token) {
-      Alert.alert('Google login failed', 'No ID token received');
-      return;
-    }
-
-    const credential = GoogleAuthProvider.credential(id_token);
-
-    signInWithCredential(auth, credential)
-      .then(() => {
-        router.replace('/(tabs)');
-      })
-      .catch((err) => {
-        Alert.alert('Google login failed', err.message);
-      });
-  }
-}, [response, router]);
-
-
-
-  // LOGIN
   const onLoginPress = async () => {
     if (!email || !password) {
       Alert.alert('Please fill all fields');
@@ -180,7 +150,6 @@ useEffect(() => {
       <Animatable.Text animation="fadeInDown" style={styles.title}>
         Welcome back
       </Animatable.Text>
-      <Text style={styles.subtitle}>You&apos;ve been missed!</Text>
 
       {/* EMAIL */}
       <Animatable.View animation="fadeInUp" delay={200} style={styles.inputWrapper}>
