@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { auth, db } from '../../utils/firebaseConfig';
+import * as WebBrowser from 'expo-web-browser';
+
 
 // 🌙 Theme
 import { useSettings } from '../utilis/Settings';
@@ -143,7 +145,7 @@ export default function SignupPage() {
             Already have an account? Login
           </Text>
         </TouchableOpacity>
-      </View>
+      </Animatable.View>
     </KeyboardAvoidingView>
   );
 }
