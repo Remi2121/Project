@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import * as AuthSession from 'expo-auth-session';
 import { useRouter } from 'expo-router';

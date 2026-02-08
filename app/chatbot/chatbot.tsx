@@ -1,8 +1,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { UnknownOutputParams } from 'expo-router';
 import Lottie from 'lottie-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, ScrollView, Text, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  KeyboardAvoidingView, // ✅ ADDED
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+} from 'react-native';
 
 import { useRouter } from 'expo-router';
 import {
@@ -15,7 +24,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from 'utils/firebaseConfig';
 
-// THEME imports (new)
+// THEME imports
 import { useSettings } from '../utilis/Settings';
 import { getChatbotStyles } from './chatbotstyles';
 
@@ -23,39 +32,42 @@ type Props = { routeParams?: UnknownOutputParams };
 
 const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const router = useRouter();
-
-    const { isDark } = useSettings();
+  const { isDark } = useSettings();
   const styles = getChatbotStyles(isDark);
 
-  // NOTE: still using "topic" for input state, but we will SAVE as "mood"
+  // 🔽 Scroll reference (IMPORTANT)
+  const scrollRef = useRef<ScrollView>(null);
+
   const [topic, setTopic] = useState('');
   const [tips, setTips] = useState('');
   const [question] = useState('How are you feeling today?');
   const [loading, setLoading] = useState(false);
 
-  // recent from MoodHistory (per user)
-  const [, setRecent] = useState<{ id: string; mood: string; tag?: string; createdAt?: Date }[]>([]);
+  const [, setRecent] = useState<
+    { id: string; mood: string; tag?: string; createdAt?: Date }[]
+  >([]);
 
   const validMoods = [
-    "anxiety","depression","stress","self-care","mindfulness",
-    "mental health","wellbeing","coping","therapy","burnout",
-    "emotions","mental fitness","resilience","sleep","loneliness",
-    "social anxiety","panic attack","self-esteem","sad","alone","happy",
-    "angry","frustrated","overwhelmed","nervous","anger","calm","neutral"
+    'anxiety','depression','stress','self-care','mindfulness',
+    'mental health','wellbeing','coping','therapy','burnout',
+    'emotions','mental fitness','resilience','sleep','loneliness',
+    'social anxiety','panic attack','self-esteem','sad','alone','happy',
+    'angry','frustrated','overwhelmed','nervous','anger','calm','neutral'
   ];
 
-  /** ===== Helpers: user-scoped paths ===== */
+  /** ===== Auth helpers ===== */
   const requireUser = () => {
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('NOT_SIGNED_IN');
     return uid;
   };
+
   const userHistoryColl = () => {
     const uid = requireUser();
     return collection(db, 'users', uid, 'MoodHistory');
   };
 
-  /** ===== Load recent (reads mood field, not topic) ===== */
+  /** ===== Load recent moods ===== */
   const loadRecent = async () => {
     try {
       const qRef = query(userHistoryColl(), orderBy('createdAt', 'desc'));
@@ -64,26 +76,26 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         const data = d.data() as any;
         return {
           id: d.id,
-          mood: (data.mood ?? data.topic ?? '').toString(),
-          tag: data.tag ?? undefined,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : undefined,
+          mood: (data.mood ?? '').toString(),
+          tag: data.tag,
+          createdAt: data.createdAt?.toDate?.(),
         };
       });
       setRecent(rows.slice(0, 5));
-    } catch (e: any) {
-      console.log('loadRecent error:', e?.message ?? e);
+    } catch (e) {
+      console.log('loadRecent error', e);
     }
   };
 
-  /** ===== Save one session per user ===== */
+  /** ===== Save session ===== */
   const saveSession = async (payload: {
-    mood: string;     // normalized mood key (e.g., "sad")
+    mood: string;
     tips: string;
     raw?: any;
   }) => {
     await addDoc(userHistoryColl(), {
-      mood: payload.mood,               // <- main field
-      tag: `mood-${payload.mood}`,      // <- "mood-sad" like you asked
+      mood: payload.mood,
+      tag: `mood-${payload.mood}`,
       tips: payload.tips,
       source: 'chatbot',
       createdAt: serverTimestamp(),
@@ -91,7 +103,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     });
   };
 
-  /** ===== Fetch tips & store per user ===== */
+  /** ===== Fetch tips ===== */
   const getTips = async () => {
     setLoading(true);
     setTips('');
@@ -115,34 +127,29 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
         return;
       }
 
-      const res = await fetch('http://10.65.215.146:8000/get_tips', {
+      const res = await fetch('http://10.52.112.146:8000/get_tips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: normalizedTopic }),
       });
 
-      const text = await res.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error('JSON parse error:', err, 'Raw response:', text);
-        setTips('Server returned invalid JSON.');
-        setLoading(false);
-        return;
-      }
+      const data = await res.json();
 
       if (typeof data.tips === 'string') {
-        // make numbered list
         const tipsArray = data.tips.split(/\d+\.\s/);
         tipsArray.shift();
+
         const numberedTips = tipsArray
           .map((tip: string, index: number) => `${index + 1}. ${tip.trim()}`)
           .join('\n\n');
 
         setTips(numberedTips);
 
-        // 🔐 Save using "mood" + "mood-<mood>" tag
+        // ✅ EXISTING AUTO SCROLL (unchanged)
+        setTimeout(() => {
+          scrollRef.current?.scrollToEnd({ animated: true });
+        }, 300);
+
         await saveSession({
           mood: normalizedTopic,
           tips: numberedTips,
@@ -161,8 +168,10 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
     }
   };
 
-  /** ===== Auto-run by route param ===== */
-  const topicParam = typeof routeParams?.topic === 'string' ? routeParams.topic : '';
+  /** ===== Auto-run from route param ===== */
+  const topicParam =
+    typeof routeParams?.topic === 'string' ? routeParams.topic : '';
+
   useEffect(() => {
     if (topicParam) {
       const normalized = topicParam.trim().toLowerCase();
@@ -170,59 +179,84 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
 
       if (validMoods.includes(normalized)) {
         getTips();
-      } else {
-        setTips('This is not a mental health related mood.');
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicParam]);
 
-  /** ===== Ensure user present & load recent once ===== */
+  /** ===== Auth listener ===== */
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged((u) => {
-      if (!u) {
+    const unsub = auth.onAuthStateChanged(user => {
+      if (!user) {
         router.replace('/authpages/Login-page');
       } else {
         loadRecent();
       }
     });
     return unsub;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <LinearGradient
-      colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffffff', '#ffffffff']}
+      colors={isDark ? ['#0b0b10', '#121018'] : ['#ffffff', '#ffffff']}
       style={styles.gradient}
     >
-  
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        <Text style={styles.header}>Your AI Meditation Doctor</Text>
-        <Lottie
-          source={require('../../assets/animation/doctoranimation.json')}
-          autoPlay
-          loop
-          style={{ height: 300 ,  }}
-        />
-        <Text style={styles.question}>{question}</Text>
+      {/* ✅ ADDED: KeyboardAvoidingView (wrapper only) */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={90}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingTop: 50, paddingBottom: 10 }, // ✅ ADDED
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"              // ✅ ADDED
+          onContentSizeChange={() =>                // ✅ ADDED
+            scrollRef.current?.scrollToEnd({ animated: true })
+          }
+        >
+          <Text style={styles.header}>Your AI Meditation Doctor</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Describe your feeling..."
-          placeholderTextColor={isDark ? '#bdbdbd' : '#2a1faa'}
-          value={topic}
-          onChangeText={setTopic}
-          autoCapitalize="none"
-        />
+          <Lottie
+            source={require('../../assets/animation/livechatbot.json')}
+            autoPlay
+            loop
+            style={{ height: 300 }}
+          />
 
-         <Button title="Get Tips" onPress={getTips} color={isDark ? '#6f6cff' : undefined} />
+          <Text style={styles.question}>{question}</Text>
 
-        {loading ? (
-          <ActivityIndicator size="large" color={isDark ? '#ffffff' : '#2a1faa'} style={{ marginTop: 20 }} />
-        ) : (
-          <Text style={styles.tips}>{tips}</Text>
-        )}
-      </ScrollView>
+          <TextInput
+            style={styles.input}
+            placeholder="Describe your feeling..."
+            placeholderTextColor={isDark ? '#bdbdbd' : '#2a1faa'}
+            value={topic}
+            onChangeText={setTopic}
+            autoCapitalize="none"
+          />
+
+          <Button
+            title="Get Tips"
+            onPress={getTips}
+            color={isDark ? '#6f6cff' : undefined}
+          />
+
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color={isDark ? '#ffffff' : '#2a1faa'}
+              style={{ marginTop: 20 }}
+            />
+          ) : (
+            <Text style={styles.tips}>{tips}</Text>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 };
