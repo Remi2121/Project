@@ -34,7 +34,7 @@ const Chatbot: React.FC<Props> = ({ routeParams }) => {
   const [loading, setLoading] = useState(false);
 
   // recent from MoodHistory (per user)
-  const [recent, setRecent] = useState<{ id: string; mood: string; tag?: string; createdAt?: Date }[]>([]);
+  const [, setRecent] = useState<{ id: string; mood: string; tag?: string; createdAt?: Date }[]>([]);
 
   const validMoods = [
     "anxiety","depression","stress","self-care","mindfulness",
