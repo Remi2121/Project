@@ -225,9 +225,9 @@ export default function JournalScreen() {
       <ScrollView contentContainerStyle={[ { paddingBottom: 140 }]} keyboardShouldPersistTaps="handled">
         {/*Header*/}
         <View style={styles.headerBar}>
-          <Text style={styles.header}>📝 Mood Journal</Text>
+          <Text style={styles.header}>Mood Journal</Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar-outline" size={24} color={isDark ? '#0015ffff' : '#fff'} />
+            <Ionicons name="calendar-outline" size={24} color={isDark ? 'rgb(255, 255, 255)' : '#041cd3'} />
           </TouchableOpacity>
         </View>
 

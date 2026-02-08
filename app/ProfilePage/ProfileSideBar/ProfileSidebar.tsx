@@ -28,7 +28,7 @@ import { auth, db, storage } from '../../../utils/firebaseConfig';
 // Image picker
 import * as ImagePicker from 'expo-image-picker';
 
-const menuItems = ['Mood History.', 'Favorites', 'Journal', 'Settings'] as const;
+const menuItems = ['Mood History.', 'Journal', 'Settings'] as const;
 type MenuItem = typeof menuItems[number];
 
 function nameFromEmail(email?: string | null) {
@@ -51,7 +51,7 @@ export default function ProfileSidebar() {
   const [tooltipText, setTooltipText] = useState('Share a note.....');
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [, setLoadingUser] = useState(true);
   const [profileName, setProfileName] = useState<string>('');
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [savingPhoto, setSavingPhoto] = useState(false);
@@ -147,9 +147,7 @@ export default function ProfileSidebar() {
       case 'Mood History.':
         router.push('../ProfilePage/Menu_Items/mood-history');
         break;
-      case 'Favorites':
-        router.push('../ProfilePage/Menu_Items/favorites');
-        break;
+
       case 'Journal':
         router.push('../ProfilePage/Menu_Items/moodjournal');
         break;
